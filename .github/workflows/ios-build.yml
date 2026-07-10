@@ -1,0 +1,61 @@
+name: iOS build probe
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/ios-build.yml"
+      - "platform/Apple/**"
+      - "source/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  legacy-ios-target:
+    name: Legacy EDuke32-iOS target
+    runs-on: macos-26
+    timeout-minutes: 30
+
+    steps:
+      - name: Check out eDukeiOS
+        uses: actions/checkout@v6
+
+      - name: Fetch SDL2 beside the repository
+        run: git clone --depth 1 --branch SDL2 https://github.com/libsdl-org/SDL.git ../SDL
+
+      - name: Record Apple toolchain
+        run: |
+          xcodebuild -version
+          xcrun --sdk iphoneos --show-sdk-version
+          xcrun --sdk iphoneos --show-sdk-path
+          uname -m
+
+      - name: List Xcode targets
+        run: xcodebuild -list -project platform/Apple/EDuke32.xcodeproj
+
+      - name: Probe unsigned arm64 device build
+        run: |
+          set -o pipefail
+          xcodebuild \
+            -project platform/Apple/EDuke32.xcodeproj \
+            -target EDuke32-iOS \
+            -configuration Debug \
+            -sdk iphoneos \
+            -destination "generic/platform=iOS" \
+            ARCHS=arm64 \
+            ONLY_ACTIVE_ARCH=NO \
+            IPHONEOS_DEPLOYMENT_TARGET=15.0 \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            COMPILER_INDEX_STORE_ENABLE=NO \
+            build 2>&1 | tee ios-build.log
+
+      - name: Upload diagnostic log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-build-log
+          path: ios-build.log
+          if-no-files-found: ignore
+          retention-days: 3

@@ -3018,7 +3018,7 @@
 				GCC_PRECOMPILE_PREFIX_HEADER = NO;
 				GCC_PREFIX_HEADER = "";
 				GCC_PREPROCESSOR_DEFINITIONS = (
-					"DEBUG=1",
+					"DEBUGGINGAIDS=1",
 					"$(inherited)",
 				);
 				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
@@ -3044,6 +3044,7 @@
 					/usr/local/include,
 					/usr/local/include/SDL2,
 					"$(SRCROOT)/../../source/glad/include",
+					"$(SRCROOT)/../../source/build/include",
 					"$(SRCROOT)/../../source/libxmp-lite/include",
 				);
 				INFOPLIST_FILE = "$(SRCROOT)/bundles/EDuke32.app/Contents/Info.plist";
@@ -3167,6 +3168,7 @@
 					/usr/local/include,
 					/usr/local/include/SDL2,
 					"$(SRCROOT)/../../source/glad/include",
+					"$(SRCROOT)/../../source/build/include",
 					"$(SRCROOT)/../../source/libxmp-lite/include",
 				);
 				INFOPLIST_FILE = "$(SRCROOT)/bundles/EDuke32.app/Contents/Info.plist";
@@ -3270,7 +3272,7 @@
 				GCC_PRECOMPILE_PREFIX_HEADER = NO;
 				GCC_PREFIX_HEADER = "";
 				GCC_PREPROCESSOR_DEFINITIONS = (
-					"DEBUG=1",
+					"DEBUGGINGAIDS=1",
 					"$(inherited)",
 				);
 				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
@@ -3296,6 +3298,7 @@
 					/usr/local/include,
 					/usr/local/include/SDL2,
 					"$(SRCROOT)/../../source/glad/include",
+					"$(SRCROOT)/../../source/build/include",
 					"$(SRCROOT)/../../source/libxmp-lite/include",
 				);
 				INFOPLIST_FILE = "$(SRCROOT)/bundles/Mapster32.app/Contents/Info.plist";
@@ -3419,6 +3422,7 @@
 					/usr/local/include,
 					/usr/local/include/SDL2,
 					"$(SRCROOT)/../../source/glad/include",
+					"$(SRCROOT)/../../source/build/include",
 					"$(SRCROOT)/../../source/libxmp-lite/include",
 				);
 				INFOPLIST_FILE = "$(SRCROOT)/bundles/Mapster32.app/Contents/Info.plist";
@@ -3515,7 +3519,7 @@
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_PRECOMPILE_PREFIX_HEADER = NO;
 				GCC_PREPROCESSOR_DEFINITIONS = (
-					"DEBUG=1",
+					"DEBUGGINGAIDS=1",
 					"$(inherited)",
 				);
 				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
@@ -3540,6 +3544,7 @@
 					/usr/local/include,
 					/usr/local/include/SDL2,
 					"$(SRCROOT)/../../source/glad/include",
+					"$(SRCROOT)/../../source/build/include",
 					"$(SRCROOT)/../../source/libxmp-lite/include",
 				);
 				LIBRARY_SEARCH_PATHS = /usr/local/lib;
@@ -3652,6 +3657,7 @@
 					/usr/local/include,
 					/usr/local/include/SDL2,
 					"$(SRCROOT)/../../source/glad/include",
+					"$(SRCROOT)/../../source/build/include",
 					"$(SRCROOT)/../../source/libxmp-lite/include",
 				);
 				LIBRARY_SEARCH_PATHS = /usr/local/lib;
@@ -3745,7 +3751,7 @@
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_PRECOMPILE_PREFIX_HEADER = NO;
 				GCC_PREPROCESSOR_DEFINITIONS = (
-					"DEBUG=1",
+					"DEBUGGINGAIDS=1",
 					"$(inherited)",
 				);
 				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
@@ -3770,6 +3776,7 @@
 					/usr/local/include,
 					/usr/local/include/SDL2,
 					"$(SRCROOT)/../../source/glad/include",
+					"$(SRCROOT)/../../source/build/include",
 					"$(SRCROOT)/../../source/libxmp-lite/include",
 				);
 				LIBRARY_SEARCH_PATHS = /usr/local/lib;
@@ -3882,6 +3889,7 @@
 					/usr/local/include,
 					/usr/local/include/SDL2,
 					"$(SRCROOT)/../../source/glad/include",
+					"$(SRCROOT)/../../source/build/include",
 					"$(SRCROOT)/../../source/libxmp-lite/include",
 				);
 				LIBRARY_SEARCH_PATHS = /usr/local/lib;
@@ -3974,7 +3982,7 @@
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_PRECOMPILE_PREFIX_HEADER = NO;
 				GCC_PREPROCESSOR_DEFINITIONS = (
-					"DEBUG=1",
+					"DEBUGGINGAIDS=1",
 					"$(inherited)",
 				);
 				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
@@ -3999,6 +4007,7 @@
 					/usr/local/include,
 					/usr/local/include/SDL2,
 					"$(SRCROOT)/../../source/glad/include",
+					"$(SRCROOT)/../../source/build/include",
 					"$(SRCROOT)/../../source/libxmp-lite/include",
 				);
 				LIBRARY_SEARCH_PATHS = /usr/local/lib;
@@ -4110,6 +4119,7 @@
 					/usr/local/include,
 					/usr/local/include/SDL2,
 					"$(SRCROOT)/../../source/glad/include",
+					"$(SRCROOT)/../../source/build/include",
 					"$(SRCROOT)/../../source/libxmp-lite/include",
 				);
 				LIBRARY_SEARCH_PATHS = /usr/local/lib;
@@ -4245,7 +4255,7 @@
 				GCC_PRECOMPILE_PREFIX_HEADER = NO;
 				GCC_PREFIX_HEADER = "";
 				GCC_PREPROCESSOR_DEFINITIONS = (
-					"DEBUG=1",
+					"DEBUGGINGAIDS=1",
 					"$(inherited)",
 				);
 				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
@@ -4270,6 +4280,7 @@
 					../../../SDL/include,
 					"$(SRCROOT)/../../source/libxmp-lite/include",
 					"$(SRCROOT)/../../source/glad/include",
+					"$(SRCROOT)/../../source/build/include",
 				);
 				INFOPLIST_FILE = iOS/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
@@ -4386,6 +4397,7 @@
 					../../../SDL/include,
 					"$(SRCROOT)/../../source/libxmp-lite/include",
 					"$(SRCROOT)/../../source/glad/include",
+					"$(SRCROOT)/../../source/build/include",
 				);
 				INFOPLIST_FILE = iOS/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
@@ -4477,7 +4489,7 @@
 				GCC_PRECOMPILE_PREFIX_HEADER = NO;
 				GCC_PREFIX_HEADER = "";
 				GCC_PREPROCESSOR_DEFINITIONS = (
-					"DEBUG=1",
+					"DEBUGGINGAIDS=1",
 					"$(inherited)",
 				);
 				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
@@ -4502,6 +4514,7 @@
 					../../../SDL/include,
 					"$(SRCROOT)/../../source/libxmp-lite/include",
 					"$(SRCROOT)/../../source/glad/include",
+					"$(SRCROOT)/../../source/build/include",
 				);
 				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				LIBRARY_SEARCH_PATHS = /usr/local/lib;
@@ -4610,6 +4623,7 @@
 					../../../SDL/include,
 					"$(SRCROOT)/../../source/libxmp-lite/include",
 					"$(SRCROOT)/../../source/glad/include",
+					"$(SRCROOT)/../../source/build/include",
 				);
 				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				LIBRARY_SEARCH_PATHS = /usr/local/lib;
@@ -4697,7 +4711,7 @@
 				GCC_PRECOMPILE_PREFIX_HEADER = NO;
 				GCC_PREFIX_HEADER = "";
 				GCC_PREPROCESSOR_DEFINITIONS = (
-					"DEBUG=1",
+					"DEBUGGINGAIDS=1",
 					"$(inherited)",
 				);
 				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
@@ -4722,6 +4736,7 @@
 					../../../SDL/include,
 					"$(SRCROOT)/../../source/libxmp-lite/include",
 					"$(SRCROOT)/../../source/glad/include",
+					"$(SRCROOT)/../../source/build/include",
 				);
 				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				LIBRARY_SEARCH_PATHS = /usr/local/lib;
@@ -4830,6 +4845,7 @@
 					../../../SDL/include,
 					"$(SRCROOT)/../../source/libxmp-lite/include",
 					"$(SRCROOT)/../../source/glad/include",
+					"$(SRCROOT)/../../source/build/include",
 				);
 				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				LIBRARY_SEARCH_PATHS = /usr/local/lib;
@@ -4917,7 +4933,7 @@
 				GCC_PRECOMPILE_PREFIX_HEADER = NO;
 				GCC_PREFIX_HEADER = "";
 				GCC_PREPROCESSOR_DEFINITIONS = (
-					"DEBUG=1",
+					"DEBUGGINGAIDS=1",
 					"$(inherited)",
 				);
 				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
@@ -4942,6 +4958,7 @@
 					../../../SDL/include,
 					"$(SRCROOT)/../../source/libxmp-lite/include",
 					"$(SRCROOT)/../../source/glad/include",
+					"$(SRCROOT)/../../source/build/include",
 				);
 				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				LIBRARY_SEARCH_PATHS = /usr/local/lib;
@@ -5050,6 +5067,7 @@
 					../../../SDL/include,
 					"$(SRCROOT)/../../source/libxmp-lite/include",
 					"$(SRCROOT)/../../source/glad/include",
+					"$(SRCROOT)/../../source/build/include",
 				);
 				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				LIBRARY_SEARCH_PATHS = /usr/local/lib;

@@ -32,24 +32,39 @@ jobs:
           uname -m
 
       - name: List Xcode targets
-        run: xcodebuild -list -project platform/Apple/EDuke32.xcodeproj
+        run: |
+          xcodebuild -list -project platform/Apple/EDuke32.xcodeproj
+          xcodebuild -list -project ../SDL/Xcode-iOS/SDL/SDL.xcodeproj
 
-      - name: Probe unsigned arm64 device build
+      - name: Build unsigned arm64 dependencies and app
         run: |
           set -o pipefail
+
+          common_settings=(
+            -configuration Debug
+            -sdk iphoneos
+            ARCHS=arm64
+            ONLY_ACTIVE_ARCH=NO
+            IPHONEOS_DEPLOYMENT_TARGET=15.0
+            CODE_SIGNING_ALLOWED=NO
+            CODE_SIGNING_REQUIRED=NO
+            COMPILER_INDEX_STORE_ENABLE=NO
+            SYMROOT="$GITHUB_WORKSPACE/platform/Apple/build"
+          )
+
           xcodebuild \
-            -project platform/Apple/EDuke32.xcodeproj \
-            -target EDuke32-iOS \
-            -configuration Debug \
-            -sdk iphoneos \
-            -destination "generic/platform=iOS" \
-            ARCHS=arm64 \
-            ONLY_ACTIVE_ARCH=NO \
-            IPHONEOS_DEPLOYMENT_TARGET=15.0 \
-            CODE_SIGNING_ALLOWED=NO \
-            CODE_SIGNING_REQUIRED=NO \
-            COMPILER_INDEX_STORE_ENABLE=NO \
+            -project ../SDL/Xcode-iOS/SDL/SDL.xcodeproj \
+            -target "Static Library-iOS" \
+            "${common_settings[@]}" \
             build 2>&1 | tee ios-build.log
+
+          for target in BUILD-iOS MACT-iOS AudioLib-iOS EDuke32-iOS; do
+            xcodebuild \
+              -project platform/Apple/EDuke32.xcodeproj \
+              -target "$target" \
+              "${common_settings[@]}" \
+              build 2>&1 | tee -a ios-build.log
+          done
 
       - name: Upload diagnostic log
         if: always()

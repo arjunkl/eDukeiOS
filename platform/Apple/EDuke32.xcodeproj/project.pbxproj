@@ -145,7 +145,7 @@
 		0008E9FD19F1AD9B0091588D /* savegame.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0008E9D519F1AD9B0091588D /* savegame.cpp */; };
 		0008EA0019F1AD9B0091588D /* sector.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0008E9DA19F1AD9B0091588D /* sector.cpp */; };
 		0008EA0119F1AD9B0091588D /* sounds.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0008E9DD19F1AD9B0091588D /* sounds.cpp */; };
-		0008EA0219F1AD9B0091588D /* soundsdyn.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0008E9DF19F1AD9B0091588D /* soundsdyn.cpp */; };
+		0008EA0219F1AD9B0091588D /* dnames.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0008E9DF19F1AD9B0091588D /* dnames.cpp */; };
 		0008EA0319F1AD9B0091588D /* startosx.game.mm in Sources */ = {isa = PBXBuildFile; fileRef = 0008E9E219F1AD9B0091588D /* startosx.game.mm */; };
 		0008EA0719F1ADC90091588D /* common.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0008EA0519F1ADC90091588D /* common.cpp */; };
 		0008EA0819F1ADC90091588D /* common.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0008EA0519F1ADC90091588D /* common.cpp */; };
@@ -202,7 +202,7 @@
 		000C48B019F35601006E6B52 /* savegame.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0008E9D519F1AD9B0091588D /* savegame.cpp */; };
 		000C48B219F35601006E6B52 /* sector.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0008E9DA19F1AD9B0091588D /* sector.cpp */; };
 		000C48B319F35601006E6B52 /* sounds.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0008E9DD19F1AD9B0091588D /* sounds.cpp */; };
-		000C48B419F35601006E6B52 /* soundsdyn.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0008E9DF19F1AD9B0091588D /* soundsdyn.cpp */; };
+		000C48B419F35601006E6B52 /* dnames.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0008E9DF19F1AD9B0091588D /* dnames.cpp */; };
 		000C48D519F35D7A006E6B52 /* libSDL2.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 000C48D419F35D6E006E6B52 /* libSDL2.a */; };
 		000C48D719F35D92006E6B52 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 000C48D619F35D92006E6B52 /* UIKit.framework */; };
 		000C48D919F35DA3006E6B52 /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0008EA8119F1B1E20091588D /* AudioToolbox.framework */; };
@@ -884,8 +884,8 @@
 		0008E9DC19F1AD9B0091588D /* soundefs.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = soundefs.h; sourceTree = "<group>"; };
 		0008E9DD19F1AD9B0091588D /* sounds.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.c; path = sounds.cpp; sourceTree = "<group>"; };
 		0008E9DE19F1AD9B0091588D /* sounds.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = sounds.h; sourceTree = "<group>"; };
-		0008E9DF19F1AD9B0091588D /* soundsdyn.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.c; path = soundsdyn.cpp; sourceTree = "<group>"; };
-		0008E9E019F1AD9B0091588D /* soundsdyn.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = soundsdyn.h; sourceTree = "<group>"; };
+		0008E9DF19F1AD9B0091588D /* dnames.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.c; path = dnames.cpp; sourceTree = "<group>"; };
+		0008E9E019F1AD9B0091588D /* dnames.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = dnames.h; sourceTree = "<group>"; };
 		0008E9E119F1AD9B0091588D /* standard.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = standard.h; sourceTree = "<group>"; };
 		0008E9E219F1AD9B0091588D /* startosx.game.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = startosx.game.mm; sourceTree = "<group>"; };
 		0008EA0419F1ADC90091588D /* common_game.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = common_game.h; sourceTree = "<group>"; };
@@ -1783,8 +1783,8 @@
 				0008E9DC19F1AD9B0091588D /* soundefs.h */,
 				0008E9DD19F1AD9B0091588D /* sounds.cpp */,
 				0008E9DE19F1AD9B0091588D /* sounds.h */,
-				0008E9DF19F1AD9B0091588D /* soundsdyn.cpp */,
-				0008E9E019F1AD9B0091588D /* soundsdyn.h */,
+				0008E9DF19F1AD9B0091588D /* dnames.cpp */,
+				0008E9E019F1AD9B0091588D /* dnames.h */,
 				0008E9E119F1AD9B0091588D /* standard.h */,
 				0008E9E219F1AD9B0091588D /* startosx.game.mm */,
 				20F7124B1C6C19E5006B68D0 /* text.cpp */,
@@ -2504,7 +2504,7 @@
 				20E16CE81C7022DE00EE8446 /* screens.cpp in Sources */,
 				0008E9EB19F1AD9B0091588D /* gamedef.cpp in Sources */,
 				20F7124D1C6C19E5006B68D0 /* text.cpp in Sources */,
-				0008EA0219F1AD9B0091588D /* soundsdyn.cpp in Sources */,
+				0008EA0219F1AD9B0091588D /* dnames.cpp in Sources */,
 				0008E9EF19F1AD9B0091588D /* gamevars.cpp in Sources */,
 				0008E9EC19F1AD9B0091588D /* gameexec.cpp in Sources */,
 				20F712511C6C19F4006B68D0 /* sbar.cpp in Sources */,
@@ -2692,7 +2692,7 @@
 				000C489B19F35601006E6B52 /* anim.cpp in Sources */,
 				000C48B319F35601006E6B52 /* sounds.cpp in Sources */,
 				000C48AE19F35601006E6B52 /* rev.cpp in Sources */,
-				000C48B419F35601006E6B52 /* soundsdyn.cpp in Sources */,
+				000C48B419F35601006E6B52 /* dnames.cpp in Sources */,
 				000C48A519F35601006E6B52 /* grpscan.cpp in Sources */,
 				000C48AB19F35601006E6B52 /* osdfuncs.cpp in Sources */,
 				000C489F19F35601006E6B52 /* gamedef.cpp in Sources */,

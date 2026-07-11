@@ -389,8 +389,12 @@
 		20A63CDB23BF23700007D142 /* timer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 20A63CD923BF23700007D142 /* timer.cpp */; };
 		20A63CDD23BF23750007D142 /* vfs.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 20A63CDC23BF23750007D142 /* vfs.cpp */; };
 		20A63CDE23BF23750007D142 /* vfs.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 20A63CDC23BF23750007D142 /* vfs.cpp */; };
-		20A63CE023BF23810007D142 /* zpl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 20A63CDF23BF23810007D142 /* zpl.cpp */; };
-		20A63CE123BF23810007D142 /* zpl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 20A63CDF23BF23810007D142 /* zpl.cpp */; };
+		20A63CE023BF23810007D142 /* smmalloc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 20A63CDF23BF23810007D142 /* smmalloc.cpp */; };
+		20A63CE123BF23810007D142 /* smmalloc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 20A63CDF23BF23810007D142 /* smmalloc.cpp */; };
+		F10000000000000000000011 /* smmalloc_generic.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F10000000000000000000001 /* smmalloc_generic.cpp */; };
+		F10000000000000000000012 /* smmalloc_tls.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F10000000000000000000002 /* smmalloc_tls.cpp */; };
+		F10000000000000000000021 /* smmalloc_generic.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F10000000000000000000001 /* smmalloc_generic.cpp */; };
+		F10000000000000000000022 /* smmalloc_tls.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F10000000000000000000002 /* smmalloc_tls.cpp */; };
 		20A63CE623BF24D10007D142 /* linklist.h in Headers */ = {isa = PBXBuildFile; fileRef = 0008E6DF19F1AAFF0091588D /* linklist.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		20A63CE723BF24D30007D142 /* linklist.h in Headers */ = {isa = PBXBuildFile; fileRef = 0008E6DF19F1AAFF0091588D /* linklist.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		20A63CEC23BF25330007D142 /* _midi.h in Headers */ = {isa = PBXBuildFile; fileRef = 0008E99A19F1AD9B0091588D /* _midi.h */; };
@@ -964,7 +968,9 @@
 		20A63CD623BF23690007D142 /* tilepacker.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = tilepacker.cpp; sourceTree = "<group>"; };
 		20A63CD923BF23700007D142 /* timer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = timer.cpp; sourceTree = "<group>"; };
 		20A63CDC23BF23750007D142 /* vfs.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = vfs.cpp; sourceTree = "<group>"; };
-		20A63CDF23BF23810007D142 /* zpl.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = zpl.cpp; sourceTree = "<group>"; };
+		20A63CDF23BF23810007D142 /* smmalloc.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = smmalloc.cpp; sourceTree = "<group>"; };
+		F10000000000000000000001 /* smmalloc_generic.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = smmalloc_generic.cpp; sourceTree = "<group>"; };
+		F10000000000000000000002 /* smmalloc_tls.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = smmalloc_tls.cpp; sourceTree = "<group>"; };
 		20A63CF223BF26520007D142 /* events_defs.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = events_defs.h; sourceTree = "<group>"; };
 		20A63CF323BF26B90007D142 /* mapster32.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = mapster32.h; sourceTree = "<group>"; };
 		20A63CF423BF27340007D142 /* al_midi.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = al_midi.h; sourceTree = "<group>"; };
@@ -1506,7 +1512,9 @@
 				20A63CDC23BF23750007D142 /* vfs.cpp */,
 				0008E91F19F1AC540091588D /* voxmodel.cpp */,
 				0008E92219F1AC540091588D /* xxhash.c */,
-				20A63CDF23BF23810007D142 /* zpl.cpp */,
+				20A63CDF23BF23810007D142 /* smmalloc.cpp */,
+				F10000000000000000000001 /* smmalloc_generic.cpp */,
+				F10000000000000000000002 /* smmalloc_tls.cpp */,
 			);
 			path = src;
 			sourceTree = "<group>";
@@ -2598,7 +2606,9 @@
 				0008E97719F1AC540091588D /* polymost.cpp in Sources */,
 				20A63CD423BF23600007D142 /* softsurface.cpp in Sources */,
 				0008E96819F1AC540091588D /* hightile.cpp in Sources */,
-				20A63CE023BF23810007D142 /* zpl.cpp in Sources */,
+				20A63CE023BF23810007D142 /* smmalloc.cpp in Sources */,
+				F10000000000000000000011 /* smmalloc_generic.cpp in Sources */,
+				F10000000000000000000012 /* smmalloc_tls.cpp in Sources */,
 				0008E96119F1AC540091588D /* dxtfilter.cpp in Sources */,
 				20A63CCB23BF232F0007D142 /* klzw.cpp in Sources */,
 				0008E96B19F1AC540091588D /* lz4.c in Sources */,
@@ -2747,7 +2757,9 @@
 				0013829D19F361B60007DA6C /* textfont.cpp in Sources */,
 				204D6B611C98973F001FA505 /* ProcessRGB.cpp in Sources */,
 				20A63CDB23BF23700007D142 /* timer.cpp in Sources */,
-				20A63CE123BF23810007D142 /* zpl.cpp in Sources */,
+				20A63CE123BF23810007D142 /* smmalloc.cpp in Sources */,
+				F10000000000000000000021 /* smmalloc_generic.cpp in Sources */,
+				F10000000000000000000022 /* smmalloc_tls.cpp in Sources */,
 				0013829E19F361B60007DA6C /* mdsprite.cpp in Sources */,
 				0013829F19F361B60007DA6C /* defs.cpp in Sources */,
 				2044C9911E08A6BC00A8C543 /* screenshot.cpp in Sources */,

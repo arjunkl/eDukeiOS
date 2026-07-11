@@ -3,6 +3,7 @@
 
 #include "SDL.h"
 
+#include "../../../source/build/include/compat.h"
 #include "../../../source/duke3d/src/function.h"
 #include "../../../source/duke3d/src/in_android.h"
 #include "../../../source/mact/include/control.h"

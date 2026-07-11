@@ -89,7 +89,7 @@ extern "C" void AndroidAutomapControl(float zoom, float dx, float dy)
     g_mapDelta.y += dy;
 }
 
-extern "C" void CONTROL_Android_ScrollMap(int32_t *angle, int32_t *x, int32_t *y, uint16_t *zoom)
+void CONTROL_Android_ScrollMap(int32_t *angle, int32_t *x, int32_t *y, uint16_t *zoom)
 {
     (void)angle;
     (void)zoom;
@@ -98,17 +98,17 @@ extern "C" void CONTROL_Android_ScrollMap(int32_t *angle, int32_t *x, int32_t *y
     g_mapDelta = CGPointZero;
 }
 
-extern "C" void CONTROL_Android_SetLastWeapon(int weapon)
+void CONTROL_Android_SetLastWeapon(int weapon)
 {
     droidinput.lastWeapon = weapon;
 }
 
-extern "C" void CONTROL_Android_ClearButton(int32_t button)
+void CONTROL_Android_ClearButton(int32_t button)
 {
     droidinput.functionHeld &= ~(UINT64_C(1) << static_cast<uint64_t>(button));
 }
 
-extern "C" void CONTROL_Android_PollDevices(ControlInfo *info)
+void CONTROL_Android_PollDevices(ControlInfo *info)
 {
     info->dz += static_cast<int32_t>(-droidinput.forwardmove * ANDROIDMOVEFACTOR);
     info->dx += static_cast<int32_t>(droidinput.sidemove * ANDROIDMOVEFACTOR) >> 5;

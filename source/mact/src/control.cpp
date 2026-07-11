@@ -20,7 +20,8 @@
 #include "pragmas.h"
 
 #if defined EDUKE32_TOUCH_DEVICES
-#include "android.h"
+extern void CONTROL_Android_ClearButton(int32_t whichbutton);
+extern void CONTROL_Android_PollDevices(ControlInfo *info);
 #endif
 
 // TODO: add mact cvars and make this user configurable

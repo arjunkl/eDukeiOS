@@ -353,9 +353,7 @@
 		2044C99D1E08A74100A8C543 /* tiles.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2044C99B1E08A74100A8C543 /* tiles.cpp */; };
 		204D6B5F1C98973F001FA505 /* Math.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 204D6B571C98973F001FA505 /* Math.hpp */; };
 		204D6B601C98973F001FA505 /* ProcessCommon.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 204D6B581C98973F001FA505 /* ProcessCommon.hpp */; };
-		204D6B611C98973F001FA505 /* ProcessRGB.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 204D6B591C98973F001FA505 /* ProcessRGB.cpp */; };
 		204D6B621C98973F001FA505 /* ProcessRGB.h in Headers */ = {isa = PBXBuildFile; fileRef = 204D6B5A1C98973F001FA505 /* ProcessRGB.h */; };
-		204D6B631C98973F001FA505 /* Tables.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 204D6B5B1C98973F001FA505 /* Tables.cpp */; };
 		204D6B641C98973F001FA505 /* Tables.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 204D6B5C1C98973F001FA505 /* Tables.hpp */; };
 		204D6B651C98973F001FA505 /* Types.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 204D6B5D1C98973F001FA505 /* Types.hpp */; };
 		204D6B661C98973F001FA505 /* Vector.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 204D6B5E1C98973F001FA505 /* Vector.hpp */; };
@@ -948,9 +946,7 @@
 		204D6B4F1C9896B0001FA505 /* inv.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.h; fileEncoding = 4; path = inv.h; sourceTree = "<group>"; };
 		204D6B571C98973F001FA505 /* Math.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = Math.hpp; sourceTree = "<group>"; };
 		204D6B581C98973F001FA505 /* ProcessCommon.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = ProcessCommon.hpp; sourceTree = "<group>"; };
-		204D6B591C98973F001FA505 /* ProcessRGB.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ProcessRGB.cpp; sourceTree = "<group>"; };
 		204D6B5A1C98973F001FA505 /* ProcessRGB.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = ProcessRGB.h; sourceTree = "<group>"; };
-		204D6B5B1C98973F001FA505 /* Tables.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Tables.cpp; sourceTree = "<group>"; };
 		204D6B5C1C98973F001FA505 /* Tables.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = Tables.hpp; sourceTree = "<group>"; };
 		204D6B5D1C98973F001FA505 /* Types.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = Types.hpp; sourceTree = "<group>"; };
 		204D6B5E1C98973F001FA505 /* Vector.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = Vector.hpp; sourceTree = "<group>"; };
@@ -1568,8 +1564,6 @@
 			children = (
 				204D6B571C98973F001FA505 /* Math.hpp */,
 				204D6B581C98973F001FA505 /* ProcessCommon.hpp */,
-				204D6B591C98973F001FA505 /* ProcessRGB.cpp */,
-				204D6B5B1C98973F001FA505 /* Tables.cpp */,
 				204D6B5C1C98973F001FA505 /* Tables.hpp */,
 				204D6B5D1C98973F001FA505 /* Types.hpp */,
 				204D6B5E1C98973F001FA505 /* Vector.hpp */,
@@ -2753,7 +2747,6 @@
 				0013829C19F361B60007DA6C /* a-c.cpp in Sources */,
 				2038AE9D1A8F126C0093B7B2 /* md4.cpp in Sources */,
 				0013829D19F361B60007DA6C /* textfont.cpp in Sources */,
-				204D6B611C98973F001FA505 /* ProcessRGB.cpp in Sources */,
 				20A63CDB23BF23700007D142 /* timer.cpp in Sources */,
 				20A63CE123BF23810007D142 /* smmalloc.cpp in Sources */,
 				F10000000000000000000021 /* smmalloc_generic.cpp in Sources */,
@@ -2769,7 +2762,6 @@
 				0013829E19F361B60007DA6C /* mdsprite.cpp in Sources */,
 				0013829F19F361B60007DA6C /* defs.cpp in Sources */,
 				2044C9911E08A6BC00A8C543 /* screenshot.cpp in Sources */,
-				204D6B631C98973F001FA505 /* Tables.cpp in Sources */,
 				001382A019F361B60007DA6C /* baselayer.cpp in Sources */,
 				20A63CCF23BF23420007D142 /* pngwrite.cpp in Sources */,
 				20A63CC923BF23230007D142 /* glsurface.cpp in Sources */,

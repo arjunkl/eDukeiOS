@@ -501,6 +501,7 @@ extern int32_t m_mouselastactivity;
 # define MOUSEALPHA 0
 # define CURSORALPHA (255/3)
 # define MOUSEACTIVECONDITIONAL(condition) (condition)
+# define MOUSEINACTIVECONDITIONAL(condition) (condition)
 # define MOUSEWATCHPOINTCONDITIONAL(condition) (condition)
 #else
 extern int32_t m_mousewake_watchpoint, m_menuchange_watchpoint;

@@ -1667,7 +1667,9 @@ void sdlayer_setvideomode_opengl(void)
 
 int32_t setvideomode_sdlcommon(int32_t *x, int32_t *y, int32_t c, int32_t fs, int32_t *regrab)
 {
-    if ((r_displayindex == g_displayindex) && (fs == fullscreen) && (*x == xres) && (*y == yres) && (c == bpp) && !videomodereset)
+    // A matching mode is only a no-op after a real window has been created.
+    // On UIKit the startup defaults can otherwise match before SDL_CreateWindow.
+    if (sdl_window && (r_displayindex == g_displayindex) && (fs == fullscreen) && (*x == xres) && (*y == yres) && (c == bpp) && !videomodereset)
         return 0;
 
     if (videoCheckMode(x, y, c, fs, 0) < 0)

@@ -460,7 +460,7 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpCmdLine, int nC
 extern "C" int eduke32_android_main(int argc, char const *argv[]);
 # endif
 int eduke32_android_main(int argc, char const *argv[])
-#elif defined GEKKO
+#elif defined GEKKO || defined EDUKE32_IOS
 int SDL_main(int argc, char *argv[])
 #else
 int main(int argc, char *argv[])

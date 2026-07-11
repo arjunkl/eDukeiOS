@@ -1,0 +1,383 @@
+#import <CoreMotion/CoreMotion.h>
+#import <UIKit/UIKit.h>
+
+#include "SDL.h"
+
+#include "../../../source/duke3d/src/function.h"
+#include "../../../source/duke3d/src/in_android.h"
+#include "../../../source/mact/include/control.h"
+
+#include <cmath>
+
+namespace
+{
+constexpr CGFloat kStickRadius = 58.0;
+constexpr CGFloat kLookScale = 0.0025;
+constexpr CGFloat kGyroScale = 0.85;
+
+static CGPoint g_mapDelta = CGPointZero;
+
+static void PushKey(SDL_Scancode scancode)
+{
+    SDL_Event event = {};
+    event.type = SDL_KEYDOWN;
+    event.key.state = SDL_PRESSED;
+    event.key.keysym.scancode = scancode;
+    event.key.keysym.sym = SDL_GetKeyFromScancode(scancode);
+    SDL_PushEvent(&event);
+
+    event.type = SDL_KEYUP;
+    event.key.state = SDL_RELEASED;
+    SDL_PushEvent(&event);
+}
+
+static void PushMenuTap(CGPoint point)
+{
+    SDL_Event event = {};
+    event.type = SDL_MOUSEMOTION;
+    event.motion.x = static_cast<Sint32>(point.x);
+    event.motion.y = static_cast<Sint32>(point.y);
+    SDL_PushEvent(&event);
+
+    event.type = SDL_MOUSEBUTTONDOWN;
+    event.button.button = SDL_BUTTON_LEFT;
+    event.button.state = SDL_PRESSED;
+    event.button.x = static_cast<Sint32>(point.x);
+    event.button.y = static_cast<Sint32>(point.y);
+    SDL_PushEvent(&event);
+
+    event.type = SDL_MOUSEBUTTONUP;
+    event.button.state = SDL_RELEASED;
+    SDL_PushEvent(&event);
+}
+
+static CGRect CircleRect(CGPoint center, CGFloat radius)
+{
+    return CGRectMake(center.x - radius, center.y - radius, radius * 2.0, radius * 2.0);
+}
+}
+
+extern "C" void AndroidMove(float forward, float strafe)
+{
+    droidinput.forwardmove = fmaxf(-1.f, fminf(1.f, forward));
+    droidinput.sidemove = fmaxf(-1.f, fminf(1.f, strafe));
+}
+
+extern "C" void AndroidLook(float yaw, float pitch)
+{
+    droidinput.yaw += yaw;
+    droidinput.pitch += droidinput.invertLook ? -pitch : pitch;
+}
+
+extern "C" void AndroidAction(int state, int action)
+{
+    uint64_t const mask = UINT64_C(1) << static_cast<uint64_t>(action);
+
+    if (state)
+    {
+        droidinput.functionSticky |= mask;
+        droidinput.functionHeld |= mask;
+    }
+    else
+        droidinput.functionHeld &= ~mask;
+}
+
+extern "C" void AndroidAutomapControl(float zoom, float dx, float dy)
+{
+    (void)zoom;
+    g_mapDelta.x += dx;
+    g_mapDelta.y += dy;
+}
+
+extern "C" void CONTROL_Android_ScrollMap(int32_t *angle, int32_t *x, int32_t *y, uint16_t *zoom)
+{
+    (void)angle;
+    (void)zoom;
+    *x += static_cast<int32_t>(g_mapDelta.x * 30000.f);
+    *y += static_cast<int32_t>(g_mapDelta.y * 30000.f);
+    g_mapDelta = CGPointZero;
+}
+
+extern "C" void CONTROL_Android_SetLastWeapon(int weapon)
+{
+    droidinput.lastWeapon = weapon;
+}
+
+extern "C" void CONTROL_Android_ClearButton(int32_t button)
+{
+    droidinput.functionHeld &= ~(UINT64_C(1) << static_cast<uint64_t>(button));
+}
+
+extern "C" void CONTROL_Android_PollDevices(ControlInfo *info)
+{
+    info->dz += static_cast<int32_t>(-droidinput.forwardmove * ANDROIDMOVEFACTOR);
+    info->dx += static_cast<int32_t>(droidinput.sidemove * ANDROIDMOVEFACTOR) >> 5;
+    info->dpitch += static_cast<int32_t>(droidinput.pitch * ANDROIDLOOKFACTOR);
+    info->dyaw += static_cast<int32_t>(-droidinput.yaw * ANDROIDLOOKFACTOR);
+
+    droidinput.pitch = 0.0;
+    droidinput.yaw = 0.0;
+    CONTROL_ButtonState = droidinput.functionSticky | droidinput.functionHeld;
+    droidinput.functionSticky = 0;
+}
+
+@interface EDuke32ControlsView : UIView
+{
+    UITouch *_moveTouch;
+    UITouch *_lookTouch;
+    CGPoint _moveOrigin;
+    CGPoint _lookPrevious;
+    CGPoint _lookOrigin;
+    NSMutableDictionary *_touchActions;
+    CMMotionManager *_motionManager;
+    BOOL _gyroEnabled;
+}
+@end
+
+@implementation EDuke32ControlsView
+
+- (instancetype)initWithFrame:(CGRect)frame
+{
+    self = [super initWithFrame:frame];
+    if (!self)
+        return nil;
+
+    self.backgroundColor = UIColor.clearColor;
+    self.multipleTouchEnabled = YES;
+    self.opaque = NO;
+    self.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+    _touchActions = [[NSMutableDictionary alloc] init];
+    _gyroEnabled = YES;
+
+    _motionManager = [[CMMotionManager alloc] init];
+    if (_motionManager.deviceMotionAvailable)
+    {
+        _motionManager.deviceMotionUpdateInterval = 1.0 / 100.0;
+        __block EDuke32ControlsView *view = self;
+        [_motionManager startDeviceMotionUpdatesUsingReferenceFrame:CMAttitudeReferenceFrameXArbitraryZVertical
+                                                            toQueue:NSOperationQueue.mainQueue
+                                                        withHandler:^(CMDeviceMotion *motion, NSError *error) {
+            if (error || !view->_gyroEnabled || UIApplication.sharedApplication.applicationState != UIApplicationStateActive)
+                return;
+
+            CMRotationRate const rate = motion.rotationRate;
+            UIInterfaceOrientation const orientation = view.window.windowScene.interfaceOrientation;
+            CGFloat const direction = orientation == UIInterfaceOrientationLandscapeRight ? -1.0 : 1.0;
+            AndroidLook(static_cast<float>(rate.x * kGyroScale * direction * _motionManager.deviceMotionUpdateInterval),
+                        static_cast<float>(-rate.y * kGyroScale * direction * _motionManager.deviceMotionUpdateInterval));
+        }];
+    }
+
+    return self;
+}
+
+- (void)dealloc
+{
+    [_motionManager stopDeviceMotionUpdates];
+    [_motionManager release];
+    [_touchActions release];
+    [super dealloc];
+}
+
+- (CGPoint)fireCenter { return CGPointMake(CGRectGetWidth(self.bounds) - 66.0, CGRectGetHeight(self.bounds) - 70.0); }
+- (CGPoint)useCenter { return CGPointMake(CGRectGetWidth(self.bounds) - 150.0, CGRectGetHeight(self.bounds) - 105.0); }
+- (CGPoint)jumpCenter { return CGPointMake(CGRectGetWidth(self.bounds) - 72.0, CGRectGetHeight(self.bounds) - 166.0); }
+- (CGPoint)crouchCenter { return CGPointMake(CGRectGetWidth(self.bounds) - 153.0, CGRectGetHeight(self.bounds) - 42.0); }
+- (CGPoint)weaponCenter { return CGPointMake(CGRectGetWidth(self.bounds) - 226.0, CGRectGetHeight(self.bounds) - 46.0); }
+- (CGPoint)pauseCenter { return CGPointMake(CGRectGetWidth(self.bounds) - 35.0, 35.0); }
+- (CGPoint)gyroCenter { return CGPointMake(42.0, 35.0); }
+
+- (NSInteger)actionAtPoint:(CGPoint)point
+{
+    if (CGRectContainsPoint(CircleRect(self.fireCenter, 43.0), point)) return gamefunc_Fire;
+    if (CGRectContainsPoint(CircleRect(self.useCenter, 31.0), point)) return gamefunc_Open;
+    if (CGRectContainsPoint(CircleRect(self.jumpCenter, 31.0), point)) return gamefunc_Jump;
+    if (CGRectContainsPoint(CircleRect(self.crouchCenter, 28.0), point)) return gamefunc_Crouch;
+    if (CGRectContainsPoint(CircleRect(self.weaponCenter, 27.0), point)) return gamefunc_Next_Weapon;
+    if (CGRectContainsPoint(CircleRect(self.pauseCenter, 25.0), point)) return -2;
+    if (CGRectContainsPoint(CircleRect(self.gyroCenter, 31.0), point)) return -3;
+    return -1;
+}
+
+- (void)touchesBegan:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event
+{
+    (void)event;
+    for (UITouch *touch in touches)
+    {
+        CGPoint const point = [touch locationInView:self];
+        NSInteger const action = [self actionAtPoint:point];
+
+        if (action >= 0)
+        {
+            AndroidAction(1, static_cast<int>(action));
+            [_touchActions setObject:@(action) forKey:[NSValue valueWithNonretainedObject:touch]];
+        }
+        else if (action == -2)
+            PushKey(SDL_SCANCODE_ESCAPE);
+        else if (action == -3)
+        {
+            _gyroEnabled = !_gyroEnabled;
+            [self setNeedsDisplay];
+        }
+        else if (!_moveTouch && point.x < CGRectGetWidth(self.bounds) * 0.46)
+        {
+            _moveTouch = touch;
+            _moveOrigin = point;
+        }
+        else if (!_lookTouch)
+        {
+            _lookTouch = touch;
+            _lookOrigin = point;
+            _lookPrevious = point;
+        }
+    }
+    [self setNeedsDisplay];
+}
+
+- (void)touchesMoved:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event
+{
+    (void)event;
+    for (UITouch *touch in touches)
+    {
+        CGPoint const point = [touch locationInView:self];
+        if (touch == _moveTouch)
+        {
+            CGFloat const dx = fmax(-kStickRadius, fmin(kStickRadius, point.x - _moveOrigin.x));
+            CGFloat const dy = fmax(-kStickRadius, fmin(kStickRadius, point.y - _moveOrigin.y));
+            AndroidMove(static_cast<float>(-dy / kStickRadius), static_cast<float>(dx / kStickRadius));
+        }
+        else if (touch == _lookTouch)
+        {
+            CGFloat const dx = point.x - _lookPrevious.x;
+            CGFloat const dy = point.y - _lookPrevious.y;
+            AndroidLook(static_cast<float>(dx * kLookScale), static_cast<float>(dy * kLookScale));
+            _lookPrevious = point;
+        }
+    }
+    [self setNeedsDisplay];
+}
+
+- (void)finishTouches:(NSSet<UITouch *> *)touches cancelled:(BOOL)cancelled
+{
+    for (UITouch *touch in touches)
+    {
+        NSValue *key = [NSValue valueWithNonretainedObject:touch];
+        NSNumber *action = [_touchActions objectForKey:key];
+        if (action)
+        {
+            AndroidAction(0, action.intValue);
+            [_touchActions removeObjectForKey:key];
+        }
+
+        if (touch == _moveTouch)
+        {
+            _moveTouch = nil;
+            AndroidMove(0.f, 0.f);
+        }
+        else if (touch == _lookTouch)
+        {
+            CGPoint const point = [touch locationInView:self];
+            CGFloat const distance = hypot(point.x - _lookOrigin.x, point.y - _lookOrigin.y);
+            if (!cancelled && distance < 12.0)
+                PushMenuTap(point);
+            _lookTouch = nil;
+        }
+    }
+    [self setNeedsDisplay];
+}
+
+- (void)touchesEnded:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event
+{
+    (void)event;
+    [self finishTouches:touches cancelled:NO];
+}
+
+- (void)touchesCancelled:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event
+{
+    (void)event;
+    [self finishTouches:touches cancelled:YES];
+}
+
+- (void)drawCircleAt:(CGPoint)center radius:(CGFloat)radius label:(NSString *)label active:(BOOL)active
+{
+    CGContextRef const context = UIGraphicsGetCurrentContext();
+    UIColor *fill = [UIColor colorWithWhite:active ? 0.95 : 0.12 alpha:active ? 0.45 : 0.30];
+    UIColor *stroke = [UIColor colorWithWhite:1.0 alpha:0.58];
+    CGContextSetFillColorWithColor(context, fill.CGColor);
+    CGContextSetStrokeColorWithColor(context, stroke.CGColor);
+    CGContextSetLineWidth(context, 1.5);
+    CGContextAddEllipseInRect(context, CircleRect(center, radius));
+    CGContextDrawPath(context, kCGPathFillStroke);
+
+    NSDictionary *attributes = @{
+        NSFontAttributeName: [UIFont boldSystemFontOfSize:11.0],
+        NSForegroundColorAttributeName: [UIColor colorWithWhite:1.0 alpha:0.85]
+    };
+    CGSize const size = [label sizeWithAttributes:attributes];
+    [label drawAtPoint:CGPointMake(center.x - size.width * 0.5, center.y - size.height * 0.5) withAttributes:attributes];
+}
+
+- (void)drawRect:(CGRect)rect
+{
+    (void)rect;
+    CGPoint const stickCenter = _moveTouch ? _moveOrigin : CGPointMake(82.0, CGRectGetHeight(self.bounds) - 82.0);
+    [self drawCircleAt:stickCenter radius:kStickRadius label:@"MOVE" active:_moveTouch != nil];
+    [self drawCircleAt:self.fireCenter radius:43.0 label:@"FIRE" active:NO];
+    [self drawCircleAt:self.useCenter radius:31.0 label:@"USE" active:NO];
+    [self drawCircleAt:self.jumpCenter radius:31.0 label:@"JUMP" active:NO];
+    [self drawCircleAt:self.crouchCenter radius:28.0 label:@"DUCK" active:NO];
+    [self drawCircleAt:self.weaponCenter radius:27.0 label:@"NEXT" active:NO];
+    [self drawCircleAt:self.pauseCenter radius:25.0 label:@"II" active:NO];
+    [self drawCircleAt:self.gyroCenter radius:31.0 label:@"GYRO" active:_gyroEnabled];
+}
+
+@end
+
+@interface EDuke32ControlsInstaller : NSObject
+@end
+
+@implementation EDuke32ControlsInstaller
+
++ (void)load
+{
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(installControls)
+                                                     name:UIApplicationDidBecomeActiveNotification
+                                                   object:nil];
+        [self performSelector:@selector(installControls) withObject:nil afterDelay:0.75];
+    });
+}
+
++ (UIWindow *)activeWindow
+{
+    for (UIScene *scene in UIApplication.sharedApplication.connectedScenes)
+    {
+        if (scene.activationState != UISceneActivationStateForegroundActive || ![scene isKindOfClass:UIWindowScene.class])
+            continue;
+        for (UIWindow *window in ((UIWindowScene *)scene).windows)
+            if (window.isKeyWindow)
+                return window;
+    }
+    return UIApplication.sharedApplication.windows.firstObject;
+}
+
++ (void)installControls
+{
+    UIWindow *window = [self activeWindow];
+    if (!window)
+    {
+        [self performSelector:@selector(installControls) withObject:nil afterDelay:0.5];
+        return;
+    }
+
+    NSInteger const tag = 0x4544554B;
+    if ([window viewWithTag:tag])
+        return;
+
+    EDuke32ControlsView *controls = [[[EDuke32ControlsView alloc] initWithFrame:window.bounds] autorelease];
+    controls.tag = tag;
+    [window addSubview:controls];
+}
+
+@end

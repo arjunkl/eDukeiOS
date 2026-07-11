@@ -23,7 +23,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #ifndef android_h_
 #define android_h_
 
-#ifdef __ANDROID__
+#if defined EDUKE32_TOUCH_DEVICES
 #include "compat.h"
 #include "control.h"
 #include "in_android.h"

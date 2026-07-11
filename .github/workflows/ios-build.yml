@@ -34,7 +34,7 @@ jobs:
       - name: List Xcode targets
         run: |
           xcodebuild -list -project platform/Apple/EDuke32.xcodeproj
-          xcodebuild -list -project ../SDL/Xcode-iOS/SDL/SDL.xcodeproj
+          xcodebuild -list -project ../SDL/Xcode/SDL/SDL.xcodeproj
 
       - name: Build unsigned arm64 dependencies and app
         run: |
@@ -53,7 +53,7 @@ jobs:
           )
 
           xcodebuild \
-            -project ../SDL/Xcode-iOS/SDL/SDL.xcodeproj \
+            -project ../SDL/Xcode/SDL/SDL.xcodeproj \
             -target "Static Library-iOS" \
             "${common_settings[@]}" \
             build 2>&1 | tee ios-build.log

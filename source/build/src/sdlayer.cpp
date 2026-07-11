@@ -13,6 +13,9 @@
 #include "palette.h"
 #include "renderlayer.h"
 #include "sdl_inc.h"
+#ifdef EDUKE32_IOS
+# include "SDL_main.h"
+#endif
 #include "softsurface.h"
 
 #if SDL_MAJOR_VERSION >= 2

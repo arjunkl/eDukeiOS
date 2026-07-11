@@ -366,8 +366,6 @@
 		20A63CBD23BF23070007D142 /* cpuid.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 20A63CBB23BF23070007D142 /* cpuid.cpp */; };
 		20A63CBF23BF23100007D142 /* enet.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 20A63CBE23BF23100007D142 /* enet.cpp */; };
 		20A63CC023BF23100007D142 /* enet.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 20A63CBE23BF23100007D142 /* enet.cpp */; };
-		20A63CC323BF231C0007D142 /* fix16_str.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 20A63CC123BF231C0007D142 /* fix16_str.cpp */; };
-		20A63CC423BF231C0007D142 /* fix16_str.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 20A63CC123BF231C0007D142 /* fix16_str.cpp */; };
 		20A63CC523BF231C0007D142 /* fix16.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 20A63CC223BF231C0007D142 /* fix16.cpp */; };
 		20A63CC623BF231C0007D142 /* fix16.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 20A63CC223BF231C0007D142 /* fix16.cpp */; };
 		20A63CC823BF23230007D142 /* glsurface.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 20A63CC723BF23230007D142 /* glsurface.cpp */; };
@@ -960,7 +958,6 @@
 		20A63CB823BF23000007D142 /* communityapi.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = communityapi.cpp; sourceTree = "<group>"; };
 		20A63CBB23BF23070007D142 /* cpuid.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = cpuid.cpp; sourceTree = "<group>"; };
 		20A63CBE23BF23100007D142 /* enet.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = enet.cpp; sourceTree = "<group>"; };
-		20A63CC123BF231C0007D142 /* fix16_str.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = fix16_str.cpp; sourceTree = "<group>"; };
 		20A63CC223BF231C0007D142 /* fix16.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = fix16.cpp; sourceTree = "<group>"; };
 		20A63CC723BF23230007D142 /* glsurface.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = glsurface.cpp; sourceTree = "<group>"; };
 		20A63CCA23BF232F0007D142 /* klzw.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = klzw.cpp; sourceTree = "<group>"; };
@@ -1473,7 +1470,6 @@
 				0008E8E619F1AC530091588D /* engine.cpp */,
 				0008E8E719F1AC540091588D /* engine_oldmap.h */,
 				0008E8E819F1AC540091588D /* engine_priv.h */,
-				20A63CC123BF231C0007D142 /* fix16_str.cpp */,
 				20A63CC223BF231C0007D142 /* fix16.cpp */,
 				0008E8E919F1AC540091588D /* glbuild.cpp */,
 				20A63CC723BF23230007D142 /* glsurface.cpp */,
@@ -2594,7 +2590,6 @@
 				00970E3419F207F000873EB9 /* a-c.cpp in Sources */,
 				20A63CD723BF23690007D142 /* tilepacker.cpp in Sources */,
 				20A63CBC23BF23070007D142 /* cpuid.cpp in Sources */,
-				20A63CC323BF231C0007D142 /* fix16_str.cpp in Sources */,
 				20A63CC523BF231C0007D142 /* fix16.cpp in Sources */,
 				0008E98319F1AC540091588D /* textfont.cpp in Sources */,
 				0008E96D19F1AC540091588D /* mdsprite.cpp in Sources */,
@@ -2783,7 +2778,6 @@
 				20B02C5123BF30DF00896299 /* miniz_tinfl.c in Sources */,
 				20A63CDE23BF23750007D142 /* vfs.cpp in Sources */,
 				2044C99A1E08A72200A8C543 /* mhk.cpp in Sources */,
-				20A63CC423BF231C0007D142 /* fix16_str.cpp in Sources */,
 				001382A219F361B60007DA6C /* scriptfile.cpp in Sources */,
 				001382A319F361B60007DA6C /* polymost.cpp in Sources */,
 				20E014DB23BF366100CC954F /* polymost1Frag.glsl.cpp in Sources */,

@@ -359,9 +359,6 @@
 		204D6B641C98973F001FA505 /* Tables.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 204D6B5C1C98973F001FA505 /* Tables.hpp */; };
 		204D6B651C98973F001FA505 /* Types.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 204D6B5D1C98973F001FA505 /* Types.hpp */; };
 		204D6B661C98973F001FA505 /* Vector.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 204D6B5E1C98973F001FA505 /* Vector.hpp */; };
-		206B3A081B074F3800E5DBD0 /* jwzglesI.h in Headers */ = {isa = PBXBuildFile; fileRef = 206B3A061B074F3000E5DBD0 /* jwzglesI.h */; settings = {ATTRIBUTES = (Public, ); }; };
-		206B3A0A1B074F4300E5DBD0 /* jwzgles.h in Headers */ = {isa = PBXBuildFile; fileRef = 206B3A051B074F3000E5DBD0 /* jwzgles.h */; settings = {ATTRIBUTES = (Public, ); }; };
-		206B3A0C1B074F6400E5DBD0 /* jwzgles.c in Sources */ = {isa = PBXBuildFile; fileRef = 206B3A0B1B074F6400E5DBD0 /* jwzgles.c */; };
 		2085BEBA1A8F23B9002BF4CE /* libSystem.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 2085BEB91A8F23B9002BF4CE /* libSystem.dylib */; };
 		20A63CB923BF23000007D142 /* communityapi.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 20A63CB823BF23000007D142 /* communityapi.cpp */; };
 		20A63CBA23BF23000007D142 /* communityapi.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 20A63CB823BF23000007D142 /* communityapi.cpp */; };
@@ -402,6 +399,7 @@
 		F20000000000000000000025 /* imgui_impl_sdl2.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F20000000000000000000005 /* imgui_impl_sdl2.cpp */; };
 		F20000000000000000000026 /* imgui_tables.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F20000000000000000000006 /* imgui_tables.cpp */; };
 		F20000000000000000000027 /* imgui_widgets.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F20000000000000000000007 /* imgui_widgets.cpp */; };
+		F30000000000000000000001 /* glad.c in Sources */ = {isa = PBXBuildFile; fileRef = 20C607CB23BF1F0000672309 /* glad.c */; };
 		20A63CE623BF24D10007D142 /* linklist.h in Headers */ = {isa = PBXBuildFile; fileRef = 0008E6DF19F1AAFF0091588D /* linklist.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		20A63CE723BF24D30007D142 /* linklist.h in Headers */ = {isa = PBXBuildFile; fileRef = 0008E6DF19F1AAFF0091588D /* linklist.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		20A63CEC23BF25330007D142 /* _midi.h in Headers */ = {isa = PBXBuildFile; fileRef = 0008E99A19F1AD9B0091588D /* _midi.h */; };
@@ -958,9 +956,6 @@
 		204D6B5C1C98973F001FA505 /* Tables.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = Tables.hpp; sourceTree = "<group>"; };
 		204D6B5D1C98973F001FA505 /* Types.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = Types.hpp; sourceTree = "<group>"; };
 		204D6B5E1C98973F001FA505 /* Vector.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = Vector.hpp; sourceTree = "<group>"; };
-		206B3A051B074F3000E5DBD0 /* jwzgles.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = jwzgles.h; sourceTree = "<group>"; };
-		206B3A061B074F3000E5DBD0 /* jwzglesI.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = jwzglesI.h; sourceTree = "<group>"; };
-		206B3A0B1B074F6400E5DBD0 /* jwzgles.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = jwzgles.c; sourceTree = "<group>"; };
 		2085BEB91A8F23B9002BF4CE /* libSystem.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libSystem.dylib; path = usr/lib/libSystem.dylib; sourceTree = SDKROOT; };
 		20A63CB823BF23000007D142 /* communityapi.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = communityapi.cpp; sourceTree = "<group>"; };
 		20A63CBB23BF23070007D142 /* cpuid.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = cpuid.cpp; sourceTree = "<group>"; };
@@ -1410,8 +1405,6 @@
 				20C6090823BF20C900672309 /* glsurface.h */,
 				20CEFB1D1E08A8FD0077879C /* hash.h */,
 				0008E8AF19F1AC530091588D /* hightile.h */,
-				206B3A051B074F3000E5DBD0 /* jwzgles.h */,
-				206B3A061B074F3000E5DBD0 /* jwzglesI.h */,
 				20C6090B23BF20E200672309 /* klzw.h */,
 				0008E8B019F1AC530091588D /* kplib.h */,
 				2038AE951A8F122D0093B7B2 /* libdivide.h */,
@@ -1486,7 +1479,6 @@
 				20A63CC723BF23230007D142 /* glsurface.cpp */,
 				20CEFB171E08A8830077879C /* hash.cpp */,
 				0008E8EB19F1AC540091588D /* hightile.cpp */,
-				206B3A0B1B074F6400E5DBD0 /* jwzgles.c */,
 				20A63CCA23BF232F0007D142 /* klzw.cpp */,
 				0008E8EC19F1AC540091588D /* kplib.cpp */,
 				0008E8EE19F1AC540091588D /* lz4.c */,
@@ -2032,7 +2024,6 @@
 				20C6092B23BF216700672309 /* timer.h in Headers */,
 				001382C219F361B60007DA6C /* sdlappicon.h in Headers */,
 				204D6B661C98973F001FA505 /* Vector.hpp in Headers */,
-				206B3A0A1B074F4300E5DBD0 /* jwzgles.h in Headers */,
 				001382C319F361B60007DA6C /* tracker.hpp in Headers */,
 				204D6B651C98973F001FA505 /* Types.hpp in Headers */,
 				20C6091723BF20F500672309 /* miniz.h in Headers */,
@@ -2053,7 +2044,6 @@
 				20C6093123BF218A00672309 /* zpl.h in Headers */,
 				001382CB19F361B60007DA6C /* kplib.h in Headers */,
 				001382CC19F361B60007DA6C /* lz4.h in Headers */,
-				206B3A081B074F3800E5DBD0 /* jwzglesI.h in Headers */,
 				001382CF19F361B60007DA6C /* baselayer.h in Headers */,
 				001382D019F361B60007DA6C /* scriptfile.h in Headers */,
 				20C6092E23BF217100672309 /* vfs.h in Headers */,
@@ -2746,7 +2736,6 @@
 				0013828E19F361B60007DA6C /* engine.cpp in Sources */,
 				0013828F19F361B60007DA6C /* voxmodel.cpp in Sources */,
 				0013829119F361B60007DA6C /* pragmas.cpp in Sources */,
-				206B3A0C1B074F6400E5DBD0 /* jwzgles.c in Sources */,
 				20A63CD223BF23570007D142 /* sjson.cpp in Sources */,
 				20CEFB131E08A86B0077879C /* 2d.cpp in Sources */,
 				20A63CBA23BF23000007D142 /* communityapi.cpp in Sources */,
@@ -2781,6 +2770,7 @@
 				F20000000000000000000025 /* imgui_impl_sdl2.cpp in Sources */,
 				F20000000000000000000026 /* imgui_tables.cpp in Sources */,
 				F20000000000000000000027 /* imgui_widgets.cpp in Sources */,
+				F30000000000000000000001 /* glad.c in Sources */,
 				0013829E19F361B60007DA6C /* mdsprite.cpp in Sources */,
 				0013829F19F361B60007DA6C /* defs.cpp in Sources */,
 				2044C9911E08A6BC00A8C543 /* screenshot.cpp in Sources */,
@@ -4333,7 +4323,6 @@
 					"-DRENDERTYPESDL=1",
 					"-DMIXERTYPESDL=1",
 					"-DUSE_OPENGL",
-					"-DHAVE_JWZGLES",
 					"-DUSING_LTO",
 					"-DNOASM",
 					"-DNETCODE_DISABLE",
@@ -4451,7 +4440,6 @@
 					"-DRENDERTYPESDL=1",
 					"-DMIXERTYPESDL=1",
 					"-DUSE_OPENGL",
-					"-DHAVE_JWZGLES",
 					"-DUSING_LTO",
 					"-DNOASM",
 					"-DNETCODE_DISABLE",
@@ -4566,7 +4554,6 @@
 					"-DRENDERTYPESDL=1",
 					"-DMIXERTYPESDL=1",
 					"-DUSE_OPENGL",
-					"-DHAVE_JWZGLES",
 					"-DUSING_LTO",
 					"-DNOASM",
 					"-DNETCODE_DISABLE",
@@ -4676,7 +4663,6 @@
 					"-DRENDERTYPESDL=1",
 					"-DMIXERTYPESDL=1",
 					"-DUSE_OPENGL",
-					"-DHAVE_JWZGLES",
 					"-DUSING_LTO",
 					"-DNOASM",
 					"-DNETCODE_DISABLE",
@@ -4790,7 +4776,6 @@
 					"-DRENDERTYPESDL=1",
 					"-DMIXERTYPESDL=1",
 					"-DUSE_OPENGL",
-					"-DHAVE_JWZGLES",
 					"-DUSING_LTO",
 					"-DNOASM",
 					"-DNETCODE_DISABLE",
@@ -4900,7 +4885,6 @@
 					"-DRENDERTYPESDL=1",
 					"-DMIXERTYPESDL=1",
 					"-DUSE_OPENGL",
-					"-DHAVE_JWZGLES",
 					"-DUSING_LTO",
 					"-DNOASM",
 					"-DNETCODE_DISABLE",
@@ -5014,7 +4998,6 @@
 					"-DRENDERTYPESDL=1",
 					"-DMIXERTYPESDL=1",
 					"-DUSE_OPENGL",
-					"-DHAVE_JWZGLES",
 					"-DUSING_LTO",
 					"-DNOASM",
 					"-DNETCODE_DISABLE",
@@ -5124,7 +5107,6 @@
 					"-DRENDERTYPESDL=1",
 					"-DMIXERTYPESDL=1",
 					"-DUSE_OPENGL",
-					"-DHAVE_JWZGLES",
 					"-DUSING_LTO",
 					"-DNOASM",
 					"-DNETCODE_DISABLE",

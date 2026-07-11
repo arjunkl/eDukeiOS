@@ -397,6 +397,12 @@
 		F20000000000000000000027 /* imgui_widgets.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F20000000000000000000007 /* imgui_widgets.cpp */; };
 		F30000000000000000000001 /* glad.c in Sources */ = {isa = PBXBuildFile; fileRef = 20C607CB23BF1F0000672309 /* glad.c */; };
 		F40000000000000000000021 /* driver_sf2.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F40000000000000000000001 /* driver_sf2.cpp */; };
+		F50000000000000000000021 /* AVFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F50000000000000000000001 /* AVFoundation.framework */; };
+		F50000000000000000000022 /* CoreHaptics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F50000000000000000000002 /* CoreHaptics.framework */; };
+		F50000000000000000000023 /* Metal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F50000000000000000000003 /* Metal.framework */; };
+		F60000000000000000000021 /* loguru.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F60000000000000000000001 /* loguru.cpp */; };
+		F60000000000000000000022 /* screentext.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F60000000000000000000002 /* screentext.cpp */; };
+		F60000000000000000000023 /* gamestructures.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0008E9B519F1AD9B0091588D /* gamestructures.cpp */; };
 		20A63CE623BF24D10007D142 /* linklist.h in Headers */ = {isa = PBXBuildFile; fileRef = 0008E6DF19F1AAFF0091588D /* linklist.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		20A63CE723BF24D30007D142 /* linklist.h in Headers */ = {isa = PBXBuildFile; fileRef = 0008E6DF19F1AAFF0091588D /* linklist.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		20A63CEC23BF25330007D142 /* _midi.h in Headers */ = {isa = PBXBuildFile; fileRef = 0008E99A19F1AD9B0091588D /* _midi.h */; };
@@ -975,6 +981,11 @@
 		F20000000000000000000006 /* imgui_tables.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ../../source/imgui/src/imgui_tables.cpp; sourceTree = SOURCE_ROOT; };
 		F20000000000000000000007 /* imgui_widgets.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ../../source/imgui/src/imgui_widgets.cpp; sourceTree = SOURCE_ROOT; };
 		F40000000000000000000001 /* driver_sf2.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ../../source/audiolib/src/driver_sf2.cpp; sourceTree = SOURCE_ROOT; };
+		F50000000000000000000001 /* AVFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AVFoundation.framework; path = System/Library/Frameworks/AVFoundation.framework; sourceTree = SDKROOT; };
+		F50000000000000000000002 /* CoreHaptics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreHaptics.framework; path = System/Library/Frameworks/CoreHaptics.framework; sourceTree = SDKROOT; };
+		F50000000000000000000003 /* Metal.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Metal.framework; path = System/Library/Frameworks/Metal.framework; sourceTree = SDKROOT; };
+		F60000000000000000000001 /* loguru.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ../../source/build/src/loguru.cpp; sourceTree = SOURCE_ROOT; };
+		F60000000000000000000002 /* screentext.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ../../source/build/src/screentext.cpp; sourceTree = SOURCE_ROOT; };
 		20A63CF223BF26520007D142 /* events_defs.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = events_defs.h; sourceTree = "<group>"; };
 		20A63CF323BF26B90007D142 /* mapster32.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = mapster32.h; sourceTree = "<group>"; };
 		20A63CF423BF27340007D142 /* al_midi.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = al_midi.h; sourceTree = "<group>"; };
@@ -1174,6 +1185,9 @@
 			files = (
 				2085BEBA1A8F23B9002BF4CE /* libSystem.dylib in Frameworks */,
 				0013832719F366440007DA6C /* CoreMotion.framework in Frameworks */,
+				F50000000000000000000021 /* AVFoundation.framework in Frameworks */,
+				F50000000000000000000022 /* CoreHaptics.framework in Frameworks */,
+				F50000000000000000000023 /* Metal.framework in Frameworks */,
 				20F70F131A8F25CE00F71870 /* libc++.dylib in Frameworks */,
 				0013832519F366280007DA6C /* QuartzCore.framework in Frameworks */,
 				0013832319F365D20007DA6C /* OpenGLES.framework in Frameworks */,
@@ -2694,6 +2708,7 @@
 				000C48A519F35601006E6B52 /* grpscan.cpp in Sources */,
 				000C48AB19F35601006E6B52 /* osdfuncs.cpp in Sources */,
 				000C489F19F35601006E6B52 /* gamedef.cpp in Sources */,
+				F60000000000000000000023 /* gamestructures.cpp in Sources */,
 				000C48A019F35601006E6B52 /* gameexec.cpp in Sources */,
 				000C48AD19F35601006E6B52 /* premap.cpp in Sources */,
 				000C489E19F35601006E6B52 /* game.cpp in Sources */,
@@ -2761,6 +2776,8 @@
 				F20000000000000000000026 /* imgui_tables.cpp in Sources */,
 				F20000000000000000000027 /* imgui_widgets.cpp in Sources */,
 				F30000000000000000000001 /* glad.c in Sources */,
+				F60000000000000000000021 /* loguru.cpp in Sources */,
+				F60000000000000000000022 /* screentext.cpp in Sources */,
 				0013829E19F361B60007DA6C /* mdsprite.cpp in Sources */,
 				0013829F19F361B60007DA6C /* defs.cpp in Sources */,
 				2044C9911E08A6BC00A8C543 /* screenshot.cpp in Sources */,

@@ -451,6 +451,18 @@ void sdlayer_sethints()
 #if defined SDL_HINT_MOUSE_RELATIVE_SCALING
     SDL_SetHint(SDL_HINT_MOUSE_RELATIVE_SCALING, "0");
 #endif
+
+#ifdef EDUKE32_IOS
+# if defined SDL_HINT_ACCELEROMETER_AS_JOYSTICK
+    // Gyro aiming is provided by EDuke32Controls.mm through Core Motion.
+    SDL_SetHint(SDL_HINT_ACCELEROMETER_AS_JOYSTICK, "0");
+# endif
+# ifdef USE_OPENGL
+    // The legacy iOS target does not yet create a modern GLES context. Use the
+    // classic software renderer for the first playable iOS milestone.
+    nogl = 1;
+# endif
+#endif
 }
 
 #ifdef _WIN32
@@ -1416,12 +1428,40 @@ void videoGetModes(int display)
         }
     }
 
+#ifdef EDUKE32_IOS
+    // SDL's UIKit backend can expose a display with no enumerable modes.
+    // Without at least one mode EDuke32 skips window and audio initialization.
+    if (validmodecnt == 0)
+    {
+        SDL_Rect bounds = {};
+
+        if (SDL_GetDisplayBounds(display, &bounds) == 0)
+        {
+            int const mobileWidth  = max(bounds.w, bounds.h);
+            int const mobileHeight = min(bounds.w, bounds.h);
+
+            if (SDL_CHECKMODE(mobileWidth, mobileHeight))
+            {
+                SDL_ADDMODE(mobileWidth, mobileHeight, 8, 1);
+                SDL_ADDMODE(mobileWidth, mobileHeight, 8, 0);
+                maxx = mobileWidth;
+                maxy = mobileHeight;
+                LOG_F(INFO, "UIKit reported no display modes; using display bounds %dx%d.", mobileWidth, mobileHeight);
+            }
+        }
+    }
+#endif
+
     SDL_CHECKFSMODES(maxx, maxy);
 
     // add windowed modes next
     // SDL sorts display modes largest to smallest, so we can just compare with mode 0
     // to make sure we aren't adding modes that are larger than the actual screen res
-    SDL_GetDisplayMode(display, 0, &dispmode);
+    if (SDL_GetDisplayMode(display, 0, &dispmode) < 0)
+    {
+        dispmode.w = maxx;
+        dispmode.h = maxy;
+    }
 
     for (i = 0; g_defaultVideoModes[i].x; i++)
     {

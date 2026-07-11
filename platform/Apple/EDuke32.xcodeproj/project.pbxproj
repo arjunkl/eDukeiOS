@@ -2405,10 +2405,8 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				2038AEA31A8F137E0093B7B2 /* DUKE.RTS in Resources */,
 				000C487819F35517006E6B52 /* InfoPlist.strings in Resources */,
 				000C488019F35517006E6B52 /* Images.xcassets in Resources */,
-				00CD003219F374ED00636963 /* duke3d.grp in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

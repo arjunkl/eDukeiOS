@@ -143,6 +143,14 @@ void S_SoundShutdown(void)
 
 void S_MusicStartup(void)
 {
+#ifdef EDUKE32_IOS
+    // The legacy OPL3 MIDI backend crashes during initialization on modern iOS.
+    // Keep digital sound effects enabled while an iOS-safe music backend is added.
+    ud.config.MusicToggle = 0;
+    LOG_F(WARNING, "MIDI music is temporarily disabled on iOS.");
+    return;
+#endif
+
     int status;
     if ((status = MUSIC_Init(ud.config.MusicDevice)) == MUSIC_Ok)
     {

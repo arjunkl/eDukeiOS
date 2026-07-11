@@ -134,7 +134,6 @@
 		0008E9F219F1AD9B0091588D /* grpscan.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0008E9BC19F1AD9B0091588D /* grpscan.cpp */; };
 		0008E9F319F1AD9B0091588D /* input.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0008E9BE19F1AD9B0091588D /* input.cpp */; };
 		0008E9F419F1AD9B0091588D /* menus.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0008E9C219F1AD9B0091588D /* menus.cpp */; };
-		0008E9F519F1AD9B0091588D /* namesdyn.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0008E9C519F1AD9B0091588D /* namesdyn.cpp */; };
 		0008E9F619F1AD9B0091588D /* network.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0008E9C719F1AD9B0091588D /* network.cpp */; };
 		0008E9F719F1AD9B0091588D /* osdcmds.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0008E9C919F1AD9B0091588D /* osdcmds.cpp */; };
 		0008E9F819F1AD9B0091588D /* osdfuncs.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0008E9CB19F1AD9B0091588D /* osdfuncs.cpp */; };
@@ -191,7 +190,6 @@
 		000C48A519F35601006E6B52 /* grpscan.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0008E9BC19F1AD9B0091588D /* grpscan.cpp */; };
 		000C48A619F35601006E6B52 /* input.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0008E9BE19F1AD9B0091588D /* input.cpp */; };
 		000C48A719F35601006E6B52 /* menus.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0008E9C219F1AD9B0091588D /* menus.cpp */; };
-		000C48A819F35601006E6B52 /* namesdyn.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0008E9C519F1AD9B0091588D /* namesdyn.cpp */; };
 		000C48A919F35601006E6B52 /* network.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0008E9C719F1AD9B0091588D /* network.cpp */; };
 		000C48AA19F35601006E6B52 /* osdcmds.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0008E9C919F1AD9B0091588D /* osdcmds.cpp */; };
 		000C48AB19F35601006E6B52 /* osdfuncs.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0008E9CB19F1AD9B0091588D /* osdfuncs.cpp */; };
@@ -860,8 +858,6 @@
 		0008E9C219F1AD9B0091588D /* menus.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.c; path = menus.cpp; sourceTree = "<group>"; };
 		0008E9C319F1AD9B0091588D /* menus.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = menus.h; sourceTree = "<group>"; };
 		0008E9C419F1AD9B0091588D /* names.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = names.h; sourceTree = "<group>"; };
-		0008E9C519F1AD9B0091588D /* namesdyn.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.c; path = namesdyn.cpp; sourceTree = "<group>"; };
-		0008E9C619F1AD9B0091588D /* namesdyn.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = namesdyn.h; sourceTree = "<group>"; };
 		0008E9C719F1AD9B0091588D /* network.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.c; path = network.cpp; sourceTree = "<group>"; };
 		0008E9C819F1AD9B0091588D /* network.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = network.h; sourceTree = "<group>"; };
 		0008E9C919F1AD9B0091588D /* osdcmds.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.c; path = osdcmds.cpp; sourceTree = "<group>"; };
@@ -1757,8 +1753,6 @@
 				0008E9C219F1AD9B0091588D /* menus.cpp */,
 				0008E9C319F1AD9B0091588D /* menus.h */,
 				0008E9C419F1AD9B0091588D /* names.h */,
-				0008E9C519F1AD9B0091588D /* namesdyn.cpp */,
-				0008E9C619F1AD9B0091588D /* namesdyn.h */,
 				0008E9C719F1AD9B0091588D /* network.cpp */,
 				0008E9C819F1AD9B0091588D /* network.h */,
 				0008E9C919F1AD9B0091588D /* osdcmds.cpp */,
@@ -2500,7 +2494,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				0008E9F519F1AD9B0091588D /* namesdyn.cpp in Sources */,
 				20E16CE81C7022DE00EE8446 /* screens.cpp in Sources */,
 				0008E9EB19F1AD9B0091588D /* gamedef.cpp in Sources */,
 				20F7124D1C6C19E5006B68D0 /* text.cpp in Sources */,
@@ -2712,7 +2705,6 @@
 				20F712561C6C1A07006B68D0 /* cheats.cpp in Sources */,
 				000C48A719F35601006E6B52 /* menus.cpp in Sources */,
 				000C48A919F35601006E6B52 /* network.cpp in Sources */,
-				000C48A819F35601006E6B52 /* namesdyn.cpp in Sources */,
 				000C48B219F35601006E6B52 /* sector.cpp in Sources */,
 				000C48AA19F35601006E6B52 /* osdcmds.cpp in Sources */,
 				000C489A19F35601006E6B52 /* actors.cpp in Sources */,

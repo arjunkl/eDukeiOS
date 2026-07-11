@@ -396,6 +396,7 @@
 		F20000000000000000000026 /* imgui_tables.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F20000000000000000000006 /* imgui_tables.cpp */; };
 		F20000000000000000000027 /* imgui_widgets.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F20000000000000000000007 /* imgui_widgets.cpp */; };
 		F30000000000000000000001 /* glad.c in Sources */ = {isa = PBXBuildFile; fileRef = 20C607CB23BF1F0000672309 /* glad.c */; };
+		F40000000000000000000021 /* driver_sf2.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F40000000000000000000001 /* driver_sf2.cpp */; };
 		20A63CE623BF24D10007D142 /* linklist.h in Headers */ = {isa = PBXBuildFile; fileRef = 0008E6DF19F1AAFF0091588D /* linklist.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		20A63CE723BF24D30007D142 /* linklist.h in Headers */ = {isa = PBXBuildFile; fileRef = 0008E6DF19F1AAFF0091588D /* linklist.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		20A63CEC23BF25330007D142 /* _midi.h in Headers */ = {isa = PBXBuildFile; fileRef = 0008E99A19F1AD9B0091588D /* _midi.h */; };
@@ -973,6 +974,7 @@
 		F20000000000000000000005 /* imgui_impl_sdl2.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ../../source/imgui/src/imgui_impl_sdl2.cpp; sourceTree = SOURCE_ROOT; };
 		F20000000000000000000006 /* imgui_tables.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ../../source/imgui/src/imgui_tables.cpp; sourceTree = SOURCE_ROOT; };
 		F20000000000000000000007 /* imgui_widgets.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ../../source/imgui/src/imgui_widgets.cpp; sourceTree = SOURCE_ROOT; };
+		F40000000000000000000001 /* driver_sf2.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ../../source/audiolib/src/driver_sf2.cpp; sourceTree = SOURCE_ROOT; };
 		20A63CF223BF26520007D142 /* events_defs.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = events_defs.h; sourceTree = "<group>"; };
 		20A63CF323BF26B90007D142 /* mapster32.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = mapster32.h; sourceTree = "<group>"; };
 		20A63CF423BF27340007D142 /* al_midi.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = al_midi.h; sourceTree = "<group>"; };
@@ -2809,6 +2811,7 @@
 				001382FC19F361BB0007DA6C /* formats.cpp in Sources */,
 				001382FD19F361BB0007DA6C /* flac.cpp in Sources */,
 				00CAC13319F4E0EA00317AE6 /* driver_sdl.cpp in Sources */,
+				F40000000000000000000021 /* driver_sf2.cpp in Sources */,
 				20C608D623BF1FB400672309 /* xm_load.c in Sources */,
 				001382FE19F361BB0007DA6C /* mixst.cpp in Sources */,
 				20CEFB1C1E08A8CB0077879C /* xmp.cpp in Sources */,
@@ -3046,6 +3049,7 @@
 					/usr/local/include/SDL2,
 					"$(SRCROOT)/../../source/glad/include",
 					"$(SRCROOT)/../../source/build/include",
+					"$(SRCROOT)/../../source/audiolib/include",
 					"$(SRCROOT)/../../source/imgui/include",
 					"$(SRCROOT)/../../source/libxmp-lite/include",
 				);
@@ -3171,6 +3175,7 @@
 					/usr/local/include/SDL2,
 					"$(SRCROOT)/../../source/glad/include",
 					"$(SRCROOT)/../../source/build/include",
+					"$(SRCROOT)/../../source/audiolib/include",
 					"$(SRCROOT)/../../source/imgui/include",
 					"$(SRCROOT)/../../source/libxmp-lite/include",
 				);
@@ -3302,6 +3307,7 @@
 					/usr/local/include/SDL2,
 					"$(SRCROOT)/../../source/glad/include",
 					"$(SRCROOT)/../../source/build/include",
+					"$(SRCROOT)/../../source/audiolib/include",
 					"$(SRCROOT)/../../source/imgui/include",
 					"$(SRCROOT)/../../source/libxmp-lite/include",
 				);
@@ -3427,6 +3433,7 @@
 					/usr/local/include/SDL2,
 					"$(SRCROOT)/../../source/glad/include",
 					"$(SRCROOT)/../../source/build/include",
+					"$(SRCROOT)/../../source/audiolib/include",
 					"$(SRCROOT)/../../source/imgui/include",
 					"$(SRCROOT)/../../source/libxmp-lite/include",
 				);
@@ -3550,6 +3557,7 @@
 					/usr/local/include/SDL2,
 					"$(SRCROOT)/../../source/glad/include",
 					"$(SRCROOT)/../../source/build/include",
+					"$(SRCROOT)/../../source/audiolib/include",
 					"$(SRCROOT)/../../source/imgui/include",
 					"$(SRCROOT)/../../source/libxmp-lite/include",
 				);
@@ -3664,6 +3672,7 @@
 					/usr/local/include/SDL2,
 					"$(SRCROOT)/../../source/glad/include",
 					"$(SRCROOT)/../../source/build/include",
+					"$(SRCROOT)/../../source/audiolib/include",
 					"$(SRCROOT)/../../source/imgui/include",
 					"$(SRCROOT)/../../source/libxmp-lite/include",
 				);
@@ -3784,6 +3793,7 @@
 					/usr/local/include/SDL2,
 					"$(SRCROOT)/../../source/glad/include",
 					"$(SRCROOT)/../../source/build/include",
+					"$(SRCROOT)/../../source/audiolib/include",
 					"$(SRCROOT)/../../source/imgui/include",
 					"$(SRCROOT)/../../source/libxmp-lite/include",
 				);
@@ -3898,6 +3908,7 @@
 					/usr/local/include/SDL2,
 					"$(SRCROOT)/../../source/glad/include",
 					"$(SRCROOT)/../../source/build/include",
+					"$(SRCROOT)/../../source/audiolib/include",
 					"$(SRCROOT)/../../source/imgui/include",
 					"$(SRCROOT)/../../source/libxmp-lite/include",
 				);
@@ -4017,6 +4028,7 @@
 					/usr/local/include/SDL2,
 					"$(SRCROOT)/../../source/glad/include",
 					"$(SRCROOT)/../../source/build/include",
+					"$(SRCROOT)/../../source/audiolib/include",
 					"$(SRCROOT)/../../source/imgui/include",
 					"$(SRCROOT)/../../source/libxmp-lite/include",
 				);
@@ -4130,6 +4142,7 @@
 					/usr/local/include/SDL2,
 					"$(SRCROOT)/../../source/glad/include",
 					"$(SRCROOT)/../../source/build/include",
+					"$(SRCROOT)/../../source/audiolib/include",
 					"$(SRCROOT)/../../source/imgui/include",
 					"$(SRCROOT)/../../source/libxmp-lite/include",
 				);
@@ -4292,6 +4305,7 @@
 					"$(SRCROOT)/../../source/libxmp-lite/include",
 					"$(SRCROOT)/../../source/glad/include",
 					"$(SRCROOT)/../../source/build/include",
+					"$(SRCROOT)/../../source/audiolib/include",
 					"$(SRCROOT)/../../source/imgui/include",
 				);
 				INFOPLIST_FILE = iOS/Info.plist;
@@ -4409,6 +4423,7 @@
 					"$(SRCROOT)/../../source/libxmp-lite/include",
 					"$(SRCROOT)/../../source/glad/include",
 					"$(SRCROOT)/../../source/build/include",
+					"$(SRCROOT)/../../source/audiolib/include",
 					"$(SRCROOT)/../../source/imgui/include",
 				);
 				INFOPLIST_FILE = iOS/Info.plist;
@@ -4526,6 +4541,7 @@
 					"$(SRCROOT)/../../source/libxmp-lite/include",
 					"$(SRCROOT)/../../source/glad/include",
 					"$(SRCROOT)/../../source/build/include",
+					"$(SRCROOT)/../../source/audiolib/include",
 					"$(SRCROOT)/../../source/imgui/include",
 				);
 				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
@@ -4635,6 +4651,7 @@
 					"$(SRCROOT)/../../source/libxmp-lite/include",
 					"$(SRCROOT)/../../source/glad/include",
 					"$(SRCROOT)/../../source/build/include",
+					"$(SRCROOT)/../../source/audiolib/include",
 					"$(SRCROOT)/../../source/imgui/include",
 				);
 				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
@@ -4748,6 +4765,7 @@
 					"$(SRCROOT)/../../source/libxmp-lite/include",
 					"$(SRCROOT)/../../source/glad/include",
 					"$(SRCROOT)/../../source/build/include",
+					"$(SRCROOT)/../../source/audiolib/include",
 					"$(SRCROOT)/../../source/imgui/include",
 				);
 				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
@@ -4857,6 +4875,7 @@
 					"$(SRCROOT)/../../source/libxmp-lite/include",
 					"$(SRCROOT)/../../source/glad/include",
 					"$(SRCROOT)/../../source/build/include",
+					"$(SRCROOT)/../../source/audiolib/include",
 					"$(SRCROOT)/../../source/imgui/include",
 				);
 				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
@@ -4970,6 +4989,7 @@
 					"$(SRCROOT)/../../source/libxmp-lite/include",
 					"$(SRCROOT)/../../source/glad/include",
 					"$(SRCROOT)/../../source/build/include",
+					"$(SRCROOT)/../../source/audiolib/include",
 					"$(SRCROOT)/../../source/imgui/include",
 				);
 				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
@@ -5079,6 +5099,7 @@
 					"$(SRCROOT)/../../source/libxmp-lite/include",
 					"$(SRCROOT)/../../source/glad/include",
 					"$(SRCROOT)/../../source/build/include",
+					"$(SRCROOT)/../../source/audiolib/include",
 					"$(SRCROOT)/../../source/imgui/include",
 				);
 				IPHONEOS_DEPLOYMENT_TARGET = 8.0;

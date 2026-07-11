@@ -395,6 +395,13 @@
 		F10000000000000000000012 /* smmalloc_tls.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F10000000000000000000002 /* smmalloc_tls.cpp */; };
 		F10000000000000000000021 /* smmalloc_generic.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F10000000000000000000001 /* smmalloc_generic.cpp */; };
 		F10000000000000000000022 /* smmalloc_tls.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F10000000000000000000002 /* smmalloc_tls.cpp */; };
+		F20000000000000000000021 /* imgui.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F20000000000000000000001 /* imgui.cpp */; };
+		F20000000000000000000022 /* imgui_demo.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F20000000000000000000002 /* imgui_demo.cpp */; };
+		F20000000000000000000023 /* imgui_draw.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F20000000000000000000003 /* imgui_draw.cpp */; };
+		F20000000000000000000024 /* imgui_impl_opengl3.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F20000000000000000000004 /* imgui_impl_opengl3.cpp */; };
+		F20000000000000000000025 /* imgui_impl_sdl2.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F20000000000000000000005 /* imgui_impl_sdl2.cpp */; };
+		F20000000000000000000026 /* imgui_tables.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F20000000000000000000006 /* imgui_tables.cpp */; };
+		F20000000000000000000027 /* imgui_widgets.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F20000000000000000000007 /* imgui_widgets.cpp */; };
 		20A63CE623BF24D10007D142 /* linklist.h in Headers */ = {isa = PBXBuildFile; fileRef = 0008E6DF19F1AAFF0091588D /* linklist.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		20A63CE723BF24D30007D142 /* linklist.h in Headers */ = {isa = PBXBuildFile; fileRef = 0008E6DF19F1AAFF0091588D /* linklist.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		20A63CEC23BF25330007D142 /* _midi.h in Headers */ = {isa = PBXBuildFile; fileRef = 0008E99A19F1AD9B0091588D /* _midi.h */; };
@@ -971,6 +978,13 @@
 		20A63CDF23BF23810007D142 /* smmalloc.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = smmalloc.cpp; sourceTree = "<group>"; };
 		F10000000000000000000001 /* smmalloc_generic.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = smmalloc_generic.cpp; sourceTree = "<group>"; };
 		F10000000000000000000002 /* smmalloc_tls.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = smmalloc_tls.cpp; sourceTree = "<group>"; };
+		F20000000000000000000001 /* imgui.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ../../source/imgui/src/imgui.cpp; sourceTree = SOURCE_ROOT; };
+		F20000000000000000000002 /* imgui_demo.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ../../source/imgui/src/imgui_demo.cpp; sourceTree = SOURCE_ROOT; };
+		F20000000000000000000003 /* imgui_draw.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ../../source/imgui/src/imgui_draw.cpp; sourceTree = SOURCE_ROOT; };
+		F20000000000000000000004 /* imgui_impl_opengl3.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ../../source/imgui/src/imgui_impl_opengl3.cpp; sourceTree = SOURCE_ROOT; };
+		F20000000000000000000005 /* imgui_impl_sdl2.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ../../source/imgui/src/imgui_impl_sdl2.cpp; sourceTree = SOURCE_ROOT; };
+		F20000000000000000000006 /* imgui_tables.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ../../source/imgui/src/imgui_tables.cpp; sourceTree = SOURCE_ROOT; };
+		F20000000000000000000007 /* imgui_widgets.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ../../source/imgui/src/imgui_widgets.cpp; sourceTree = SOURCE_ROOT; };
 		20A63CF223BF26520007D142 /* events_defs.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = events_defs.h; sourceTree = "<group>"; };
 		20A63CF323BF26B90007D142 /* mapster32.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = mapster32.h; sourceTree = "<group>"; };
 		20A63CF423BF27340007D142 /* al_midi.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = al_midi.h; sourceTree = "<group>"; };
@@ -2760,6 +2774,13 @@
 				20A63CE123BF23810007D142 /* smmalloc.cpp in Sources */,
 				F10000000000000000000021 /* smmalloc_generic.cpp in Sources */,
 				F10000000000000000000022 /* smmalloc_tls.cpp in Sources */,
+				F20000000000000000000021 /* imgui.cpp in Sources */,
+				F20000000000000000000022 /* imgui_demo.cpp in Sources */,
+				F20000000000000000000023 /* imgui_draw.cpp in Sources */,
+				F20000000000000000000024 /* imgui_impl_opengl3.cpp in Sources */,
+				F20000000000000000000025 /* imgui_impl_sdl2.cpp in Sources */,
+				F20000000000000000000026 /* imgui_tables.cpp in Sources */,
+				F20000000000000000000027 /* imgui_widgets.cpp in Sources */,
 				0013829E19F361B60007DA6C /* mdsprite.cpp in Sources */,
 				0013829F19F361B60007DA6C /* defs.cpp in Sources */,
 				2044C9911E08A6BC00A8C543 /* screenshot.cpp in Sources */,
@@ -3049,6 +3070,7 @@
 					/usr/local/include/SDL2,
 					"$(SRCROOT)/../../source/glad/include",
 					"$(SRCROOT)/../../source/build/include",
+					"$(SRCROOT)/../../source/imgui/include",
 					"$(SRCROOT)/../../source/libxmp-lite/include",
 				);
 				INFOPLIST_FILE = "$(SRCROOT)/bundles/EDuke32.app/Contents/Info.plist";
@@ -3173,6 +3195,7 @@
 					/usr/local/include/SDL2,
 					"$(SRCROOT)/../../source/glad/include",
 					"$(SRCROOT)/../../source/build/include",
+					"$(SRCROOT)/../../source/imgui/include",
 					"$(SRCROOT)/../../source/libxmp-lite/include",
 				);
 				INFOPLIST_FILE = "$(SRCROOT)/bundles/EDuke32.app/Contents/Info.plist";
@@ -3303,6 +3326,7 @@
 					/usr/local/include/SDL2,
 					"$(SRCROOT)/../../source/glad/include",
 					"$(SRCROOT)/../../source/build/include",
+					"$(SRCROOT)/../../source/imgui/include",
 					"$(SRCROOT)/../../source/libxmp-lite/include",
 				);
 				INFOPLIST_FILE = "$(SRCROOT)/bundles/Mapster32.app/Contents/Info.plist";
@@ -3427,6 +3451,7 @@
 					/usr/local/include/SDL2,
 					"$(SRCROOT)/../../source/glad/include",
 					"$(SRCROOT)/../../source/build/include",
+					"$(SRCROOT)/../../source/imgui/include",
 					"$(SRCROOT)/../../source/libxmp-lite/include",
 				);
 				INFOPLIST_FILE = "$(SRCROOT)/bundles/Mapster32.app/Contents/Info.plist";
@@ -3549,6 +3574,7 @@
 					/usr/local/include/SDL2,
 					"$(SRCROOT)/../../source/glad/include",
 					"$(SRCROOT)/../../source/build/include",
+					"$(SRCROOT)/../../source/imgui/include",
 					"$(SRCROOT)/../../source/libxmp-lite/include",
 				);
 				LIBRARY_SEARCH_PATHS = /usr/local/lib;
@@ -3662,6 +3688,7 @@
 					/usr/local/include/SDL2,
 					"$(SRCROOT)/../../source/glad/include",
 					"$(SRCROOT)/../../source/build/include",
+					"$(SRCROOT)/../../source/imgui/include",
 					"$(SRCROOT)/../../source/libxmp-lite/include",
 				);
 				LIBRARY_SEARCH_PATHS = /usr/local/lib;
@@ -3781,6 +3808,7 @@
 					/usr/local/include/SDL2,
 					"$(SRCROOT)/../../source/glad/include",
 					"$(SRCROOT)/../../source/build/include",
+					"$(SRCROOT)/../../source/imgui/include",
 					"$(SRCROOT)/../../source/libxmp-lite/include",
 				);
 				LIBRARY_SEARCH_PATHS = /usr/local/lib;
@@ -3894,6 +3922,7 @@
 					/usr/local/include/SDL2,
 					"$(SRCROOT)/../../source/glad/include",
 					"$(SRCROOT)/../../source/build/include",
+					"$(SRCROOT)/../../source/imgui/include",
 					"$(SRCROOT)/../../source/libxmp-lite/include",
 				);
 				LIBRARY_SEARCH_PATHS = /usr/local/lib;
@@ -4012,6 +4041,7 @@
 					/usr/local/include/SDL2,
 					"$(SRCROOT)/../../source/glad/include",
 					"$(SRCROOT)/../../source/build/include",
+					"$(SRCROOT)/../../source/imgui/include",
 					"$(SRCROOT)/../../source/libxmp-lite/include",
 				);
 				LIBRARY_SEARCH_PATHS = /usr/local/lib;
@@ -4124,6 +4154,7 @@
 					/usr/local/include/SDL2,
 					"$(SRCROOT)/../../source/glad/include",
 					"$(SRCROOT)/../../source/build/include",
+					"$(SRCROOT)/../../source/imgui/include",
 					"$(SRCROOT)/../../source/libxmp-lite/include",
 				);
 				LIBRARY_SEARCH_PATHS = /usr/local/lib;
@@ -4285,6 +4316,7 @@
 					"$(SRCROOT)/../../source/libxmp-lite/include",
 					"$(SRCROOT)/../../source/glad/include",
 					"$(SRCROOT)/../../source/build/include",
+					"$(SRCROOT)/../../source/imgui/include",
 				);
 				INFOPLIST_FILE = iOS/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
@@ -4402,6 +4434,7 @@
 					"$(SRCROOT)/../../source/libxmp-lite/include",
 					"$(SRCROOT)/../../source/glad/include",
 					"$(SRCROOT)/../../source/build/include",
+					"$(SRCROOT)/../../source/imgui/include",
 				);
 				INFOPLIST_FILE = iOS/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
@@ -4519,6 +4552,7 @@
 					"$(SRCROOT)/../../source/libxmp-lite/include",
 					"$(SRCROOT)/../../source/glad/include",
 					"$(SRCROOT)/../../source/build/include",
+					"$(SRCROOT)/../../source/imgui/include",
 				);
 				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				LIBRARY_SEARCH_PATHS = /usr/local/lib;
@@ -4628,6 +4662,7 @@
 					"$(SRCROOT)/../../source/libxmp-lite/include",
 					"$(SRCROOT)/../../source/glad/include",
 					"$(SRCROOT)/../../source/build/include",
+					"$(SRCROOT)/../../source/imgui/include",
 				);
 				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				LIBRARY_SEARCH_PATHS = /usr/local/lib;
@@ -4741,6 +4776,7 @@
 					"$(SRCROOT)/../../source/libxmp-lite/include",
 					"$(SRCROOT)/../../source/glad/include",
 					"$(SRCROOT)/../../source/build/include",
+					"$(SRCROOT)/../../source/imgui/include",
 				);
 				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				LIBRARY_SEARCH_PATHS = /usr/local/lib;
@@ -4850,6 +4886,7 @@
 					"$(SRCROOT)/../../source/libxmp-lite/include",
 					"$(SRCROOT)/../../source/glad/include",
 					"$(SRCROOT)/../../source/build/include",
+					"$(SRCROOT)/../../source/imgui/include",
 				);
 				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				LIBRARY_SEARCH_PATHS = /usr/local/lib;
@@ -4963,6 +5000,7 @@
 					"$(SRCROOT)/../../source/libxmp-lite/include",
 					"$(SRCROOT)/../../source/glad/include",
 					"$(SRCROOT)/../../source/build/include",
+					"$(SRCROOT)/../../source/imgui/include",
 				);
 				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				LIBRARY_SEARCH_PATHS = /usr/local/lib;
@@ -5072,6 +5110,7 @@
 					"$(SRCROOT)/../../source/libxmp-lite/include",
 					"$(SRCROOT)/../../source/glad/include",
 					"$(SRCROOT)/../../source/build/include",
+					"$(SRCROOT)/../../source/imgui/include",
 				);
 				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				LIBRARY_SEARCH_PATHS = /usr/local/lib;

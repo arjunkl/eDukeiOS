@@ -271,6 +271,9 @@ void G_ExtPreInit(int32_t argc,char const * const * argv)
 
         if ((homedir = Bgethomedir()))
         {
+#if defined EDUKE32_IOS
+            Bsnprintf(cwd, ARRAY_SIZE(cwd), "%s/Documents", homedir);
+#else
             Bsnprintf(cwd, ARRAY_SIZE(cwd), "%s/"
 #if defined(_WIN32)
                 APPNAME
@@ -280,6 +283,7 @@ void G_ExtPreInit(int32_t argc,char const * const * argv)
                 ".config/" APPBASENAME
 #endif
                 ,homedir);
+#endif
             asperr = addsearchpath(cwd);
             if (asperr == -2)
             {

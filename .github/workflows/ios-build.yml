@@ -66,6 +66,22 @@ jobs:
               build 2>&1 | tee -a ios-build.log
           done
 
+      - name: Package unsigned IPA
+        run: |
+          mkdir Payload
+          cp -R platform/Apple/build/Debug-iphoneos/EDuke32-iOS.app Payload/
+          test -x Payload/EDuke32-iOS.app/EDuke32-iOS
+          file Payload/EDuke32-iOS.app/EDuke32-iOS
+          /usr/bin/zip -qry eDukeiOS-unsigned.ipa Payload
+
+      - name: Upload unsigned IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: eDukeiOS-unsigned-ipa
+          path: eDukeiOS-unsigned.ipa
+          if-no-files-found: error
+          retention-days: 14
+
       - name: Upload diagnostic log
         if: always()
         uses: actions/upload-artifact@v4

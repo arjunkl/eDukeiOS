@@ -21,6 +21,37 @@ jobs:
       - name: Check out eDukeiOS
         uses: actions/checkout@v6
 
+      - name: Generate iOS app icon assets
+        run: |
+          set -e
+          iconset="platform/Apple/iOS/Images.xcassets/AppIcon.appiconset"
+          source="$RUNNER_TEMP/eDukeiOS-AppIcon.jpg"
+          /usr/bin/base64 -D platform/Apple/iOS/AppIcon1024.jpg.base64 > "$source"
+
+          while read -r name size; do
+            /usr/bin/sips -s format png -z "$size" "$size" "$source" \
+              --out "$iconset/$name.png" >/dev/null
+          done <<'ICON_SIZES'
+          iphone-20@2x 40
+          iphone-20@3x 60
+          iphone-29@2x 58
+          iphone-29@3x 87
+          iphone-40@2x 80
+          iphone-40@3x 120
+          iphone-60@2x 120
+          iphone-60@3x 180
+          ipad-20@1x 20
+          ipad-20@2x 40
+          ipad-29@1x 29
+          ipad-29@2x 58
+          ipad-40@1x 40
+          ipad-40@2x 80
+          ipad-76@1x 76
+          ipad-76@2x 152
+          ipad-83.5@2x 167
+          ios-marketing 1024
+          ICON_SIZES
+
       - name: Fetch SDL2 beside the repository
         run: git clone --depth 1 --branch SDL2 https://github.com/libsdl-org/SDL.git ../SDL
 

@@ -1409,12 +1409,27 @@ void G_FadePalette(int32_t r, int32_t g, int32_t b, int32_t e)
 {
     if (ud.screenfade == 0)
       return;
+#ifdef EDUKE32_IOS
+    LOG_F(INFO, "iOS fade checkpoint: before videoFadePalette");
+#endif
     videoFadePalette(r, g, b, e);
+#ifdef EDUKE32_IOS
+    LOG_F(INFO, "iOS fade checkpoint: after videoFadePalette");
+#endif
     videoNextPage();
+#ifdef EDUKE32_IOS
+    LOG_F(INFO, "iOS fade checkpoint: after videoNextPage");
+#endif
 
     int32_t tc = (int32_t) totalclock;
+#ifdef EDUKE32_IOS
+    LOG_F(INFO, "iOS fade checkpoint: before event wait");
+#endif
     while (totalclock < tc + 4)
         gameHandleEvents();
+#ifdef EDUKE32_IOS
+    LOG_F(INFO, "iOS fade checkpoint: after event wait");
+#endif
 }
 
 // START and END limits are always inclusive!

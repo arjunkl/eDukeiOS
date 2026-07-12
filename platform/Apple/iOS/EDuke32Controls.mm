@@ -108,6 +108,19 @@ static CGRect CircleRect(CGPoint center, CGFloat radius)
 }
 }
 
+extern "C" void EDuke32_IOS_GetRenderSize(int32_t *width, int32_t *height)
+{
+    CGRect const bounds = UIScreen.mainScreen.bounds;
+    CGFloat const longEdge = fmax(CGRectGetWidth(bounds), CGRectGetHeight(bounds));
+    CGFloat const shortEdge = fmin(CGRectGetWidth(bounds), CGRectGetHeight(bounds));
+
+    // Preserve the exact device aspect ratio while keeping the 8-bit software
+    // renderer at a practical resolution on larger iPads.
+    CGFloat const renderScale = shortEdge > 600.0 ? 600.0 / shortEdge : 1.0;
+    *width = static_cast<int32_t>(floor(longEdge * renderScale)) & ~1;
+    *height = static_cast<int32_t>(floor(shortEdge * renderScale)) & ~1;
+}
+
 extern "C" void AndroidMove(float forward, float strafe)
 {
     droidinput.forwardmove = fmaxf(-1.f, fminf(1.f, forward));

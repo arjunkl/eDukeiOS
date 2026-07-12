@@ -4,6 +4,7 @@
 #include "SDL.h"
 
 #include "../../../source/build/include/compat.h"
+#include "../../../source/duke3d/src/duke3d.h"
 #include "../../../source/duke3d/src/function.h"
 #include "../../../source/duke3d/src/in_android.h"
 #include "../../../source/mact/include/control.h"
@@ -269,7 +270,14 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
 
 - (touchscreemode_t)touchMode
 {
-    return static_cast<touchscreemode_t>(AndroidRead(R_TOUCH_MODE));
+    DukePlayer_t *player = g_player[myconnectindex].ps;
+    if (!player)
+        return TOUCH_SCREEN_BLANK_TAP;
+    if (player->gm & MODE_MENU)
+        return TOUCH_SCREEN_MENU;
+    if (player->gm & MODE_GAME)
+        return TOUCH_SCREEN_GAME;
+    return TOUCH_SCREEN_BLANK_TAP;
 }
 
 - (NSInteger)actionAtPoint:(CGPoint)point

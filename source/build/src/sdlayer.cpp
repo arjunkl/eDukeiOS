@@ -503,6 +503,10 @@ int main(int argc, char *argv[])
     signal(SIGILL, sighandler);  /* clang -fcatch-undefined-behavior uses an ill. insn */
     signal(SIGABRT, sighandler);
     signal(SIGFPE, sighandler);
+#ifdef EDUKE32_IOS
+    signal(SIGBUS, sighandler);
+    signal(SIGTRAP, sighandler);
+#endif
 #endif
 
     engineSetupLogging(argc, argv);

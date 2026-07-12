@@ -41,19 +41,32 @@ static void PushKey(SDL_Scancode scancode)
     SDL_PushEvent(&event);
 }
 
-static void PushMenuTap(CGPoint point)
+static void PushMenuTap(CGPoint point, CGSize sourceSize)
 {
+    int windowWidth = 480;
+    int windowHeight = 320;
+    SDL_Window *window = SDL_GetKeyboardFocus();
+    if (!window)
+        window = SDL_GetMouseFocus();
+    if (!window)
+        window = SDL_GetWindowFromID(1);
+    if (window)
+        SDL_GetWindowSize(window, &windowWidth, &windowHeight);
+
+    Sint32 const gameX = static_cast<Sint32>(point.x * windowWidth / fmax(sourceSize.width, 1.0));
+    Sint32 const gameY = static_cast<Sint32>(point.y * windowHeight / fmax(sourceSize.height, 1.0));
+
     SDL_Event event = {};
     event.type = SDL_MOUSEMOTION;
-    event.motion.x = static_cast<Sint32>(point.x);
-    event.motion.y = static_cast<Sint32>(point.y);
+    event.motion.x = gameX;
+    event.motion.y = gameY;
     SDL_PushEvent(&event);
 
     event.type = SDL_MOUSEBUTTONDOWN;
     event.button.button = SDL_BUTTON_LEFT;
     event.button.state = SDL_PRESSED;
-    event.button.x = static_cast<Sint32>(point.x);
-    event.button.y = static_cast<Sint32>(point.y);
+    event.button.x = gameX;
+    event.button.y = gameY;
     SDL_PushEvent(&event);
 
     event.type = SDL_MOUSEBUTTONUP;
@@ -220,6 +233,8 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
         if (action >= 0)
         {
             AndroidAction(1, static_cast<int>(action));
+            if (action == gamefunc_Fire)
+                PushKey(SDL_SCANCODE_RETURN);
             [_touchActions setObject:@(action) forKey:[NSValue valueWithNonretainedObject:touch]];
         }
         else if (action == -2)
@@ -289,7 +304,7 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
             CGPoint const point = [touch locationInView:self];
             CGFloat const distance = hypot(point.x - _lookOrigin.x, point.y - _lookOrigin.y);
             if (!cancelled && distance < 12.0)
-                PushMenuTap(point);
+                PushMenuTap(point, self.bounds.size);
             _lookTouch = nil;
         }
     }

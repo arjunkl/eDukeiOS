@@ -11,6 +11,11 @@ on:
   issues:
     types:
       - opened
+  workflow_run:
+    workflows:
+      - "Release publication signal"
+    types:
+      - completed
 
 permissions:
   actions: read
@@ -20,9 +25,14 @@ jobs:
   publish:
     name: Publish recent IPA builds
     if: >-
-      github.event_name != 'issues' ||
-      (github.event.issue.user.login == github.repository_owner &&
-       github.event.issue.title == 'Publish eDukeiOS milestone releases')
+      (github.event_name == 'workflow_run' &&
+       github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.actor.login == github.repository_owner) ||
+      (github.event_name == 'issues' &&
+       github.event.issue.user.login == github.repository_owner &&
+       github.event.issue.title == 'Publish eDukeiOS milestone releases') ||
+      github.event_name == 'schedule' ||
+      github.event_name == 'push'
     runs-on: ubuntu-latest
 
     env:

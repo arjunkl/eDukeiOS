@@ -326,7 +326,7 @@ void wm_setapptitle(const char *name)
 //
 
 /* XXX: libexecinfo could be used on systems without gnu libc. */
-#if !defined _WIN32 && defined __GNUC__ && !defined __OpenBSD__ && !(defined __APPLE__ && defined __BIG_ENDIAN__) && !defined GEKKO && !defined EDUKE32_TOUCH_DEVICES && !defined __OPENDINGUX__
+#if !defined _WIN32 && defined __GNUC__ && !defined __OpenBSD__ && !(defined __APPLE__ && defined __BIG_ENDIAN__) && !defined GEKKO && (!defined EDUKE32_TOUCH_DEVICES || defined EDUKE32_IOS) && !defined __OPENDINGUX__
 # define PRINTSTACKONSEGV 1
 # include <execinfo.h>
 #endif
@@ -343,7 +343,11 @@ static void attach_debugger_here(void)
 
 static void sighandler(int signum)
 {
+#ifdef EDUKE32_IOS
+    dprintf(fileno(stderr), "\nEDUKE32_IOS_CRASH: caught signal %d\n", signum);
+#else
     UNREFERENCED_PARAMETER(signum);
+#endif
     //    if (signum==SIGSEGV)
     {
         grabmouse_low(0);

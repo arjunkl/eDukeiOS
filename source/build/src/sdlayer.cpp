@@ -2234,6 +2234,9 @@ void videoShowFrame(int32_t w)
     }
 
 #ifdef EDUKE32_IOS
+    static uint32_t iOSPresentTraceCount;
+    bool const iOSPresentTrace = iOSPresentTraceCount++ < 8;
+    if (iOSPresentTrace)
     LOG_F(INFO, "iOS present: surface=%dx%d pitch=%d bpp=%d pixels=%p soft=%dx%d",
           sdl_surface ? sdl_surface->w : -1,
           sdl_surface ? sdl_surface->h : -1,
@@ -2245,15 +2248,18 @@ void videoShowFrame(int32_t w)
 #endif
     if (SDL_MUSTLOCK(sdl_surface)) SDL_LockSurface(sdl_surface);
 #ifdef EDUKE32_IOS
-    LOG_F(INFO, "iOS present checkpoint: before software blit");
+    if (iOSPresentTrace)
+        LOG_F(INFO, "iOS present checkpoint: before software blit");
 #endif
     softsurface_blitBuffer((uint32_t*) sdl_surface->pixels, sdl_surface->format->BitsPerPixel);
 #ifdef EDUKE32_IOS
-    LOG_F(INFO, "iOS present checkpoint: after software blit");
+    if (iOSPresentTrace)
+        LOG_F(INFO, "iOS present checkpoint: after software blit");
 #endif
     if (SDL_MUSTLOCK(sdl_surface)) SDL_UnlockSurface(sdl_surface);
 #ifdef EDUKE32_IOS
-    LOG_F(INFO, "iOS present checkpoint: before SDL_UpdateWindowSurface");
+    if (iOSPresentTrace)
+        LOG_F(INFO, "iOS present checkpoint: before SDL_UpdateWindowSurface");
 #endif
 #if SDL_MAJOR_VERSION >= 2
     if (SDL_UpdateWindowSurface(sdl_window))
@@ -2264,7 +2270,8 @@ void videoShowFrame(int32_t w)
         SDL_UpdateWindowSurface(sdl_window);
     }
 #ifdef EDUKE32_IOS
-    LOG_F(INFO, "iOS present checkpoint: after SDL_UpdateWindowSurface");
+    if (iOSPresentTrace)
+        LOG_F(INFO, "iOS present checkpoint: after SDL_UpdateWindowSurface");
 #endif
 #else
     SDL_Flip(sdl_surface);
@@ -2414,7 +2421,6 @@ int32_t handleevents_sdlcommon(SDL_Event *ev)
 {
     switch (ev->type)
     {
-#if !defined EDUKE32_IOS
         case SDL_MOUSEMOTION:
 #ifndef GEKKO
             g_mouseAbs.x = ev->motion.x;
@@ -2489,13 +2495,14 @@ int32_t handleevents_sdlcommon(SDL_Event *ev)
                 g_mouseCallback(j+1, ev->button.state == SDL_PRESSED);
             break;
         }
-#else
+#ifdef EDUKE32_IOS
 # if SDL_MAJOR_VERSION >= 2
         case SDL_FINGERUP:
             g_mouseClickState = MOUSE_RELEASED;
             break;
         case SDL_FINGERDOWN:
             g_mouseClickState = MOUSE_PRESSED;
+            fallthrough__;
         case SDL_FINGERMOTION:
             g_mouseAbs.x = Blrintf(ev->tfinger.x * xdim);
             g_mouseAbs.y = Blrintf(ev->tfinger.y * ydim);

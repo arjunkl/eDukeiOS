@@ -63,6 +63,11 @@ Dir.glob(File.join(source_root, "*.cpp")).sort.each do |source|
   voidsw.source_build_phase.add_file_reference(group.new_file(relative), true)
 end
 
+# rev.cpp is intentionally linked at game level in the legacy project.
+revision = File.expand_path("../../../source/build/src/rev.cpp", __dir__)
+revision_relative = Pathname.new(revision).relative_path_from(Pathname.new(File.dirname(project_path))).to_s
+voidsw.source_build_phase.add_file_reference(group.new_file(revision_relative), true)
+
 controls = File.expand_path("VoidSWControls.mm", __dir__)
 controls_relative = Pathname.new(controls).relative_path_from(Pathname.new(File.dirname(project_path))).to_s
 voidsw.source_build_phase.add_file_reference(group.new_file(controls_relative), true)

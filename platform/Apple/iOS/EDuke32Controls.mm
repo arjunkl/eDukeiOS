@@ -1,5 +1,6 @@
 #import <CoreMotion/CoreMotion.h>
 #import <UIKit/UIKit.h>
+#import <objc/runtime.h>
 
 #include "SDL.h"
 
@@ -46,6 +47,7 @@ static NSString *LayoutKey(NSInteger control, NSString *component)
 }
 
 static CGPoint g_mapDelta = CGPointZero;
+static volatile BOOL g_launcherActive = NO;
 
 static SDL_Window *ActiveSDLWindow()
 {
@@ -978,8 +980,316 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
 
 @end
 
+
 @interface EDuke32ControlsInstaller : NSObject
++ (UIWindow *)activeWindow;
 @end
+
+typedef void (^EDuke32LaunchCompletion)(NSString *grpName);
+
+@interface EDuke32LauncherViewController : UIViewController
+{
+    EDuke32LaunchCompletion _completion;
+    NSString *_documentsPath;
+    UILabel *_statusLabel;
+}
+- (instancetype)initWithCompletion:(EDuke32LaunchCompletion)completion;
+@end
+
+@implementation EDuke32LauncherViewController
+
+- (instancetype)initWithCompletion:(EDuke32LaunchCompletion)completion
+{
+    self = [super initWithNibName:nil bundle:nil];
+    if (self)
+    {
+        _completion = [completion copy];
+        _documentsPath = [[NSSearchPathForDirectoriesInDomains(NSDocumentDirectory,
+                                                                NSUserDomainMask, YES)
+                           firstObject] copy];
+    }
+    return self;
+}
+
+- (void)dealloc
+{
+    [_completion release];
+    [_documentsPath release];
+    [_statusLabel release];
+    [super dealloc];
+}
+
+- (BOOL)prefersStatusBarHidden { return YES; }
+- (UIInterfaceOrientationMask)supportedInterfaceOrientations { return UIInterfaceOrientationMaskLandscape; }
+
+- (NSString *)fileNamed:(NSString *)wanted
+{
+    NSArray *files = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:_documentsPath error:nil];
+    for (NSString *file in files)
+        if ([file caseInsensitiveCompare:wanted] == NSOrderedSame)
+            return file;
+    return nil;
+}
+
+- (UIButton *)gameButtonWithTitle:(NSString *)title
+                         subtitle:(NSString *)subtitle
+                              tag:(NSInteger)tag
+                          enabled:(BOOL)enabled
+{
+    UIButton *button = [UIButton buttonWithType:UIButtonTypeSystem];
+    button.tag = tag;
+    button.enabled = enabled;
+    button.contentHorizontalAlignment = UIControlContentHorizontalAlignmentLeft;
+    button.titleLabel.numberOfLines = 2;
+    button.titleLabel.font = [UIFont systemFontOfSize:18.0 weight:UIFontWeightSemibold];
+    button.titleLabel.adjustsFontSizeToFitWidth = YES;
+    button.titleLabel.minimumScaleFactor = 0.75;
+    button.contentEdgeInsets = UIEdgeInsetsMake(12.0, 16.0, 12.0, 16.0);
+    button.layer.cornerRadius = 14.0;
+    button.layer.borderWidth = 1.0;
+    button.layer.borderColor = [UIColor colorWithWhite:1.0 alpha:enabled ? 0.22 : 0.10].CGColor;
+    button.backgroundColor = [UIColor colorWithWhite:1.0 alpha:enabled ? 0.085 : 0.035];
+    NSString *text = [NSString stringWithFormat:@"%@\n%@", title, subtitle];
+    NSMutableAttributedString *attributed =
+        [[[NSMutableAttributedString alloc] initWithString:text] autorelease];
+    [attributed addAttribute:NSForegroundColorAttributeName
+                       value:[UIColor colorWithWhite:1.0 alpha:enabled ? 0.96 : 0.42]
+                       range:NSMakeRange(0, title.length)];
+    [attributed addAttribute:NSFontAttributeName
+                       value:[UIFont systemFontOfSize:12.0 weight:UIFontWeightRegular]
+                       range:NSMakeRange(title.length + 1, subtitle.length)];
+    [attributed addAttribute:NSForegroundColorAttributeName
+                       value:[UIColor colorWithWhite:1.0 alpha:enabled ? 0.58 : 0.30]
+                       range:NSMakeRange(title.length + 1, subtitle.length)];
+    [button setAttributedTitle:attributed forState:UIControlStateNormal];
+    [button addTarget:self action:@selector(gameSelected:) forControlEvents:UIControlEventTouchUpInside];
+    return button;
+}
+
+- (void)loadView
+{
+    UIView *root = [[[UIView alloc] initWithFrame:UIScreen.mainScreen.bounds] autorelease];
+    root.backgroundColor = [UIColor colorWithRed:0.035 green:0.043 blue:0.060 alpha:1.0];
+    self.view = root;
+
+    CAGradientLayer *gradient = [CAGradientLayer layer];
+    gradient.frame = root.bounds;
+    gradient.colors = @[
+        (id)[UIColor colorWithRed:0.11 green:0.06 blue:0.04 alpha:1.0].CGColor,
+        (id)[UIColor colorWithRed:0.035 green:0.043 blue:0.060 alpha:1.0].CGColor
+    ];
+    gradient.startPoint = CGPointMake(0.0, 0.0);
+    gradient.endPoint = CGPointMake(1.0, 1.0);
+    gradient.autoresizingMask = kCALayerWidthSizable | kCALayerHeightSizable;
+    [root.layer addSublayer:gradient];
+
+    UILabel *title = [[[UILabel alloc] initWithFrame:CGRectZero] autorelease];
+    title.text = @"eDukeiOS";
+    title.textColor = UIColor.whiteColor;
+    title.font = [UIFont systemFontOfSize:30.0 weight:UIFontWeightBlack];
+    title.textAlignment = NSTextAlignmentCenter;
+
+    UILabel *subtitle = [[[UILabel alloc] initWithFrame:CGRectZero] autorelease];
+    subtitle.text = @"CHOOSE A GAME";
+    subtitle.textColor = [UIColor colorWithWhite:1.0 alpha:0.48];
+    subtitle.font = [UIFont systemFontOfSize:12.0 weight:UIFontWeightBold];
+    subtitle.textAlignment = NSTextAlignmentCenter;
+
+    UIStackView *cards = [[[UIStackView alloc] initWithArrangedSubviews:@[
+        [self gameButtonWithTitle:@"Duke Nukem 3D"
+                         subtitle:@"DUKE3D.GRP" tag:1 enabled:YES],
+        [self gameButtonWithTitle:@"Ion Fury"
+                         subtitle:@"FURY.GRP" tag:2 enabled:YES],
+        [self gameButtonWithTitle:@"Shadow Warrior"
+                         subtitle:@"SW.GRP · VoidSW engine coming next" tag:3 enabled:YES],
+        [self gameButtonWithTitle:@"Custom"
+                         subtitle:@"CUSTOM.GRP · Duke-compatible game data" tag:4 enabled:YES]
+    ]] autorelease];
+    cards.axis = UILayoutConstraintAxisVertical;
+    cards.spacing = 9.0;
+    cards.distribution = UIStackViewDistributionFillEqually;
+
+    _statusLabel = [[UILabel alloc] initWithFrame:CGRectZero];
+    _statusLabel.text = @"Place your legally owned game files in the eDukeiOS Files folder.";
+    _statusLabel.textColor = [UIColor colorWithWhite:1.0 alpha:0.54];
+    _statusLabel.font = [UIFont systemFontOfSize:12.0 weight:UIFontWeightRegular];
+    _statusLabel.textAlignment = NSTextAlignmentCenter;
+    _statusLabel.numberOfLines = 2;
+
+    UIStackView *stack = [[[UIStackView alloc] initWithArrangedSubviews:@[
+        title, subtitle, cards, _statusLabel
+    ]] autorelease];
+    stack.axis = UILayoutConstraintAxisVertical;
+    stack.spacing = 9.0;
+    stack.translatesAutoresizingMaskIntoConstraints = NO;
+    [root addSubview:stack];
+
+    [NSLayoutConstraint activateConstraints:@[
+        [stack.centerXAnchor constraintEqualToAnchor:root.centerXAnchor],
+        [stack.centerYAnchor constraintEqualToAnchor:root.centerYAnchor],
+        [stack.widthAnchor constraintEqualToAnchor:root.widthAnchor multiplier:0.72],
+        [stack.widthAnchor constraintLessThanOrEqualToConstant:620.0],
+        [cards.heightAnchor constraintEqualToConstant:238.0],
+        [title.heightAnchor constraintEqualToConstant:38.0],
+        [subtitle.heightAnchor constraintEqualToConstant:18.0],
+        [_statusLabel.heightAnchor constraintEqualToConstant:34.0]
+    ]];
+}
+
+- (uint32_t)crc32ForFileAtPath:(NSString *)path
+{
+    NSInputStream *stream = [NSInputStream inputStreamWithFileAtPath:path];
+    [stream open];
+    uint32_t crc = UINT32_C(0xffffffff);
+    uint8_t buffer[64 * 1024];
+    NSInteger count;
+    while ((count = [stream read:buffer maxLength:sizeof(buffer)]) > 0)
+    {
+        for (NSInteger i = 0; i < count; ++i)
+        {
+            crc ^= buffer[i];
+            for (int bit = 0; bit < 8; ++bit)
+                crc = (crc >> 1) ^ (UINT32_C(0xedb88320) & (uint32_t)-(int32_t)(crc & 1));
+        }
+    }
+    [stream close];
+    return crc ^ UINT32_C(0xffffffff);
+}
+
+- (BOOL)writeFuryMetadataForFile:(NSString *)file
+{
+    NSString *path = [_documentsPath stringByAppendingPathComponent:file];
+    NSDictionary *attributes = [[NSFileManager defaultManager] attributesOfItemAtPath:path error:nil];
+    if (!attributes)
+        return NO;
+
+    unsigned long long size = [attributes fileSize];
+    _statusLabel.text = @"Preparing Ion Fury…";
+    uint32_t crc = [self crc32ForFileAtPath:path];
+    NSString *metadata = [NSString stringWithFormat:
+        @"grpinfo\n{\n"
+         "    name \"Ion Fury\"\n"
+         "    scriptname \"scripts/main.con\"\n"
+         "    defname \"fury.def\"\n"
+         "    size %llu\n"
+         "    crc 0x%08X\n"
+         "    flags 1664\n"
+         "    dependency 0\n"
+         "}\n", size, crc];
+    NSString *metadataPath = [_documentsPath stringByAppendingPathComponent:@"edukeios-fury.grpinfo"];
+    NSError *error = nil;
+    BOOL ok = [metadata writeToFile:metadataPath atomically:YES
+                           encoding:NSUTF8StringEncoding error:&error];
+    if (!ok)
+        _statusLabel.text = [NSString stringWithFormat:@"Could not prepare Ion Fury: %@",
+                                                       error.localizedDescription];
+    return ok;
+}
+
+- (void)showMessage:(NSString *)title body:(NSString *)body
+{
+    UIAlertController *alert = [UIAlertController alertControllerWithTitle:title
+                                                                   message:body
+                                                            preferredStyle:UIAlertControllerStyleAlert];
+    [alert addAction:[UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleDefault handler:nil]];
+    [self presentViewController:alert animated:YES completion:nil];
+}
+
+- (void)gameSelected:(UIButton *)sender
+{
+    NSString *wanted = nil;
+    switch (sender.tag)
+    {
+        case 1: wanted = @"DUKE3D.GRP"; break;
+        case 2: wanted = @"FURY.GRP"; break;
+        case 3:
+            [self showMessage:@"Shadow Warrior"
+                         body:@"The launcher entry is ready, but SW.GRP needs the separate VoidSW game engine. That engine is the next compatibility target."];
+            return;
+        case 4: wanted = @"CUSTOM.GRP"; break;
+        default: return;
+    }
+
+    NSString *file = [self fileNamed:wanted];
+    if (!file)
+    {
+        [self showMessage:@"Game file not found"
+                     body:[NSString stringWithFormat:
+                         @"Add %@ to the eDukeiOS folder in Files, then reopen the launcher.", wanted]];
+        return;
+    }
+
+    if (sender.tag == 2 && ![self writeFuryMetadataForFile:file])
+        return;
+
+    _statusLabel.text = [NSString stringWithFormat:@"Starting %@…", file];
+    if (_completion)
+        _completion(file);
+}
+
+@end
+
+extern "C" char *EDuke32_IOS_SelectGame(void)
+{
+    g_launcherActive = YES;
+    __block NSString *selected = nil;
+    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
+
+    void (^showLauncher)(void) = ^{
+        UIWindow *window = [EDuke32ControlsInstaller activeWindow];
+        if (!window)
+            window = UIApplication.sharedApplication.windows.firstObject;
+
+        EDuke32LauncherViewController *launcher =
+            [[[EDuke32LauncherViewController alloc] initWithCompletion:^(NSString *grpName) {
+                selected = [grpName copy];
+                dispatch_semaphore_signal(semaphore);
+            }] autorelease];
+        launcher.view.tag = 0x45444C41;
+        launcher.view.frame = window.bounds;
+        launcher.view.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+        [window addSubview:launcher.view];
+        objc_setAssociatedObject(launcher.view, "EDuke32LauncherController", launcher,
+                                 OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+    };
+
+    if (NSThread.isMainThread)
+    {
+        showLauncher();
+        while (!selected)
+            [[NSRunLoop currentRunLoop] runMode:NSDefaultRunLoopMode
+                                     beforeDate:[NSDate dateWithTimeIntervalSinceNow:0.05]];
+    }
+    else
+    {
+        dispatch_async(dispatch_get_main_queue(), showLauncher);
+        dispatch_semaphore_wait(semaphore, DISPATCH_TIME_FOREVER);
+    }
+
+    void (^removeLauncher)(void) = ^{
+        for (UIWindow *window in UIApplication.sharedApplication.windows)
+        {
+            UIView *view = [window viewWithTag:0x45444C41];
+            if (view)
+            {
+                objc_setAssociatedObject(view, "EDuke32LauncherController", nil,
+                                         OBJC_ASSOCIATION_ASSIGN);
+                [view removeFromSuperview];
+            }
+        }
+    };
+    if (NSThread.isMainThread)
+        removeLauncher();
+    else
+        dispatch_sync(dispatch_get_main_queue(), removeLauncher);
+
+#if !OS_OBJECT_USE_OBJC
+    dispatch_release(semaphore);
+#endif
+    g_launcherActive = NO;
+    return selected ? strdup(selected.fileSystemRepresentation) : NULL;
+}
+
 
 @implementation EDuke32ControlsInstaller
 
@@ -1010,6 +1320,12 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
 
 + (void)installControls
 {
+    if (g_launcherActive)
+    {
+        [self performSelector:@selector(installControls) withObject:nil afterDelay:0.5];
+        return;
+    }
+
     UIWindow *window = [self activeWindow];
     if (!window)
     {

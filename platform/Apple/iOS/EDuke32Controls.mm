@@ -227,6 +227,7 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
     UILabel *_gyroStatusLabel;
     UIView *_editorPanel;
     UIButton *_gyroButton;
+    UIButton *_doneButton;
     UILabel *_touchSensitivityLabel;
     UILabel *_gyroSensitivityLabel;
     UISlider *_touchSensitivitySlider;
@@ -313,6 +314,16 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
     [_gyroButton addTarget:self action:@selector(toggleGyroFromEditor:) forControlEvents:UIControlEventTouchUpInside];
     [_editorPanel addSubview:_gyroButton];
 
+    _doneButton = [[UIButton buttonWithType:UIButtonTypeSystem] retain];
+    _doneButton.titleLabel.font = [UIFont boldSystemFontOfSize:13.0];
+    _doneButton.layer.cornerRadius = 10.0;
+    _doneButton.backgroundColor = [UIColor colorWithWhite:1.0 alpha:0.16];
+    [_doneButton setTitle:@"DONE" forState:UIControlStateNormal];
+    [_doneButton setTitleColor:UIColor.whiteColor forState:UIControlStateNormal];
+    [_doneButton addTarget:self action:@selector(finishControlEditor:)
+          forControlEvents:UIControlEventTouchUpInside];
+    [_editorPanel addSubview:_doneButton];
+
     _touchSensitivityLabel = [[UILabel alloc] initWithFrame:CGRectZero];
     _touchSensitivityLabel.textColor = [UIColor colorWithWhite:0.92 alpha:1.0];
     _touchSensitivityLabel.font = [UIFont systemFontOfSize:12.0 weight:UIFontWeightSemibold];
@@ -375,6 +386,7 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
     [_gyroStatusLabel release];
     [_editorPanel release];
     [_gyroButton release];
+    [_doneButton release];
     [_touchSensitivityLabel release];
     [_gyroSensitivityLabel release];
     [_touchSensitivitySlider release];
@@ -504,7 +516,8 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
     _editorPanel.frame = CGRectMake((CGRectGetWidth(self.bounds) - panelWidth) * 0.5, 12.0, panelWidth, 124.0);
     UILabel *title = (UILabel *)[_editorPanel viewWithTag:7001];
     title.frame = CGRectMake(16.0, 10.0, 180.0, 30.0);
-    _gyroButton.frame = CGRectMake(panelWidth - 118.0, 9.0, 102.0, 32.0);
+    _gyroButton.frame = CGRectMake(panelWidth - 202.0, 9.0, 102.0, 32.0);
+    _doneButton.frame = CGRectMake(panelWidth - 92.0, 9.0, 76.0, 32.0);
     _touchSensitivityLabel.frame = CGRectMake(16.0, 47.0, 118.0, 27.0);
     _touchSensitivitySlider.frame = CGRectMake(134.0, 45.0, panelWidth - 150.0, 31.0);
     _gyroSensitivityLabel.frame = CGRectMake(16.0, 84.0, 118.0, 27.0);
@@ -578,6 +591,13 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
         [NSString stringWithFormat:@"TOUCH AIM %.1fx", _touchAimScale / kDefaultLookScale];
     _gyroSensitivityLabel.text =
         [NSString stringWithFormat:@"GYRO AIM %.1fx", _gyroAimScale / kDefaultGyroScale];
+}
+
+- (void)finishControlEditor:(UIButton *)sender
+{
+    (void)sender;
+    if (_layoutEditing)
+        [self toggleControlEditor];
 }
 
 - (void)toggleGyroFromEditor:(UIButton *)sender

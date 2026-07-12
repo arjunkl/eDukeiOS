@@ -24,8 +24,8 @@ static void EDuke32UncaughtExceptionHandler(NSException *exception)
 
 constexpr CGFloat kMovementDeadZone = 12.0;
 constexpr CGFloat kMovementDiagonalRatio = 0.55;
-constexpr CGFloat kLookScale = 0.018;
-constexpr CGFloat kGyroScale = 6.0;
+constexpr CGFloat kDefaultLookScale = 0.018;
+constexpr CGFloat kDefaultGyroScale = 6.0;
 constexpr CGFloat kDirectMouseFactor = 2048.0;
 
 enum IOSControlIndex : NSInteger
@@ -174,7 +174,9 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
     double const lookYaw = droidinput.yaw;
     double const lookPitch = droidinput.pitch;
     info->mousex += static_cast<int32_t>(nearbyint(lookYaw * kDirectMouseFactor));
-    info->mousey += static_cast<int32_t>(nearbyint(lookPitch * kDirectMouseFactor));
+    // UIKit's vertical touch/motion coordinates increase downward, opposite
+    // Duke's horizon direction.
+    info->mousey -= static_cast<int32_t>(nearbyint(lookPitch * kDirectMouseFactor));
     if (lookYaw != 0.0 || lookPitch != 0.0)
     {
         g_myAimMode = 1;
@@ -208,10 +210,17 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
     CGPoint _lookOrigin;
     NSMutableDictionary *_touchActions;
     CMMotionManager *_motionManager;
-    UITapGestureRecognizer *_gyroToggleGesture;
     UILongPressGestureRecognizer *_layoutEditGesture;
     UILabel *_gyroStatusLabel;
+    UIView *_editorPanel;
+    UIButton *_gyroButton;
+    UILabel *_touchSensitivityLabel;
+    UILabel *_gyroSensitivityLabel;
+    UISlider *_touchSensitivitySlider;
+    UISlider *_gyroSensitivitySlider;
     BOOL _gyroEnabled;
+    float _touchAimScale;
+    float _gyroAimScale;
     BOOL _lookMoved;
     BOOL _lookFiring;
 
@@ -239,13 +248,14 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
     self.opaque = NO;
     self.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
     _touchActions = [[NSMutableDictionary alloc] init];
-    _gyroEnabled = YES;
 
-    _gyroToggleGesture = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(toggleGyro:)];
-    _gyroToggleGesture.numberOfTouchesRequired = 3;
-    _gyroToggleGesture.numberOfTapsRequired = 2;
-    _gyroToggleGesture.cancelsTouchesInView = YES;
-    [self addGestureRecognizer:_gyroToggleGesture];
+    NSUserDefaults *preferences = NSUserDefaults.standardUserDefaults;
+    _gyroEnabled = [preferences objectForKey:@"eDukeiOS.gyro.enabled"]
+        ? [preferences boolForKey:@"eDukeiOS.gyro.enabled"] : YES;
+    _touchAimScale = [preferences objectForKey:@"eDukeiOS.aim.touch"]
+        ? [preferences floatForKey:@"eDukeiOS.aim.touch"] : kDefaultLookScale;
+    _gyroAimScale = [preferences objectForKey:@"eDukeiOS.aim.gyro"]
+        ? [preferences floatForKey:@"eDukeiOS.aim.gyro"] : kDefaultGyroScale;
 
     _layoutEditGesture = [[UILongPressGestureRecognizer alloc] initWithTarget:self
                                                                       action:@selector(toggleControlEditor:)];
@@ -265,6 +275,56 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
     _gyroStatusLabel.alpha = 0.0;
     [self addSubview:_gyroStatusLabel];
 
+    _editorPanel = [[UIView alloc] initWithFrame:CGRectZero];
+    _editorPanel.backgroundColor = [UIColor colorWithWhite:0.03 alpha:0.90];
+    _editorPanel.layer.cornerRadius = 16.0;
+    _editorPanel.layer.borderWidth = 1.0;
+    _editorPanel.layer.borderColor = [UIColor colorWithWhite:1.0 alpha:0.20].CGColor;
+    _editorPanel.hidden = YES;
+    [self addSubview:_editorPanel];
+
+    UILabel *editorTitle = [[[UILabel alloc] initWithFrame:CGRectZero] autorelease];
+    editorTitle.text = @"CONTROL EDITOR";
+    editorTitle.textColor = UIColor.whiteColor;
+    editorTitle.font = [UIFont boldSystemFontOfSize:14.0];
+    [_editorPanel addSubview:editorTitle];
+    editorTitle.tag = 7001;
+
+    _gyroButton = [[UIButton buttonWithType:UIButtonTypeSystem] retain];
+    _gyroButton.titleLabel.font = [UIFont boldSystemFontOfSize:13.0];
+    _gyroButton.layer.cornerRadius = 10.0;
+    [_gyroButton addTarget:self action:@selector(toggleGyroFromEditor:) forControlEvents:UIControlEventTouchUpInside];
+    [_editorPanel addSubview:_gyroButton];
+
+    _touchSensitivityLabel = [[UILabel alloc] initWithFrame:CGRectZero];
+    _touchSensitivityLabel.textColor = [UIColor colorWithWhite:0.92 alpha:1.0];
+    _touchSensitivityLabel.font = [UIFont systemFontOfSize:12.0 weight:UIFontWeightSemibold];
+    [_editorPanel addSubview:_touchSensitivityLabel];
+
+    _gyroSensitivityLabel = [[UILabel alloc] initWithFrame:CGRectZero];
+    _gyroSensitivityLabel.textColor = [UIColor colorWithWhite:0.92 alpha:1.0];
+    _gyroSensitivityLabel.font = [UIFont systemFontOfSize:12.0 weight:UIFontWeightSemibold];
+    [_editorPanel addSubview:_gyroSensitivityLabel];
+
+    _touchSensitivitySlider = [[UISlider alloc] initWithFrame:CGRectZero];
+    _touchSensitivitySlider.minimumValue = 0.006f;
+    _touchSensitivitySlider.maximumValue = 0.060f;
+    _touchSensitivitySlider.value = _touchAimScale;
+    _touchSensitivitySlider.minimumTrackTintColor = [UIColor colorWithRed:0.05 green:0.78 blue:0.90 alpha:1.0];
+    [_touchSensitivitySlider addTarget:self action:@selector(sensitivityChanged:)
+                      forControlEvents:UIControlEventValueChanged];
+    [_editorPanel addSubview:_touchSensitivitySlider];
+
+    _gyroSensitivitySlider = [[UISlider alloc] initWithFrame:CGRectZero];
+    _gyroSensitivitySlider.minimumValue = 1.0f;
+    _gyroSensitivitySlider.maximumValue = 12.0f;
+    _gyroSensitivitySlider.value = _gyroAimScale;
+    _gyroSensitivitySlider.minimumTrackTintColor = [UIColor colorWithRed:1.0 green:0.47 blue:0.08 alpha:1.0];
+    [_gyroSensitivitySlider addTarget:self action:@selector(sensitivityChanged:)
+                     forControlEvents:UIControlEventValueChanged];
+    [_editorPanel addSubview:_gyroSensitivitySlider];
+    [self updateEditorControls];
+
     _motionManager = [[CMMotionManager alloc] init];
     fprintf(stderr, "EDUKE32_IOS_GYRO: available=%d enabled=%d\n",
             _motionManager.deviceMotionAvailable ? 1 : 0, _gyroEnabled ? 1 : 0);
@@ -282,8 +342,8 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
             CMRotationRate const rate = motion.rotationRate;
             UIInterfaceOrientation const orientation = view.window.windowScene.interfaceOrientation;
             CGFloat const direction = orientation == UIInterfaceOrientationLandscapeRight ? -1.0 : 1.0;
-            AndroidLook(static_cast<float>(rate.x * kGyroScale * direction * _motionManager.deviceMotionUpdateInterval),
-                        static_cast<float>(rate.y * kGyroScale * direction * _motionManager.deviceMotionUpdateInterval));
+            AndroidLook(static_cast<float>(rate.x * view->_gyroAimScale * direction * view->_motionManager.deviceMotionUpdateInterval),
+                        static_cast<float>(rate.y * view->_gyroAimScale * direction * view->_motionManager.deviceMotionUpdateInterval));
         }];
     }
 
@@ -294,9 +354,14 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
 {
     [_motionManager stopDeviceMotionUpdates];
     [_motionManager release];
-    [_gyroToggleGesture release];
     [_layoutEditGesture release];
     [_gyroStatusLabel release];
+    [_editorPanel release];
+    [_gyroButton release];
+    [_touchSensitivityLabel release];
+    [_gyroSensitivityLabel release];
+    [_touchSensitivitySlider release];
+    [_gyroSensitivitySlider release];
     [_touchActions release];
     [super dealloc];
 }
@@ -417,6 +482,16 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
     [super layoutSubviews];
     [self ensureControlLayout];
     _gyroStatusLabel.center = CGPointMake(CGRectGetMidX(self.bounds), 42.0);
+
+    CGFloat const panelWidth = fmin(CGRectGetWidth(self.bounds) - 32.0, 520.0);
+    _editorPanel.frame = CGRectMake((CGRectGetWidth(self.bounds) - panelWidth) * 0.5, 12.0, panelWidth, 124.0);
+    UILabel *title = (UILabel *)[_editorPanel viewWithTag:7001];
+    title.frame = CGRectMake(16.0, 10.0, 180.0, 30.0);
+    _gyroButton.frame = CGRectMake(panelWidth - 118.0, 9.0, 102.0, 32.0);
+    _touchSensitivityLabel.frame = CGRectMake(16.0, 47.0, 118.0, 27.0);
+    _touchSensitivitySlider.frame = CGRectMake(134.0, 45.0, panelWidth - 150.0, 31.0);
+    _gyroSensitivityLabel.frame = CGRectMake(16.0, 84.0, 118.0, 27.0);
+    _gyroSensitivitySlider.frame = CGRectMake(134.0, 82.0, panelWidth - 150.0, 31.0);
 }
 
 - (void)toggleControlEditor:(UILongPressGestureRecognizer *)recognizer
@@ -439,11 +514,13 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
     _editingControl = kNoControl;
 
     _layoutEditing = !_layoutEditing;
+    _editorPanel.hidden = !_layoutEditing;
     if (!_layoutEditing)
         [self saveControlLayout];
 
-    _gyroStatusLabel.text = _layoutEditing ? @"EDIT CONTROLS • DRAG CENTER / EDGE RESIZE" : @"CONTROL LAYOUT SAVED";
-    _gyroStatusLabel.alpha = 1.0;
+    [self updateEditorControls];
+    _gyroStatusLabel.text = @"CONTROL LAYOUT SAVED";
+    _gyroStatusLabel.alpha = _layoutEditing ? 0.0 : 1.0;
 
     UINotificationFeedbackGenerator *feedback = [[[UINotificationFeedbackGenerator alloc] init] autorelease];
     [feedback notificationOccurred:_layoutEditing ? UINotificationFeedbackTypeSuccess : UINotificationFeedbackTypeWarning];
@@ -456,24 +533,40 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
     [self setNeedsDisplay];
 }
 
-- (void)toggleGyro:(UITapGestureRecognizer *)recognizer
+- (void)updateEditorControls
 {
-    if (recognizer.state != UIGestureRecognizerStateRecognized)
-        return;
+    [_gyroButton setTitle:(_gyroEnabled ? @"GYRO ON" : @"GYRO OFF") forState:UIControlStateNormal];
+    _gyroButton.backgroundColor = _gyroEnabled
+        ? [UIColor colorWithRed:0.10 green:0.68 blue:0.35 alpha:0.85]
+        : [UIColor colorWithRed:0.48 green:0.16 blue:0.16 alpha:0.85];
+    [_gyroButton setTitleColor:UIColor.whiteColor forState:UIControlStateNormal];
 
+    _touchSensitivityLabel.text =
+        [NSString stringWithFormat:@"TOUCH AIM %.1fx", _touchAimScale / kDefaultLookScale];
+    _gyroSensitivityLabel.text =
+        [NSString stringWithFormat:@"GYRO AIM %.1fx", _gyroAimScale / kDefaultGyroScale];
+}
+
+- (void)toggleGyroFromEditor:(UIButton *)sender
+{
+    (void)sender;
     _gyroEnabled = !_gyroEnabled;
-    _gyroStatusLabel.text = _gyroEnabled ? @"GYRO ON" : @"GYRO OFF";
-    _gyroStatusLabel.alpha = 1.0;
+    [NSUserDefaults.standardUserDefaults setBool:_gyroEnabled forKey:@"eDukeiOS.gyro.enabled"];
+    [self updateEditorControls];
 
-    UINotificationFeedbackGenerator *feedback = [[[UINotificationFeedbackGenerator alloc] init] autorelease];
-    [feedback notificationOccurred:_gyroEnabled ? UINotificationFeedbackTypeSuccess : UINotificationFeedbackTypeWarning];
+    UISelectionFeedbackGenerator *feedback = [[[UISelectionFeedbackGenerator alloc] init] autorelease];
+    [feedback selectionChanged];
+}
 
-    [UIView animateWithDuration:0.25
-                          delay:0.8
-                        options:UIViewAnimationOptionBeginFromCurrentState
-                     animations:^{
-        self->_gyroStatusLabel.alpha = 0.0;
-    } completion:nil];
+- (void)sensitivityChanged:(UISlider *)slider
+{
+    (void)slider;
+    _touchAimScale = _touchSensitivitySlider.value;
+    _gyroAimScale = _gyroSensitivitySlider.value;
+    NSUserDefaults *preferences = NSUserDefaults.standardUserDefaults;
+    [preferences setFloat:_touchAimScale forKey:@"eDukeiOS.aim.touch"];
+    [preferences setFloat:_gyroAimScale forKey:@"eDukeiOS.aim.gyro"];
+    [self updateEditorControls];
 }
 
 - (touchscreemode_t)touchMode
@@ -640,7 +733,7 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
                 CGFloat const dy = point.y - _lookPrevious.y;
                 if (!_lookFiring && hypot(point.x - _lookOrigin.x, point.y - _lookOrigin.y) >= 12.0)
                     _lookMoved = YES;
-                AndroidLook(static_cast<float>(dx * kLookScale), static_cast<float>(dy * kLookScale));
+                AndroidLook(static_cast<float>(dx * _touchAimScale), static_cast<float>(dy * _touchAimScale));
                 _lookPrevious = point;
             }
         }

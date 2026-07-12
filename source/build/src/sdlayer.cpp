@@ -15,6 +15,7 @@
 #include "sdl_inc.h"
 #ifdef EDUKE32_IOS
 # include "SDL_main.h"
+extern "C" void EDuke32_IOS_GetRenderSize(int32_t *width, int32_t *height);
 #endif
 #include "softsurface.h"
 
@@ -1437,26 +1438,19 @@ void videoGetModes(int display)
     }
 
 #ifdef EDUKE32_IOS
-    // SDL's UIKit backend can expose a display with no enumerable modes.
-    // Without at least one mode EDuke32 skips window and audio initialization.
-    if (validmodecnt == 0)
+    // SDL's UIKit mode list may report only a legacy 3:2 surface. Add an
+    // exact device-aspect software mode obtained from UIScreen so the renderer
+    // fills modern iPhone and iPad displays without stretching.
+    int32_t mobileWidth = 0;
+    int32_t mobileHeight = 0;
+    EDuke32_IOS_GetRenderSize(&mobileWidth, &mobileHeight);
+    if (SDL_CHECKMODE(mobileWidth, mobileHeight))
     {
-        SDL_Rect bounds = {};
-
-        if (SDL_GetDisplayBounds(display, &bounds) == 0)
-        {
-            int const mobileWidth  = max(bounds.w, bounds.h);
-            int const mobileHeight = min(bounds.w, bounds.h);
-
-            if (SDL_CHECKMODE(mobileWidth, mobileHeight))
-            {
-                SDL_ADDMODE(mobileWidth, mobileHeight, 8, 1);
-                SDL_ADDMODE(mobileWidth, mobileHeight, 8, 0);
-                maxx = mobileWidth;
-                maxy = mobileHeight;
-                LOG_F(INFO, "UIKit reported no display modes; using display bounds %dx%d.", mobileWidth, mobileHeight);
-            }
-        }
+        SDL_ADDMODE(mobileWidth, mobileHeight, 8, 1);
+        SDL_ADDMODE(mobileWidth, mobileHeight, 8, 0);
+        maxx = max(maxx, mobileWidth);
+        maxy = max(maxy, mobileHeight);
+        LOG_F(INFO, "UIKit device-aspect render mode: %dx%d.", mobileWidth, mobileHeight);
     }
 #endif
 
@@ -1862,6 +1856,12 @@ int setvideomode_sdlcommonpost(int32_t x, int32_t y, int32_t c, int32_t fs, int3
 int32_t videoSetMode(int32_t x, int32_t y, int32_t c, int32_t fs)
 {
     int32_t regrab = 0, ret;
+
+#ifdef EDUKE32_IOS
+    EDuke32_IOS_GetRenderSize(&x, &y);
+    c = 8;
+    fs = 1;
+#endif
 
     ret = setvideomode_sdlcommon(&x, &y, c, fs, &regrab);
 

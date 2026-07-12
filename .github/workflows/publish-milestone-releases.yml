@@ -1,0 +1,142 @@
+name: Publish milestone releases
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/publish-milestone-releases.yml"
+
+permissions:
+  actions: read
+  contents: write
+
+jobs:
+  publish:
+    name: Publish recent IPA builds
+    runs-on: ubuntu-latest
+
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+
+    steps:
+      - name: Download verified IPA artifacts
+        run: |
+          set -euo pipefail
+          mkdir -p downloads/build-67 downloads/build-70 downloads/v0.1.0
+
+          gh run download 29198970421 --repo "$GH_REPO" \
+            --name eDukeiOS-unsigned-ipa --dir downloads/build-67
+          gh run download 29205525245 --repo "$GH_REPO" \
+            --name eDukeiOS-unsigned-ipa --dir downloads/build-70
+          gh run download 29206115871 --repo "$GH_REPO" \
+            --name eDukeiOS-unsigned-ipa --dir downloads/v0.1.0
+
+          mv downloads/build-67/eDukeiOS-unsigned.ipa eDukeiOS-Build-67.ipa
+          mv downloads/build-70/eDukeiOS-unsigned.ipa eDukeiOS-Build-70.ipa
+          mv downloads/v0.1.0/eDukeiOS-unsigned.ipa eDukeiOS-v0.1.0.ipa
+
+          unzip -t eDukeiOS-Build-67.ipa
+          unzip -t eDukeiOS-Build-70.ipa
+          unzip -t eDukeiOS-v0.1.0.ipa
+
+      - name: Write release notes
+        run: |
+          cat > build-67-notes.md <<'NOTES'
+          ## eDukeiOS Build 67
+
+          Stable playable Duke Nukem 3D milestone before the multi-game launcher work.
+
+          - Fullscreen device-aspect software rendering
+          - Touch movement and swipe aiming
+          - Gyroscope aiming
+          - Movable and resizable controls
+          - Touch and gyro sensitivity settings
+          - Working sound and OPL3 music
+          - Explicit Done button in the control editor
+
+          This is an **unsigned IPA** intended for personal signing through AltStore or a similar tool.
+
+          No game data is included. Supply your own legally obtained `DUKE3D.GRP` and `DUKE.RTS`.
+          NOTES
+
+          cat > build-70-notes.md <<'NOTES'
+          ## eDukeiOS Build 70
+
+          Preview build introducing the native multi-game launcher.
+
+          - Includes all working Duke functionality from Build 67
+          - Adds Duke, Ion Fury, Shadow Warrior, and Custom launcher entries
+          - Adds experimental `FURY.GRP` metadata generation
+          - Recognizes `CUSTOM.GRP` for Duke-compatible custom content
+          - Shadow Warrior entry documents the separate VoidSW requirement
+
+          This is an **unsigned IPA** intended for personal signing through AltStore or a similar tool.
+
+          No proprietary game data is included.
+          NOTES
+
+          cat > v0.1.0-notes.md <<'NOTES'
+          ## eDukeiOS v0.1.0 — Duke milestone
+
+          The first repository release representing the completed playable Duke Nukem 3D iOS milestone.
+
+          - Modern arm64 iPhone and iPad support
+          - Fullscreen widescreen software rendering
+          - Customizable touch controls
+          - Touch and gyroscope aiming
+          - Tap and sustained firing
+          - Working sound and built-in OPL3 music
+          - Files-app access to game data, saves, settings, and logs
+          - Native launcher with experimental Ion Fury support
+          - VoidSW diagnostic target available in the source and CI workflow
+
+          This is an **unsigned IPA** intended for personal signing through AltStore or a similar tool.
+
+          No proprietary game data is included. Supply your own legally obtained game files.
+          NOTES
+
+      - name: Publish GitHub releases
+        run: |
+          set -euo pipefail
+
+          publish_release() {
+            tag="$1"
+            target="$2"
+            title="$3"
+            notes="$4"
+            asset="$5"
+
+            if gh release view "$tag" --repo "$GH_REPO" >/dev/null 2>&1; then
+              gh release upload "$tag" "$asset" --repo "$GH_REPO" --clobber
+              gh release edit "$tag" --repo "$GH_REPO" \
+                --title "$title" --notes-file "$notes"
+            else
+              gh release create "$tag" "$asset" --repo "$GH_REPO" \
+                --target "$target" --title "$title" --notes-file "$notes"
+            fi
+          }
+
+          publish_release \
+            "build-67" \
+            "edcaeb2c6ac9f45d6bb8dae2f18056a44bf527e3" \
+            "eDukeiOS Build 67" \
+            "build-67-notes.md" \
+            "eDukeiOS-Build-67.ipa#Unsigned IPA"
+
+          publish_release \
+            "build-70" \
+            "3916f5dcc5f2a9cba23da2c56db214a26c33a35e" \
+            "eDukeiOS Build 70 — Launcher Preview" \
+            "build-70-notes.md" \
+            "eDukeiOS-Build-70.ipa#Unsigned IPA"
+
+          publish_release \
+            "v0.1.0" \
+            "main" \
+            "eDukeiOS v0.1.0 — Duke Milestone" \
+            "v0.1.0-notes.md" \
+            "eDukeiOS-v0.1.0.ipa#Unsigned IPA"
+
+          gh release edit v0.1.0 --repo "$GH_REPO" --latest

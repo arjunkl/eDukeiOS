@@ -28,6 +28,23 @@ constexpr CGFloat kLookScale = 0.018;
 constexpr CGFloat kGyroScale = 6.0;
 constexpr CGFloat kDirectMouseFactor = 2048.0;
 
+enum IOSControlIndex : NSInteger
+{
+    kControlUse = 0,
+    kControlJump,
+    kControlCrouch,
+    kControlWeapon,
+    kControlPause,
+    kControlCount
+};
+
+constexpr NSInteger kNoControl = -1;
+
+static NSString *LayoutKey(NSInteger control, NSString *component)
+{
+    return [NSString stringWithFormat:@"eDukeiOS.control.%ld.%@", (long)control, component];
+}
+
 static CGPoint g_mapDelta = CGPointZero;
 
 static SDL_Window *ActiveSDLWindow()
@@ -192,10 +209,20 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
     NSMutableDictionary *_touchActions;
     CMMotionManager *_motionManager;
     UITapGestureRecognizer *_gyroToggleGesture;
+    UILongPressGestureRecognizer *_layoutEditGesture;
     UILabel *_gyroStatusLabel;
     BOOL _gyroEnabled;
     BOOL _lookMoved;
     BOOL _lookFiring;
+
+    BOOL _layoutEditing;
+    BOOL _controlLayoutReady;
+    CGSize _controlLayoutSize;
+    CGPoint _controlCenters[kControlCount];
+    CGFloat _controlRadii[kControlCount];
+    UITouch *_editTouch;
+    NSInteger _editingControl;
+    BOOL _editingResize;
 }
 @end
 
@@ -220,7 +247,15 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
     _gyroToggleGesture.cancelsTouchesInView = YES;
     [self addGestureRecognizer:_gyroToggleGesture];
 
-    _gyroStatusLabel = [[UILabel alloc] initWithFrame:CGRectMake(0.0, 0.0, 150.0, 42.0)];
+    _layoutEditGesture = [[UILongPressGestureRecognizer alloc] initWithTarget:self
+                                                                      action:@selector(toggleControlEditor:)];
+    _layoutEditGesture.numberOfTouchesRequired = 3;
+    _layoutEditGesture.minimumPressDuration = 3.0;
+    _layoutEditGesture.cancelsTouchesInView = YES;
+    [self addGestureRecognizer:_layoutEditGesture];
+    _editingControl = kNoControl;
+
+    _gyroStatusLabel = [[UILabel alloc] initWithFrame:CGRectMake(0.0, 0.0, 330.0, 42.0)];
     _gyroStatusLabel.backgroundColor = [UIColor colorWithWhite:0.05 alpha:0.72];
     _gyroStatusLabel.textColor = UIColor.whiteColor;
     _gyroStatusLabel.font = [UIFont boldSystemFontOfSize:15.0];
@@ -260,21 +295,165 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
     [_motionManager stopDeviceMotionUpdates];
     [_motionManager release];
     [_gyroToggleGesture release];
+    [_layoutEditGesture release];
     [_gyroStatusLabel release];
     [_touchActions release];
     [super dealloc];
 }
 
-- (CGPoint)useCenter { return CGPointMake(CGRectGetWidth(self.bounds) - 150.0, CGRectGetHeight(self.bounds) - 105.0); }
-- (CGPoint)jumpCenter { return CGPointMake(CGRectGetWidth(self.bounds) - 72.0, CGRectGetHeight(self.bounds) - 166.0); }
-- (CGPoint)crouchCenter { return CGPointMake(CGRectGetWidth(self.bounds) - 153.0, CGRectGetHeight(self.bounds) - 42.0); }
-- (CGPoint)weaponCenter { return CGPointMake(CGRectGetWidth(self.bounds) - 226.0, CGRectGetHeight(self.bounds) - 46.0); }
-- (CGPoint)pauseCenter { return CGPointMake(CGRectGetWidth(self.bounds) - 35.0, 35.0); }
+- (CGPoint)defaultCenterForControl:(NSInteger)control
+{
+    CGFloat const width = CGRectGetWidth(self.bounds);
+    CGFloat const height = CGRectGetHeight(self.bounds);
+    switch (control)
+    {
+        case kControlUse: return CGPointMake(width - 150.0, height - 105.0);
+        case kControlJump: return CGPointMake(width - 72.0, height - 166.0);
+        case kControlCrouch: return CGPointMake(width - 153.0, height - 42.0);
+        case kControlWeapon: return CGPointMake(width - 226.0, height - 46.0);
+        case kControlPause: return CGPointMake(width - 35.0, 35.0);
+        default: return CGPointMake(width * 0.5, height * 0.5);
+    }
+}
+
+- (CGFloat)defaultRadiusForControl:(NSInteger)control
+{
+    switch (control)
+    {
+        case kControlUse:
+        case kControlJump: return 31.0;
+        case kControlCrouch: return 28.0;
+        case kControlWeapon: return 27.0;
+        case kControlPause: return 25.0;
+        default: return 28.0;
+    }
+}
+
+- (void)ensureControlLayout
+{
+    CGSize const size = self.bounds.size;
+    if (size.width <= 0.0 || size.height <= 0.0)
+        return;
+
+    if (_controlLayoutReady)
+    {
+        if (!CGSizeEqualToSize(size, _controlLayoutSize))
+        {
+            CGFloat const sx = size.width / _controlLayoutSize.width;
+            CGFloat const sy = size.height / _controlLayoutSize.height;
+            CGFloat const sr = fmin(sx, sy);
+            for (NSInteger control = 0; control < kControlCount; ++control)
+            {
+                _controlCenters[control].x *= sx;
+                _controlCenters[control].y *= sy;
+                _controlRadii[control] *= sr;
+            }
+            _controlLayoutSize = size;
+        }
+        return;
+    }
+
+    NSUserDefaults *defaults = NSUserDefaults.standardUserDefaults;
+    CGFloat const scale = fmin(size.width, size.height);
+    for (NSInteger control = 0; control < kControlCount; ++control)
+    {
+        NSNumber *x = [defaults objectForKey:LayoutKey(control, @"x")];
+        NSNumber *y = [defaults objectForKey:LayoutKey(control, @"y")];
+        NSNumber *radius = [defaults objectForKey:LayoutKey(control, @"r")];
+
+        if (x && y && radius)
+        {
+            _controlCenters[control] = CGPointMake(x.doubleValue * size.width, y.doubleValue * size.height);
+            _controlRadii[control] = radius.doubleValue * scale;
+        }
+        else
+        {
+            _controlCenters[control] = [self defaultCenterForControl:control];
+            _controlRadii[control] = [self defaultRadiusForControl:control];
+        }
+    }
+    _controlLayoutSize = size;
+    _controlLayoutReady = YES;
+}
+
+- (void)saveControlLayout
+{
+    [self ensureControlLayout];
+    CGFloat const width = CGRectGetWidth(self.bounds);
+    CGFloat const height = CGRectGetHeight(self.bounds);
+    CGFloat const scale = fmin(width, height);
+    if (width <= 0.0 || height <= 0.0 || scale <= 0.0)
+        return;
+
+    NSUserDefaults *defaults = NSUserDefaults.standardUserDefaults;
+    for (NSInteger control = 0; control < kControlCount; ++control)
+    {
+        [defaults setDouble:_controlCenters[control].x / width forKey:LayoutKey(control, @"x")];
+        [defaults setDouble:_controlCenters[control].y / height forKey:LayoutKey(control, @"y")];
+        [defaults setDouble:_controlRadii[control] / scale forKey:LayoutKey(control, @"r")];
+    }
+}
+
+- (CGPoint)centerForControl:(NSInteger)control
+{
+    [self ensureControlLayout];
+    return _controlCenters[control];
+}
+
+- (CGFloat)radiusForControl:(NSInteger)control
+{
+    [self ensureControlLayout];
+    return _controlRadii[control];
+}
+
+- (CGPoint)useCenter { return [self centerForControl:kControlUse]; }
+- (CGPoint)jumpCenter { return [self centerForControl:kControlJump]; }
+- (CGPoint)crouchCenter { return [self centerForControl:kControlCrouch]; }
+- (CGPoint)weaponCenter { return [self centerForControl:kControlWeapon]; }
+- (CGPoint)pauseCenter { return [self centerForControl:kControlPause]; }
 
 - (void)layoutSubviews
 {
     [super layoutSubviews];
+    [self ensureControlLayout];
     _gyroStatusLabel.center = CGPointMake(CGRectGetMidX(self.bounds), 42.0);
+}
+
+- (void)toggleControlEditor:(UILongPressGestureRecognizer *)recognizer
+{
+    if (recognizer.state != UIGestureRecognizerStateBegan)
+        return;
+
+    if (_moveTouch)
+        AndroidMove(0.f, 0.f);
+    if (_lookFiring)
+        AndroidAction(0, gamefunc_Fire);
+    for (NSNumber *action in _touchActions.allValues)
+        AndroidAction(0, action.intValue);
+    [_touchActions removeAllObjects];
+    _moveTouch = nil;
+    _lookTouch = nil;
+    _lookFiring = NO;
+    _lookMoved = NO;
+    _editTouch = nil;
+    _editingControl = kNoControl;
+
+    _layoutEditing = !_layoutEditing;
+    if (!_layoutEditing)
+        [self saveControlLayout];
+
+    _gyroStatusLabel.text = _layoutEditing ? @"EDIT CONTROLS • DRAG CENTER / EDGE RESIZE" : @"CONTROL LAYOUT SAVED";
+    _gyroStatusLabel.alpha = 1.0;
+
+    UINotificationFeedbackGenerator *feedback = [[[UINotificationFeedbackGenerator alloc] init] autorelease];
+    [feedback notificationOccurred:_layoutEditing ? UINotificationFeedbackTypeSuccess : UINotificationFeedbackTypeWarning];
+
+    if (!_layoutEditing)
+    {
+        [UIView animateWithDuration:0.25 delay:0.8 options:UIViewAnimationOptionBeginFromCurrentState
+                         animations:^{ self->_gyroStatusLabel.alpha = 0.0; } completion:nil];
+    }
+    [self setNeedsDisplay];
 }
 
 - (void)toggleGyro:(UITapGestureRecognizer *)recognizer
@@ -311,14 +490,14 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
 
 - (NSInteger)actionAtPoint:(CGPoint)point
 {
-    if (CGRectContainsPoint(CircleRect(self.pauseCenter, 25.0), point)) return -2;
+    if (CGRectContainsPoint(CircleRect(self.pauseCenter, [self radiusForControl:kControlPause]), point)) return -2;
     if ([self touchMode] != TOUCH_SCREEN_GAME)
         return -1;
 
-    if (CGRectContainsPoint(CircleRect(self.useCenter, 31.0), point)) return gamefunc_Open;
-    if (CGRectContainsPoint(CircleRect(self.jumpCenter, 31.0), point)) return gamefunc_Jump;
-    if (CGRectContainsPoint(CircleRect(self.crouchCenter, 28.0), point)) return gamefunc_Crouch;
-    if (CGRectContainsPoint(CircleRect(self.weaponCenter, 27.0), point)) return gamefunc_Next_Weapon;
+    if (CGRectContainsPoint(CircleRect(self.useCenter, [self radiusForControl:kControlUse]), point)) return gamefunc_Open;
+    if (CGRectContainsPoint(CircleRect(self.jumpCenter, [self radiusForControl:kControlJump]), point)) return gamefunc_Jump;
+    if (CGRectContainsPoint(CircleRect(self.crouchCenter, [self radiusForControl:kControlCrouch]), point)) return gamefunc_Crouch;
+    if (CGRectContainsPoint(CircleRect(self.weaponCenter, [self radiusForControl:kControlWeapon]), point)) return gamefunc_Next_Weapon;
     return -1;
 }
 

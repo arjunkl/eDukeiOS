@@ -411,6 +411,11 @@ void SW_ExtInit()
 
         if ((homedir = Bgethomedir()))
         {
+#if defined(EDUKE32_IOS)
+            // Keep user-supplied SW.GRP/SW.RTS, saves, logs and music visible
+            // through the Files app, matching the Duke iOS target.
+            Bsnprintf(cwd, ARRAY_SIZE(cwd), "%s/Documents", homedir);
+#else
             Bsnprintf(cwd, ARRAY_SIZE(cwd), "%s/"
 #if defined(_WIN32)
                       APPNAME
@@ -420,6 +425,7 @@ void SW_ExtInit()
                       ".config/" APPBASENAME
 #endif
                       ,homedir);
+#endif
             asperr = addsearchpath(cwd);
             if (asperr == -2)
             {

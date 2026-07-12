@@ -214,7 +214,7 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
     droidinput.functionSticky = 0;
 }
 
-@interface EDuke32ControlsView : UIView
+@interface EDuke32ControlsView : UIView <UIGestureRecognizerDelegate>
 {
     UITouch *_moveTouch;
     UITouch *_lookTouch;
@@ -223,6 +223,7 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
     CGPoint _lookOrigin;
     NSMutableDictionary *_touchActions;
     CMMotionManager *_motionManager;
+    UILongPressGestureRecognizer *_pauseLongPressGesture;
     UILabel *_gyroStatusLabel;
     UIView *_editorPanel;
     UIButton *_gyroButton;
@@ -272,6 +273,14 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
         ? [preferences floatForKey:@"eDukeiOS.aim.gyro"] : kDefaultGyroScale;
 
     _editingControl = kNoControl;
+
+    _pauseLongPressGesture = [[UILongPressGestureRecognizer alloc] initWithTarget:self
+                                                                          action:@selector(pauseLongPress:)];
+    _pauseLongPressGesture.minimumPressDuration = 2.0;
+    _pauseLongPressGesture.allowableMovement = 32.0;
+    _pauseLongPressGesture.cancelsTouchesInView = NO;
+    _pauseLongPressGesture.delegate = self;
+    [self addGestureRecognizer:_pauseLongPressGesture];
 
     _gyroStatusLabel = [[UILabel alloc] initWithFrame:CGRectMake(0.0, 0.0, 330.0, 42.0)];
     _gyroStatusLabel.backgroundColor = [UIColor colorWithWhite:0.05 alpha:0.72];
@@ -362,6 +371,7 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
 {
     [_motionManager stopDeviceMotionUpdates];
     [_motionManager release];
+    [_pauseLongPressGesture release];
     [_gyroStatusLabel release];
     [_editorPanel release];
     [_gyroButton release];
@@ -501,6 +511,24 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
     _gyroSensitivitySlider.frame = CGRectMake(134.0, 82.0, panelWidth - 150.0, 31.0);
 }
 
+- (BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer shouldReceiveTouch:(UITouch *)touch
+{
+    if (gestureRecognizer != _pauseLongPressGesture)
+        return YES;
+
+    CGPoint const point = [touch locationInView:self];
+    return CGRectContainsPoint(CircleRect(self.pauseCenter, [self radiusForControl:kControlPause] + 10.0), point);
+}
+
+- (void)pauseLongPress:(UILongPressGestureRecognizer *)recognizer
+{
+    if (recognizer.state != UIGestureRecognizerStateBegan || _pauseHoldActivated)
+        return;
+
+    _pauseHoldActivated = YES;
+    [self toggleControlEditor];
+}
+
 - (void)toggleControlEditor
 {
 
@@ -605,18 +633,10 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
     {
         CGPoint const point = [touch locationInView:self];
 
-        if (CGRectContainsPoint(CircleRect(self.pauseCenter, [self radiusForControl:kControlPause]), point))
+        if (CGRectContainsPoint(CircleRect(self.pauseCenter, [self radiusForControl:kControlPause] + 10.0), point))
         {
             _pauseTouch = touch;
             _pauseHoldActivated = NO;
-            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 2 * NSEC_PER_SEC),
-                           dispatch_get_main_queue(), ^{
-                if (self->_pauseTouch == touch && !self->_pauseHoldActivated)
-                {
-                    self->_pauseHoldActivated = YES;
-                    [self toggleControlEditor];
-                }
-            });
             continue;
         }
 
@@ -677,7 +697,7 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
             // fire; after it starts, the same finger may drag to aim.
             if ([self touchMode] == TOUCH_SCREEN_GAME)
             {
-                dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 180 * NSEC_PER_MSEC),
+                dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 90 * NSEC_PER_MSEC),
                                dispatch_get_main_queue(), ^{
                     if (self->_lookTouch == touch && !self->_lookMoved && !self->_lookFiring
                         && [self touchMode] == TOUCH_SCREEN_GAME)

@@ -22,8 +22,8 @@ static void EDuke32UncaughtExceptionHandler(NSException *exception)
 }
 
 constexpr CGFloat kStickRadius = 58.0;
-constexpr CGFloat kLookScale = 0.0025;
-constexpr CGFloat kGyroScale = 0.85;
+constexpr CGFloat kLookScale = 0.018;
+constexpr CGFloat kGyroScale = 8.0;
 
 static CGPoint g_mapDelta = CGPointZero;
 
@@ -63,44 +63,23 @@ static void PushKey(SDL_Scancode scancode)
     });
 }
 
-static void PushMenuTap(CGPoint point, CGSize sourceSize)
+static void PulseAction(int action)
 {
-    int windowWidth = 480;
-    int windowHeight = 320;
-    SDL_Window *window = ActiveSDLWindow();
-    Uint32 const windowID = window ? SDL_GetWindowID(window) : 0;
-    if (window)
-        SDL_GetWindowSize(window, &windowWidth, &windowHeight);
-
-    Sint32 const gameX = static_cast<Sint32>(point.x * windowWidth / fmax(sourceSize.width, 1.0));
-    Sint32 const gameY = static_cast<Sint32>(point.y * windowHeight / fmax(sourceSize.height, 1.0));
-
-    SDL_Event event = {};
-    event.type = SDL_MOUSEMOTION;
-    event.motion.windowID = windowID;
-    event.motion.x = gameX;
-    event.motion.y = gameY;
-    SDL_PushEvent(&event);
-
-    event = {};
-    event.type = SDL_MOUSEBUTTONDOWN;
-    event.button.windowID = windowID;
-    event.button.button = SDL_BUTTON_LEFT;
-    event.button.state = SDL_PRESSED;
-    event.button.x = gameX;
-    event.button.y = gameY;
-    SDL_PushEvent(&event);
-
+    AndroidAction(1, action);
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 80 * NSEC_PER_MSEC), dispatch_get_main_queue(), ^{
-        SDL_Event release = {};
-        release.type = SDL_MOUSEBUTTONUP;
-        release.button.windowID = windowID;
-        release.button.button = SDL_BUTTON_LEFT;
-        release.button.state = SDL_RELEASED;
-        release.button.x = gameX;
-        release.button.y = gameY;
-        SDL_PushEvent(&release);
+        AndroidAction(0, action);
     });
+}
+
+static void PushSwipeKey(CGPoint origin, CGPoint point)
+{
+    CGFloat const dx = point.x - origin.x;
+    CGFloat const dy = point.y - origin.y;
+
+    if (fabs(dx) > fabs(dy))
+        PushKey(dx < 0.0 ? SDL_SCANCODE_LEFT : SDL_SCANCODE_RIGHT);
+    else
+        PushKey(dy < 0.0 ? SDL_SCANCODE_UP : SDL_SCANCODE_DOWN);
 }
 
 static CGRect CircleRect(CGPoint center, CGFloat radius)
@@ -163,13 +142,18 @@ void CONTROL_Android_ClearButton(int32_t button)
 void CONTROL_Android_PollDevices(ControlInfo *info)
 {
     info->dz += static_cast<int32_t>(-droidinput.forwardmove * ANDROIDMOVEFACTOR);
-    info->dx += static_cast<int32_t>(droidinput.sidemove * ANDROIDMOVEFACTOR) >> 5;
+    info->dx += static_cast<int32_t>(droidinput.sidemove * ANDROIDMOVEFACTOR);
     info->dpitch += static_cast<int32_t>(droidinput.pitch * ANDROIDLOOKFACTOR);
     info->dyaw += static_cast<int32_t>(-droidinput.yaw * ANDROIDLOOKFACTOR);
 
     droidinput.pitch = 0.0;
     droidinput.yaw = 0.0;
-    CONTROL_ButtonState = droidinput.functionSticky | droidinput.functionHeld;
+
+    uint64_t const touchButtons = droidinput.functionSticky | droidinput.functionHeld;
+    for (int32_t action = 0; action < CONTROL_NUM_FLAGS; ++action)
+        if (touchButtons & (UINT64_C(1) << static_cast<uint64_t>(action)))
+            CONTROL_ButtonFlags[action] = 1;
+
     droidinput.functionSticky = 0;
 }
 
@@ -233,8 +217,8 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
             CMRotationRate const rate = motion.rotationRate;
             UIInterfaceOrientation const orientation = view.window.windowScene.interfaceOrientation;
             CGFloat const direction = orientation == UIInterfaceOrientationLandscapeRight ? -1.0 : 1.0;
-            AndroidLook(static_cast<float>(rate.x * kGyroScale * direction * _motionManager.deviceMotionUpdateInterval),
-                        static_cast<float>(-rate.y * kGyroScale * direction * _motionManager.deviceMotionUpdateInterval));
+            AndroidLook(static_cast<float>(rate.y * kGyroScale * direction * _motionManager.deviceMotionUpdateInterval),
+                        static_cast<float>(rate.x * kGyroScale * direction * _motionManager.deviceMotionUpdateInterval));
         }];
     }
 
@@ -251,7 +235,6 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
     [super dealloc];
 }
 
-- (CGPoint)fireCenter { return CGPointMake(CGRectGetWidth(self.bounds) - 66.0, CGRectGetHeight(self.bounds) - 70.0); }
 - (CGPoint)useCenter { return CGPointMake(CGRectGetWidth(self.bounds) - 150.0, CGRectGetHeight(self.bounds) - 105.0); }
 - (CGPoint)jumpCenter { return CGPointMake(CGRectGetWidth(self.bounds) - 72.0, CGRectGetHeight(self.bounds) - 166.0); }
 - (CGPoint)crouchCenter { return CGPointMake(CGRectGetWidth(self.bounds) - 153.0, CGRectGetHeight(self.bounds) - 42.0); }
@@ -284,14 +267,21 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
     } completion:nil];
 }
 
+- (touchscreemode_t)touchMode
+{
+    return static_cast<touchscreemode_t>(AndroidRead(R_TOUCH_MODE));
+}
+
 - (NSInteger)actionAtPoint:(CGPoint)point
 {
-    if (CGRectContainsPoint(CircleRect(self.fireCenter, 43.0), point)) return gamefunc_Fire;
+    if (CGRectContainsPoint(CircleRect(self.pauseCenter, 25.0), point)) return -2;
+    if ([self touchMode] != TOUCH_SCREEN_GAME)
+        return -1;
+
     if (CGRectContainsPoint(CircleRect(self.useCenter, 31.0), point)) return gamefunc_Open;
     if (CGRectContainsPoint(CircleRect(self.jumpCenter, 31.0), point)) return gamefunc_Jump;
     if (CGRectContainsPoint(CircleRect(self.crouchCenter, 28.0), point)) return gamefunc_Crouch;
     if (CGRectContainsPoint(CircleRect(self.weaponCenter, 27.0), point)) return gamefunc_Next_Weapon;
-    if (CGRectContainsPoint(CircleRect(self.pauseCenter, 25.0), point)) return -2;
     return -1;
 }
 
@@ -309,8 +299,6 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
         if (action >= 0)
         {
             AndroidAction(1, static_cast<int>(action));
-            if (action == gamefunc_Fire)
-                PushKey(SDL_SCANCODE_RETURN);
             [_touchActions setObject:@(action) forKey:[NSValue valueWithNonretainedObject:touch]];
         }
         else if (action == -2)
@@ -336,18 +324,21 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
     for (UITouch *touch in touches)
     {
         CGPoint const point = [touch locationInView:self];
-        if (touch == _moveTouch)
+        if ([self touchMode] == TOUCH_SCREEN_GAME)
         {
-            CGFloat const dx = fmax(-kStickRadius, fmin(kStickRadius, point.x - _moveOrigin.x));
-            CGFloat const dy = fmax(-kStickRadius, fmin(kStickRadius, point.y - _moveOrigin.y));
-            AndroidMove(static_cast<float>(-dy / kStickRadius), static_cast<float>(dx / kStickRadius));
-        }
-        else if (touch == _lookTouch)
-        {
-            CGFloat const dx = point.x - _lookPrevious.x;
-            CGFloat const dy = point.y - _lookPrevious.y;
-            AndroidLook(static_cast<float>(dx * kLookScale), static_cast<float>(dy * kLookScale));
-            _lookPrevious = point;
+            if (touch == _moveTouch)
+            {
+                CGFloat const dx = fmax(-kStickRadius, fmin(kStickRadius, point.x - _moveOrigin.x));
+                CGFloat const dy = fmax(-kStickRadius, fmin(kStickRadius, point.y - _moveOrigin.y));
+                AndroidMove(static_cast<float>(-dy / kStickRadius), static_cast<float>(dx / kStickRadius));
+            }
+            else if (touch == _lookTouch)
+            {
+                CGFloat const dx = point.x - _lookPrevious.x;
+                CGFloat const dy = point.y - _lookPrevious.y;
+                AndroidLook(static_cast<float>(dx * kLookScale), static_cast<float>(dy * kLookScale));
+                _lookPrevious = point;
+            }
         }
     }
     [self setNeedsDisplay];
@@ -365,18 +356,40 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
             [_touchActions removeObjectForKey:key];
         }
 
+        touchscreemode_t const mode = [self touchMode];
+        CGPoint const point = [touch locationInView:self];
+
         if (touch == _moveTouch)
         {
+            CGFloat const distance = hypot(point.x - _moveOrigin.x, point.y - _moveOrigin.y);
             _moveTouch = nil;
             AndroidMove(0.f, 0.f);
+
+            if (!cancelled && mode != TOUCH_SCREEN_GAME)
+            {
+                if (distance < 18.0)
+                    PushKey(SDL_SCANCODE_RETURN);
+                else
+                    PushSwipeKey(_moveOrigin, point);
+            }
         }
         else if (touch == _lookTouch)
         {
-            CGPoint const point = [touch locationInView:self];
             CGFloat const distance = hypot(point.x - _lookOrigin.x, point.y - _lookOrigin.y);
-            if (!cancelled && distance < 12.0)
-                PushMenuTap(point, self.bounds.size);
             _lookTouch = nil;
+
+            if (!cancelled)
+            {
+                if (mode == TOUCH_SCREEN_GAME)
+                {
+                    if (distance < 12.0)
+                        PulseAction(gamefunc_Fire);
+                }
+                else if (distance < 18.0)
+                    PushKey(SDL_SCANCODE_RETURN);
+                else
+                    PushSwipeKey(_lookOrigin, point);
+            }
         }
     }
     [self setNeedsDisplay];
@@ -421,11 +434,13 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
 - (void)drawRect:(CGRect)rect
 {
     (void)rect;
-    [self drawCircleAt:self.fireCenter radius:43.0 label:@"FIRE" active:[self isActionActive:gamefunc_Fire]];
-    [self drawCircleAt:self.useCenter radius:31.0 label:@"USE" active:[self isActionActive:gamefunc_Open]];
-    [self drawCircleAt:self.jumpCenter radius:31.0 label:@"JUMP" active:[self isActionActive:gamefunc_Jump]];
-    [self drawCircleAt:self.crouchCenter radius:28.0 label:@"DUCK" active:[self isActionActive:gamefunc_Crouch]];
-    [self drawCircleAt:self.weaponCenter radius:27.0 label:@"NEXT" active:[self isActionActive:gamefunc_Next_Weapon]];
+    if ([self touchMode] == TOUCH_SCREEN_GAME)
+    {
+        [self drawCircleAt:self.useCenter radius:31.0 label:@"USE" active:[self isActionActive:gamefunc_Open]];
+        [self drawCircleAt:self.jumpCenter radius:31.0 label:@"JUMP" active:[self isActionActive:gamefunc_Jump]];
+        [self drawCircleAt:self.crouchCenter radius:28.0 label:@"DUCK" active:[self isActionActive:gamefunc_Crouch]];
+        [self drawCircleAt:self.weaponCenter radius:27.0 label:@"NEXT" active:[self isActionActive:gamefunc_Next_Weapon]];
+    }
     [self drawCircleAt:self.pauseCenter radius:25.0 label:@"II" active:NO];
 }
 

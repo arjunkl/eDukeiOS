@@ -16,6 +16,7 @@
 #ifdef EDUKE32_IOS
 # include "SDL_main.h"
 extern "C" void EDuke32_IOS_GetRenderSize(int32_t *width, int32_t *height);
+extern "C" char *EDuke32_IOS_SelectGame(void);
 #endif
 #include "softsurface.h"
 
@@ -495,6 +496,18 @@ int main(int argc, char *argv[])
         while (*wp) wp++;
     }
     argv[argc] = NULL;
+#endif
+
+#ifdef EDUKE32_IOS
+    // Choose the main game before allocator/log/search-path initialization.
+    // The returned filename lives in Documents and remains valid for app_main.
+    char *iosSelectedGrp = EDuke32_IOS_SelectGame();
+    char *iosArgv[4] = { argv[0], (char *)"-gamegrp", iosSelectedGrp, nullptr };
+    if (iosSelectedGrp != nullptr)
+    {
+        argc = 3;
+        argv = iosArgv;
+    }
 #endif
 
     engineSetupAllocator();

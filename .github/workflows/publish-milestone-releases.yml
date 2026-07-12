@@ -26,8 +26,7 @@ jobs:
     name: Publish recent IPA builds
     if: >-
       (github.event_name == 'workflow_run' &&
-       github.event.workflow_run.conclusion == 'success' &&
-       github.event.workflow_run.actor.login == github.repository_owner) ||
+       github.event.workflow_run.conclusion == 'success') ||
       (github.event_name == 'issues' &&
        github.event.issue.user.login == github.repository_owner &&
        github.event.issue.title == 'Publish eDukeiOS milestone releases') ||

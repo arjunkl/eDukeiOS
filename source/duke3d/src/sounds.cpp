@@ -145,11 +145,12 @@ void S_SoundShutdown(void)
 void S_MusicStartup(void)
 {
 #ifdef EDUKE32_IOS
-    // The legacy OPL3 MIDI backend crashes during initialization on modern iOS.
-    // Keep digital sound effects enabled while an iOS-safe music backend is added.
-    ud.config.MusicToggle = 0;
-    LOG_F(WARNING, "MIDI music is temporarily disabled on iOS.");
-    return;
+    // Use EDuke32's built-in software OPL3 synthesizer. The earlier crash
+    // attributed to MIDI was subsequently isolated to the iOS frame blitter.
+    // OPL3 requires no external SoundFont and preserves Duke's original music.
+    ud.config.MusicDevice = ASS_OPL3;
+    ud.config.MusicToggle = 1;
+    LOG_F(INFO, "iOS music: enabling built-in AdLib OPL3 synthesis.");
 #endif
 
     int status;

@@ -38,6 +38,7 @@ int32_t MusicIsWaveform;
 int32_t MusicVoice = -1;
 
 static bool MusicPaused;
+static bool MusicInitialized;
 static bool SoundPaused;
 
 static uint32_t localQueueIndex;
@@ -167,6 +168,7 @@ void S_MusicStartup(void)
         return;
     }
 
+    MusicInitialized = true;
     MUSIC_SetVolume(ud.config.MusicVolume);
 
     buildvfs_kfd const fil = kopen4load("d3dtimbr.tmb", 0);
@@ -183,16 +185,20 @@ void S_MusicStartup(void)
 
 void S_MusicShutdown(void)
 {
+    if (!MusicInitialized)
+        return;
+
     S_StopMusic();
 
     int status = MUSIC_Shutdown();
+    MusicInitialized = false;
     if (status != MUSIC_Ok)
         LOG_F(ERROR, "Failed tearing down music subsystem: %s", MUSIC_ErrorString(status));
 }
 
 void S_PauseMusic(bool paused)
 {
-    if (MusicPaused == paused || (MusicIsWaveform && MusicVoice < 0))
+    if (MusicPaused == paused || (MusicIsWaveform && MusicVoice < 0) || (!MusicIsWaveform && !MusicInitialized))
         return;
 
     MusicPaused = paused;
@@ -236,7 +242,8 @@ void S_MusicVolume(int32_t volume)
     if (MusicIsWaveform && MusicVoice >= 0)
         FX_SetPan(MusicVoice, volume, volume, volume);
 
-    MUSIC_SetVolume(volume);
+    if (MusicInitialized)
+        MUSIC_SetVolume(volume);
 }
 
 void S_RestartMusic(void)
@@ -448,7 +455,8 @@ void S_StopMusic(void)
         MusicIsWaveform = 0;
     }
 
-    MUSIC_StopSong();
+    if (MusicInitialized)
+        MUSIC_StopSong();
 
     ALIGNED_FREE_AND_NULL(MusicPtr);
     g_musicSize = 0;

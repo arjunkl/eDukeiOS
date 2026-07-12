@@ -2225,9 +2225,28 @@ void videoShowFrame(int32_t w)
         while (lockcount) videoEndDrawing();
     }
 
+#ifdef EDUKE32_IOS
+    LOG_F(INFO, "iOS present: surface=%dx%d pitch=%d bpp=%d pixels=%p soft=%dx%d",
+          sdl_surface ? sdl_surface->w : -1,
+          sdl_surface ? sdl_surface->h : -1,
+          sdl_surface ? sdl_surface->pitch : -1,
+          (sdl_surface && sdl_surface->format) ? sdl_surface->format->BitsPerPixel : -1,
+          sdl_surface ? sdl_surface->pixels : nullptr,
+          softsurface_getDestinationBufferResolution().x,
+          softsurface_getDestinationBufferResolution().y);
+#endif
     if (SDL_MUSTLOCK(sdl_surface)) SDL_LockSurface(sdl_surface);
+#ifdef EDUKE32_IOS
+    LOG_F(INFO, "iOS present checkpoint: before software blit");
+#endif
     softsurface_blitBuffer((uint32_t*) sdl_surface->pixels, sdl_surface->format->BitsPerPixel);
+#ifdef EDUKE32_IOS
+    LOG_F(INFO, "iOS present checkpoint: after software blit");
+#endif
     if (SDL_MUSTLOCK(sdl_surface)) SDL_UnlockSurface(sdl_surface);
+#ifdef EDUKE32_IOS
+    LOG_F(INFO, "iOS present checkpoint: before SDL_UpdateWindowSurface");
+#endif
 #if SDL_MAJOR_VERSION >= 2
     if (SDL_UpdateWindowSurface(sdl_window))
     {
@@ -2236,6 +2255,9 @@ void videoShowFrame(int32_t w)
         sdl_surface = SDL_GetWindowSurface(sdl_window);
         SDL_UpdateWindowSurface(sdl_window);
     }
+#ifdef EDUKE32_IOS
+    LOG_F(INFO, "iOS present checkpoint: after SDL_UpdateWindowSurface");
+#endif
 #else
     SDL_Flip(sdl_surface);
 #endif

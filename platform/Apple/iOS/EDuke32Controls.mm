@@ -153,6 +153,8 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
     CGPoint _lookOrigin;
     NSMutableDictionary *_touchActions;
     CMMotionManager *_motionManager;
+    UITapGestureRecognizer *_gyroToggleGesture;
+    UILabel *_gyroStatusLabel;
     BOOL _gyroEnabled;
 }
 @end
@@ -171,6 +173,22 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
     self.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
     _touchActions = [[NSMutableDictionary alloc] init];
     _gyroEnabled = YES;
+
+    _gyroToggleGesture = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(toggleGyro:)];
+    _gyroToggleGesture.numberOfTouchesRequired = 3;
+    _gyroToggleGesture.numberOfTapsRequired = 2;
+    _gyroToggleGesture.cancelsTouchesInView = YES;
+    [self addGestureRecognizer:_gyroToggleGesture];
+
+    _gyroStatusLabel = [[UILabel alloc] initWithFrame:CGRectMake(0.0, 0.0, 150.0, 42.0)];
+    _gyroStatusLabel.backgroundColor = [UIColor colorWithWhite:0.05 alpha:0.72];
+    _gyroStatusLabel.textColor = UIColor.whiteColor;
+    _gyroStatusLabel.font = [UIFont boldSystemFontOfSize:15.0];
+    _gyroStatusLabel.textAlignment = NSTextAlignmentCenter;
+    _gyroStatusLabel.layer.cornerRadius = 12.0;
+    _gyroStatusLabel.clipsToBounds = YES;
+    _gyroStatusLabel.alpha = 0.0;
+    [self addSubview:_gyroStatusLabel];
 
     _motionManager = [[CMMotionManager alloc] init];
     if (_motionManager.deviceMotionAvailable)
@@ -198,6 +216,8 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
 {
     [_motionManager stopDeviceMotionUpdates];
     [_motionManager release];
+    [_gyroToggleGesture release];
+    [_gyroStatusLabel release];
     [_touchActions release];
     [super dealloc];
 }
@@ -208,7 +228,32 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
 - (CGPoint)crouchCenter { return CGPointMake(CGRectGetWidth(self.bounds) - 153.0, CGRectGetHeight(self.bounds) - 42.0); }
 - (CGPoint)weaponCenter { return CGPointMake(CGRectGetWidth(self.bounds) - 226.0, CGRectGetHeight(self.bounds) - 46.0); }
 - (CGPoint)pauseCenter { return CGPointMake(CGRectGetWidth(self.bounds) - 35.0, 35.0); }
-- (CGPoint)gyroCenter { return CGPointMake(42.0, 35.0); }
+
+- (void)layoutSubviews
+{
+    [super layoutSubviews];
+    _gyroStatusLabel.center = CGPointMake(CGRectGetMidX(self.bounds), 42.0);
+}
+
+- (void)toggleGyro:(UITapGestureRecognizer *)recognizer
+{
+    if (recognizer.state != UIGestureRecognizerStateRecognized)
+        return;
+
+    _gyroEnabled = !_gyroEnabled;
+    _gyroStatusLabel.text = _gyroEnabled ? @"GYRO ON" : @"GYRO OFF";
+    _gyroStatusLabel.alpha = 1.0;
+
+    UINotificationFeedbackGenerator *feedback = [[[UINotificationFeedbackGenerator alloc] init] autorelease];
+    [feedback notificationOccurred:_gyroEnabled ? UINotificationFeedbackTypeSuccess : UINotificationFeedbackTypeWarning];
+
+    [UIView animateWithDuration:0.25
+                          delay:0.8
+                        options:UIViewAnimationOptionBeginFromCurrentState
+                     animations:^{
+        self->_gyroStatusLabel.alpha = 0.0;
+    } completion:nil];
+}
 
 - (NSInteger)actionAtPoint:(CGPoint)point
 {
@@ -218,7 +263,6 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
     if (CGRectContainsPoint(CircleRect(self.crouchCenter, 28.0), point)) return gamefunc_Crouch;
     if (CGRectContainsPoint(CircleRect(self.weaponCenter, 27.0), point)) return gamefunc_Next_Weapon;
     if (CGRectContainsPoint(CircleRect(self.pauseCenter, 25.0), point)) return -2;
-    if (CGRectContainsPoint(CircleRect(self.gyroCenter, 31.0), point)) return -3;
     return -1;
 }
 
@@ -239,11 +283,6 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
         }
         else if (action == -2)
             PushKey(SDL_SCANCODE_ESCAPE);
-        else if (action == -3)
-        {
-            _gyroEnabled = !_gyroEnabled;
-            [self setNeedsDisplay];
-        }
         else if (!_moveTouch && point.x < CGRectGetWidth(self.bounds) * 0.46)
         {
             _moveTouch = touch;
@@ -345,15 +384,12 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
 - (void)drawRect:(CGRect)rect
 {
     (void)rect;
-    CGPoint const stickCenter = _moveTouch ? _moveOrigin : CGPointMake(82.0, CGRectGetHeight(self.bounds) - 82.0);
-    [self drawCircleAt:stickCenter radius:kStickRadius label:@"MOVE" active:_moveTouch != nil];
     [self drawCircleAt:self.fireCenter radius:43.0 label:@"FIRE" active:NO];
     [self drawCircleAt:self.useCenter radius:31.0 label:@"USE" active:NO];
     [self drawCircleAt:self.jumpCenter radius:31.0 label:@"JUMP" active:NO];
     [self drawCircleAt:self.crouchCenter radius:28.0 label:@"DUCK" active:NO];
     [self drawCircleAt:self.weaponCenter radius:27.0 label:@"NEXT" active:NO];
     [self drawCircleAt:self.pauseCenter radius:25.0 label:@"II" active:NO];
-    [self drawCircleAt:self.gyroCenter radius:31.0 label:@"GYRO" active:_gyroEnabled];
 }
 
 @end

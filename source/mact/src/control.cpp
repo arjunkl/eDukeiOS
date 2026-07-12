@@ -106,8 +106,19 @@ static void controlUpdateMouseState(ControlInfo *const info)
     vec2f_t finput = { input.x * CONTROL_MouseSensitivityUnit * CONTROL_MouseSensitivity * CONTROL_MouseAxesSensitivity[0],
                        input.y * CONTROL_MouseSensitivityUnit * CONTROL_MouseSensitivity * CONTROL_MouseAxesSensitivity[1] };
 
-    info->mousex = Blrintf(clamp(finput.x, -MAXSCALEDCONTROLVALUE, MAXSCALEDCONTROLVALUE));
-    info->mousey = Blrintf(clamp(finput.y, -MAXSCALEDCONTROLVALUE, MAXSCALEDCONTROLVALUE));
+    int32_t const mousex = Blrintf(clamp(finput.x, -MAXSCALEDCONTROLVALUE, MAXSCALEDCONTROLVALUE));
+    int32_t const mousey = Blrintf(clamp(finput.y, -MAXSCALEDCONTROLVALUE, MAXSCALEDCONTROLVALUE));
+
+#if defined EDUKE32_IOS
+    // CONTROL_Android_PollDevices runs first and injects relative touch/gyro
+    // aim into these fields. Preserve it when the UIKit mouse backend reports
+    // its usual zero delta instead of replacing it.
+    info->mousex += mousex;
+    info->mousey += mousey;
+#else
+    info->mousex = mousex;
+    info->mousey = mousey;
+#endif
 }
 
 static int32_t controlGetTime(void)

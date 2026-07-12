@@ -26,7 +26,7 @@ jobs:
           set -e
           iconset="platform/Apple/iOS/Images.xcassets/AppIcon.appiconset"
           source="$RUNNER_TEMP/eDukeiOS-AppIcon.jpg"
-          /usr/bin/base64 -D platform/Apple/iOS/AppIcon1024.jpg.base64 > "$source"
+          /usr/bin/base64 -D -i platform/Apple/iOS/AppIcon1024.jpg.base64 -o "$source"
 
           while read -r name size; do
             /usr/bin/sips -s format png -z "$size" "$size" "$source" \

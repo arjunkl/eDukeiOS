@@ -1,0 +1,23 @@
+name: Release publication signal
+
+on:
+  pull_request:
+    branches:
+      - main
+    types:
+      - opened
+      - synchronize
+
+permissions:
+  contents: read
+
+jobs:
+  signal:
+    name: Authorize trusted release publisher
+    if: >-
+      github.event.pull_request.user.login == github.repository_owner &&
+      github.event.pull_request.title == 'Publish milestone IPA releases'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Confirm owner request
+        run: echo "Owner-authorized release publication signal"

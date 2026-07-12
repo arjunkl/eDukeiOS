@@ -22,7 +22,8 @@ static void EDuke32UncaughtExceptionHandler(NSException *exception)
     fflush(stderr);
 }
 
-constexpr CGFloat kMovementDeadZone = 10.0;
+constexpr CGFloat kMovementDeadZone = 12.0;
+constexpr CGFloat kMovementDiagonalRatio = 0.55;
 constexpr CGFloat kLookScale = 0.018;
 constexpr CGFloat kGyroScale = 6.0;
 constexpr CGFloat kDirectMouseFactor = 2048.0;
@@ -143,8 +144,11 @@ void CONTROL_Android_ClearButton(int32_t button)
 
 void CONTROL_Android_PollDevices(ControlInfo *info)
 {
-    info->dz += static_cast<int32_t>(-droidinput.forwardmove * ANDROIDMOVEFACTOR);
-    info->dx += static_cast<int32_t>(droidinput.sidemove * ANDROIDMOVEFACTOR);
+    // These are digital touch directions, so use the controller's full axis
+    // extent. ANDROIDMOVEFACTOR is only about 20% of full keyboard speed.
+    constexpr int32_t kFullAxis = 32767;
+    info->dz += static_cast<int32_t>(-droidinput.forwardmove * kFullAxis);
+    info->dx += static_cast<int32_t>(droidinput.sidemove * kFullAxis);
 
     // Duke treats dyaw/dpitch as full-range controller axes. Small, relative
     // touch and gyro deltas disappear after that path's 32767 normalization.
@@ -362,10 +366,20 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
                 CGFloat const dx = point.x - _moveOrigin.x;
                 CGFloat const dy = point.y - _moveOrigin.y;
 
-                // Deliberately digital, like keyboard movement: each active
-                // axis immediately reaches full speed, including diagonals.
-                float const strafe = fabs(dx) >= kMovementDeadZone ? (dx < 0.0 ? -1.f : 1.f) : 0.f;
-                float const forward = fabs(dy) >= kMovementDeadZone ? (dy < 0.0 ? 1.f : -1.f) : 0.f;
+                // Deliberately digital, like keyboard movement. Snap toward
+                // the dominant cardinal direction so minor finger drift does
+                // not accidentally turn a pure strafe into a diagonal.
+                CGFloat const adx = fabs(dx);
+                CGFloat const ady = fabs(dy);
+                float strafe = 0.f;
+                float forward = 0.f;
+                if (fmax(adx, ady) >= kMovementDeadZone)
+                {
+                    if (adx >= ady * kMovementDiagonalRatio)
+                        strafe = dx < 0.0 ? -1.f : 1.f;
+                    if (ady >= adx * kMovementDiagonalRatio)
+                        forward = dy < 0.0 ? 1.f : -1.f;
+                }
                 AndroidMove(forward, strafe);
             }
             else if (touch == _lookTouch)

@@ -12,6 +12,15 @@
 
 namespace
 {
+static void EDuke32UncaughtExceptionHandler(NSException *exception)
+{
+    fprintf(stderr, "\nEDUKE32_IOS_OBJC_EXCEPTION: %s: %s\n%s\n",
+            exception.name.UTF8String,
+            exception.reason.UTF8String,
+            exception.callStackSymbols.description.UTF8String);
+    fflush(stderr);
+}
+
 constexpr CGFloat kStickRadius = 58.0;
 constexpr CGFloat kLookScale = 0.0025;
 constexpr CGFloat kGyroScale = 0.85;
@@ -341,6 +350,7 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
 
 + (void)load
 {
+    NSSetUncaughtExceptionHandler(&EDuke32UncaughtExceptionHandler);
     dispatch_async(dispatch_get_main_queue(), ^{
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(installControls)

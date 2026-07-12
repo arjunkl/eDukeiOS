@@ -223,7 +223,6 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
     CGPoint _lookOrigin;
     NSMutableDictionary *_touchActions;
     CMMotionManager *_motionManager;
-    UILongPressGestureRecognizer *_layoutEditGesture;
     UILabel *_gyroStatusLabel;
     UIView *_editorPanel;
     UIButton *_gyroButton;
@@ -245,6 +244,8 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
     UITouch *_editTouch;
     NSInteger _editingControl;
     BOOL _editingResize;
+    UITouch *_pauseTouch;
+    BOOL _pauseHoldActivated;
 }
 @end
 
@@ -270,12 +271,6 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
     _gyroAimScale = [preferences objectForKey:@"eDukeiOS.aim.gyro"]
         ? [preferences floatForKey:@"eDukeiOS.aim.gyro"] : kDefaultGyroScale;
 
-    _layoutEditGesture = [[UILongPressGestureRecognizer alloc] initWithTarget:self
-                                                                      action:@selector(toggleControlEditor:)];
-    _layoutEditGesture.numberOfTouchesRequired = 3;
-    _layoutEditGesture.minimumPressDuration = 3.0;
-    _layoutEditGesture.cancelsTouchesInView = YES;
-    [self addGestureRecognizer:_layoutEditGesture];
     _editingControl = kNoControl;
 
     _gyroStatusLabel = [[UILabel alloc] initWithFrame:CGRectMake(0.0, 0.0, 330.0, 42.0)];
@@ -367,7 +362,6 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
 {
     [_motionManager stopDeviceMotionUpdates];
     [_motionManager release];
-    [_layoutEditGesture release];
     [_gyroStatusLabel release];
     [_editorPanel release];
     [_gyroButton release];
@@ -507,10 +501,8 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
     _gyroSensitivitySlider.frame = CGRectMake(134.0, 82.0, panelWidth - 150.0, 31.0);
 }
 
-- (void)toggleControlEditor:(UILongPressGestureRecognizer *)recognizer
+- (void)toggleControlEditor
 {
-    if (recognizer.state != UIGestureRecognizerStateBegan)
-        return;
 
     if (_moveTouch)
         AndroidMove(0.f, 0.f);
@@ -596,7 +588,6 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
 
 - (NSInteger)actionAtPoint:(CGPoint)point
 {
-    if (CGRectContainsPoint(CircleRect(self.pauseCenter, [self radiusForControl:kControlPause]), point)) return -2;
     if ([self touchMode] != TOUCH_SCREEN_GAME)
         return -1;
 
@@ -613,6 +604,21 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
     for (UITouch *touch in touches)
     {
         CGPoint const point = [touch locationInView:self];
+
+        if (CGRectContainsPoint(CircleRect(self.pauseCenter, [self radiusForControl:kControlPause]), point))
+        {
+            _pauseTouch = touch;
+            _pauseHoldActivated = NO;
+            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 2 * NSEC_PER_SEC),
+                           dispatch_get_main_queue(), ^{
+                if (self->_pauseTouch == touch && !self->_pauseHoldActivated)
+                {
+                    self->_pauseHoldActivated = YES;
+                    [self toggleControlEditor];
+                }
+            });
+            continue;
+        }
 
         if (_layoutEditing)
         {
@@ -654,8 +660,6 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
             AndroidAction(1, static_cast<int>(action));
             [_touchActions setObject:@(action) forKey:[NSValue valueWithNonretainedObject:touch]];
         }
-        else if (action == -2)
-            PushKey(SDL_SCANCODE_ESCAPE);
         else if (!_moveTouch && point.x < CGRectGetWidth(self.bounds) * 0.46)
         {
             _moveTouch = touch;
@@ -746,7 +750,9 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
                 CGFloat const dy = point.y - _lookPrevious.y;
                 if (!_lookFiring && hypot(point.x - _lookOrigin.x, point.y - _lookOrigin.y) >= 12.0)
                     _lookMoved = YES;
-                AndroidLook(static_cast<float>(dx * _touchAimScale), static_cast<float>(dy * _touchAimScale));
+                // Touch coordinates grow downward; gyro is already correct,
+                // so invert only the touch pitch before the shared aim path.
+                AndroidLook(static_cast<float>(dx * _touchAimScale), static_cast<float>(-dy * _touchAimScale));
                 _lookPrevious = point;
             }
         }
@@ -758,6 +764,17 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
 {
     for (UITouch *touch in touches)
     {
+        if (touch == _pauseTouch)
+        {
+            BOOL const openedEditor = _pauseHoldActivated;
+            _pauseTouch = nil;
+            _pauseHoldActivated = NO;
+            if (!cancelled && !openedEditor)
+                PushKey(SDL_SCANCODE_ESCAPE);
+            [self setNeedsDisplay];
+            continue;
+        }
+
         if (_layoutEditing && touch == _editTouch)
         {
             _editTouch = nil;
@@ -848,15 +865,8 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
 
 - (UIColor *)accentForControl:(NSInteger)control
 {
-    switch (control)
-    {
-        case kControlUse: return [UIColor colorWithRed:0.05 green:0.78 blue:0.90 alpha:1.0];
-        case kControlJump: return [UIColor colorWithRed:1.00 green:0.47 blue:0.08 alpha:1.0];
-        case kControlCrouch: return [UIColor colorWithRed:0.48 green:0.36 blue:0.92 alpha:1.0];
-        case kControlWeapon: return [UIColor colorWithRed:0.96 green:0.72 blue:0.08 alpha:1.0];
-        case kControlPause: return [UIColor colorWithRed:0.93 green:0.20 blue:0.18 alpha:1.0];
-        default: return UIColor.whiteColor;
-    }
+    (void)control;
+    return UIColor.whiteColor;
 }
 
 - (void)drawControl:(NSInteger)control active:(BOOL)active
@@ -867,18 +877,14 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
     UIColor *accent = [self accentForControl:control];
     CGRect const circle = CircleRect(center, radius);
 
-    CGContextSaveGState(context);
-    CGContextSetShadowWithColor(context, CGSizeMake(0.0, 2.0), active ? 10.0 : 5.0,
-                                [accent colorWithAlphaComponent:active ? 0.85 : 0.42].CGColor);
-    CGContextSetFillColorWithColor(context, [accent colorWithAlphaComponent:active ? 0.72 : 0.34].CGColor);
-    CGContextSetStrokeColorWithColor(context, [UIColor colorWithWhite:1.0 alpha:0.78].CGColor);
-    CGContextSetLineWidth(context, active ? 3.0 : 1.8);
+    CGContextSetFillColorWithColor(context, [UIColor colorWithWhite:1.0 alpha:active ? 0.22 : 0.075].CGColor);
+    CGContextSetStrokeColorWithColor(context, [UIColor colorWithWhite:1.0 alpha:active ? 0.68 : 0.38].CGColor);
+    CGContextSetLineWidth(context, active ? 2.4 : 1.4);
     CGContextAddEllipseInRect(context, circle);
     CGContextDrawPath(context, kCGPathFillStroke);
-    CGContextRestoreGState(context);
 
     CGRect const inset = CGRectInset(circle, radius * 0.16, radius * 0.16);
-    CGContextSetStrokeColorWithColor(context, [accent colorWithAlphaComponent:0.58].CGColor);
+    CGContextSetStrokeColorWithColor(context, [UIColor colorWithWhite:1.0 alpha:0.16].CGColor);
     CGContextSetLineWidth(context, 1.0);
     CGContextStrokeEllipseInRect(context, inset);
 
@@ -887,7 +893,7 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
                                                         weight:UIImageSymbolWeightBold];
     UIImage *symbol = [[UIImage systemImageNamed:[self symbolForControl:control]]
                         imageByApplyingSymbolConfiguration:configuration];
-    symbol = [symbol imageWithTintColor:[UIColor colorWithWhite:1.0 alpha:0.94]
+    symbol = [symbol imageWithTintColor:[UIColor colorWithWhite:1.0 alpha:active ? 0.92 : 0.70]
                          renderingMode:UIImageRenderingModeAlwaysOriginal];
     CGSize const symbolSize = symbol.size;
     [symbol drawAtPoint:CGPointMake(center.x - symbolSize.width * 0.5,

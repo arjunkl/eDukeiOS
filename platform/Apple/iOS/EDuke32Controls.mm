@@ -27,29 +27,48 @@ constexpr CGFloat kGyroScale = 0.85;
 
 static CGPoint g_mapDelta = CGPointZero;
 
+static SDL_Window *ActiveSDLWindow()
+{
+    SDL_Window *window = SDL_GetKeyboardFocus();
+    if (!window)
+        window = SDL_GetMouseFocus();
+    if (!window)
+        window = SDL_GetWindowFromID(1);
+    return window;
+}
+
 static void PushKey(SDL_Scancode scancode)
 {
+    SDL_Window *window = ActiveSDLWindow();
+    Uint32 const windowID = window ? SDL_GetWindowID(window) : 0;
+
     SDL_Event event = {};
     event.type = SDL_KEYDOWN;
+    event.key.windowID = windowID;
     event.key.state = SDL_PRESSED;
+    event.key.repeat = 0;
     event.key.keysym.scancode = scancode;
     event.key.keysym.sym = SDL_GetKeyFromScancode(scancode);
     SDL_PushEvent(&event);
 
-    event.type = SDL_KEYUP;
-    event.key.state = SDL_RELEASED;
-    SDL_PushEvent(&event);
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 80 * NSEC_PER_MSEC), dispatch_get_main_queue(), ^{
+        SDL_Event release = {};
+        release.type = SDL_KEYUP;
+        release.key.windowID = windowID;
+        release.key.state = SDL_RELEASED;
+        release.key.repeat = 0;
+        release.key.keysym.scancode = scancode;
+        release.key.keysym.sym = SDL_GetKeyFromScancode(scancode);
+        SDL_PushEvent(&release);
+    });
 }
 
 static void PushMenuTap(CGPoint point, CGSize sourceSize)
 {
     int windowWidth = 480;
     int windowHeight = 320;
-    SDL_Window *window = SDL_GetKeyboardFocus();
-    if (!window)
-        window = SDL_GetMouseFocus();
-    if (!window)
-        window = SDL_GetWindowFromID(1);
+    SDL_Window *window = ActiveSDLWindow();
+    Uint32 const windowID = window ? SDL_GetWindowID(window) : 0;
     if (window)
         SDL_GetWindowSize(window, &windowWidth, &windowHeight);
 
@@ -58,20 +77,30 @@ static void PushMenuTap(CGPoint point, CGSize sourceSize)
 
     SDL_Event event = {};
     event.type = SDL_MOUSEMOTION;
+    event.motion.windowID = windowID;
     event.motion.x = gameX;
     event.motion.y = gameY;
     SDL_PushEvent(&event);
 
+    event = {};
     event.type = SDL_MOUSEBUTTONDOWN;
+    event.button.windowID = windowID;
     event.button.button = SDL_BUTTON_LEFT;
     event.button.state = SDL_PRESSED;
     event.button.x = gameX;
     event.button.y = gameY;
     SDL_PushEvent(&event);
 
-    event.type = SDL_MOUSEBUTTONUP;
-    event.button.state = SDL_RELEASED;
-    SDL_PushEvent(&event);
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 80 * NSEC_PER_MSEC), dispatch_get_main_queue(), ^{
+        SDL_Event release = {};
+        release.type = SDL_MOUSEBUTTONUP;
+        release.button.windowID = windowID;
+        release.button.button = SDL_BUTTON_LEFT;
+        release.button.state = SDL_RELEASED;
+        release.button.x = gameX;
+        release.button.y = gameY;
+        SDL_PushEvent(&release);
+    });
 }
 
 static CGRect CircleRect(CGPoint center, CGFloat radius)
@@ -273,6 +302,9 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
     {
         CGPoint const point = [touch locationInView:self];
         NSInteger const action = [self actionAtPoint:point];
+        fprintf(stderr, "EDUKE32_IOS_TOUCH: began x=%.1f y=%.1f action=%ld\n",
+                point.x, point.y, (long)action);
+        fflush(stderr);
 
         if (action >= 0)
         {
@@ -381,14 +413,19 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
     [label drawAtPoint:CGPointMake(center.x - size.width * 0.5, center.y - size.height * 0.5) withAttributes:attributes];
 }
 
+- (BOOL)isActionActive:(NSInteger)action
+{
+    return [[_touchActions allValues] containsObject:@(action)];
+}
+
 - (void)drawRect:(CGRect)rect
 {
     (void)rect;
-    [self drawCircleAt:self.fireCenter radius:43.0 label:@"FIRE" active:NO];
-    [self drawCircleAt:self.useCenter radius:31.0 label:@"USE" active:NO];
-    [self drawCircleAt:self.jumpCenter radius:31.0 label:@"JUMP" active:NO];
-    [self drawCircleAt:self.crouchCenter radius:28.0 label:@"DUCK" active:NO];
-    [self drawCircleAt:self.weaponCenter radius:27.0 label:@"NEXT" active:NO];
+    [self drawCircleAt:self.fireCenter radius:43.0 label:@"FIRE" active:[self isActionActive:gamefunc_Fire]];
+    [self drawCircleAt:self.useCenter radius:31.0 label:@"USE" active:[self isActionActive:gamefunc_Open]];
+    [self drawCircleAt:self.jumpCenter radius:31.0 label:@"JUMP" active:[self isActionActive:gamefunc_Jump]];
+    [self drawCircleAt:self.crouchCenter radius:28.0 label:@"DUCK" active:[self isActionActive:gamefunc_Crouch]];
+    [self drawCircleAt:self.weaponCenter radius:27.0 label:@"NEXT" active:[self isActionActive:gamefunc_Next_Weapon]];
     [self drawCircleAt:self.pauseCenter radius:25.0 label:@"II" active:NO];
 }
 

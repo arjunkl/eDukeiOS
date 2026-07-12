@@ -55,6 +55,13 @@ jobs:
       - name: Fetch SDL2 beside the repository
         run: git clone --depth 1 --branch SDL2 https://github.com/libsdl-org/SDL.git ../SDL
 
+      - name: Configure generated VoidSW iOS target
+        run: |
+          if ! ruby -e 'require "xcodeproj"' 2>/dev/null; then
+            gem install xcodeproj --no-document
+          fi
+          ruby platform/Apple/iOS/configure_voidsw_target.rb
+
       - name: Record Apple toolchain
         run: |
           xcodebuild -version
@@ -92,7 +99,7 @@ jobs:
             "${common_settings[@]}" \
             build 2>&1 | tee ios-build.log
 
-          for target in BUILD-iOS MACT-iOS AudioLib-iOS EDuke32-iOS; do
+          for target in BUILD-iOS MACT-iOS AudioLib-iOS EDuke32-iOS VoidSW-iOS; do
             xcodebuild \
               -project platform/Apple/EDuke32.xcodeproj \
               -target "$target" \
@@ -108,11 +115,28 @@ jobs:
           file Payload/EDuke32-iOS.app/EDuke32-iOS
           /usr/bin/zip -qry eDukeiOS-unsigned.ipa Payload
 
+      - name: Package unsigned VoidSW IPA
+        run: |
+          mkdir -p VoidSWPayload/Payload
+          cp -R platform/Apple/build/Debug-iphoneos/VoidSW-iOS.app VoidSWPayload/Payload/
+          test -x VoidSWPayload/Payload/VoidSW-iOS.app/VoidSW-iOS
+          file VoidSWPayload/Payload/VoidSW-iOS.app/VoidSW-iOS
+          cd VoidSWPayload
+          /usr/bin/zip -qry ../VoidSW-iOS-unsigned.ipa Payload
+
       - name: Upload unsigned IPA
         uses: actions/upload-artifact@v4
         with:
           name: eDukeiOS-unsigned-ipa
           path: eDukeiOS-unsigned.ipa
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Upload unsigned VoidSW IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: VoidSW-iOS-unsigned-ipa
+          path: VoidSW-iOS-unsigned.ipa
           if-no-files-found: error
           retention-days: 14
 
@@ -124,6 +148,8 @@ jobs:
           path: |
             platform/Apple/build/Debug-iphoneos/EDuke32-iOS.app.dSYM
             platform/Apple/build/Debug-iphoneos/EDuke32-iOS.app/EDuke32-iOS
+            platform/Apple/build/Debug-iphoneos/VoidSW-iOS.app.dSYM
+            platform/Apple/build/Debug-iphoneos/VoidSW-iOS.app/VoidSW-iOS
           if-no-files-found: warn
           retention-days: 14
 

@@ -1705,19 +1705,49 @@ void G_DisplayLogo(void)
     ready2send = 0;
 
     I_ClearAllInput();
+#ifdef EDUKE32_IOS
+    LOG_F(INFO, "iOS logo checkpoint: input cleared");
+#endif
 
     videoSetViewableArea(0, 0, xdim-1, ydim-1);
+#ifdef EDUKE32_IOS
+    LOG_F(INFO, "iOS logo checkpoint: viewable area set");
+#endif
     videoClearScreen(0L);
+#ifdef EDUKE32_IOS
+    LOG_F(INFO, "iOS logo checkpoint: screen cleared");
+#endif
     G_FadePalette(0, 0, 0, 252);
+#ifdef EDUKE32_IOS
+    LOG_F(INFO, "iOS logo checkpoint: palette faded");
+#endif
 
     renderFlushPerms();
+#ifdef EDUKE32_IOS
+    LOG_F(INFO, "iOS logo checkpoint: render perms flushed");
+#endif
     videoNextPage();
+#ifdef EDUKE32_IOS
+    LOG_F(INFO, "iOS logo checkpoint: first page presented");
+#endif
 
     G_UpdateAppTitle();
+#ifdef EDUKE32_IOS
+    LOG_F(INFO, "iOS logo checkpoint: app title updated");
+#endif
 
     S_StopMusic();
+#ifdef EDUKE32_IOS
+    LOG_F(INFO, "iOS logo checkpoint: music stopped");
+#endif
     FX_StopAllSounds(); // JBF 20031228
+#ifdef EDUKE32_IOS
+    LOG_F(INFO, "iOS logo checkpoint: sounds stopped");
+#endif
     S_ClearSoundLocks();  // JBF 20031228
+#ifdef EDUKE32_IOS
+    LOG_F(INFO, "iOS logo checkpoint: sound locks cleared");
+#endif
 
     if (!g_noLogo /* && (!g_netServer && ud.multimode < 2) */ &&
         VM_OnEventWithReturn(EVENT_MAINMENUSCREEN, g_player[myconnectindex].ps->i, myconnectindex, 0) == 0 &&

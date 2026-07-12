@@ -194,6 +194,8 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
     UITapGestureRecognizer *_gyroToggleGesture;
     UILabel *_gyroStatusLabel;
     BOOL _gyroEnabled;
+    BOOL _lookMoved;
+    BOOL _lookFiring;
 }
 @end
 
@@ -348,6 +350,23 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
             _lookTouch = touch;
             _lookOrigin = point;
             _lookPrevious = point;
+            _lookMoved = NO;
+            _lookFiring = NO;
+
+            // A quick tap fires once. Holding still briefly begins continuous
+            // fire; after it starts, the same finger may drag to aim.
+            if ([self touchMode] == TOUCH_SCREEN_GAME)
+            {
+                dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 180 * NSEC_PER_MSEC),
+                               dispatch_get_main_queue(), ^{
+                    if (self->_lookTouch == touch && !self->_lookMoved && !self->_lookFiring
+                        && [self touchMode] == TOUCH_SCREEN_GAME)
+                    {
+                        AndroidAction(1, gamefunc_Fire);
+                        self->_lookFiring = YES;
+                    }
+                });
+            }
         }
     }
     [self setNeedsDisplay];
@@ -386,6 +405,8 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
             {
                 CGFloat const dx = point.x - _lookPrevious.x;
                 CGFloat const dy = point.y - _lookPrevious.y;
+                if (!_lookFiring && hypot(point.x - _lookOrigin.x, point.y - _lookOrigin.y) >= 12.0)
+                    _lookMoved = YES;
                 AndroidLook(static_cast<float>(dx * kLookScale), static_cast<float>(dy * kLookScale));
                 _lookPrevious = point;
             }
@@ -426,13 +447,19 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
         else if (touch == _lookTouch)
         {
             CGFloat const distance = hypot(point.x - _lookOrigin.x, point.y - _lookOrigin.y);
+            BOOL const wasFiring = _lookFiring;
             _lookTouch = nil;
+            _lookMoved = NO;
+            _lookFiring = NO;
+
+            if (wasFiring)
+                AndroidAction(0, gamefunc_Fire);
 
             if (!cancelled)
             {
                 if (mode == TOUCH_SCREEN_GAME)
                 {
-                    if (distance < 12.0)
+                    if (!wasFiring && distance < 12.0)
                         PulseAction(gamefunc_Fire);
                 }
                 else if (distance < 18.0)

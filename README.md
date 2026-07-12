@@ -51,11 +51,11 @@ A Mac is not required when using the GitHub Actions build workflow.
 
 ## Installing the IPA
 
-1. Open the repository's [GitHub Actions page](https://github.com/arjunkl/eDukeiOS/actions).
-2. Open the latest successful **iOS build probe** workflow run.
-3. Download the `eDukeiOS-unsigned-ipa` artifact.
-4. Extract the downloaded ZIP to obtain the IPA.
-5. Install the IPA through AltStore or another personal signing solution.
+1. Open the [latest eDukeiOS release](https://github.com/arjunkl/eDukeiOS/releases/latest).
+2. Download the attached eDukeiOS IPA.
+3. Install it through AltStore or another personal signing solution.
+
+GitHub Actions artifacts are intended for development and diagnostic builds. Most users should download the current IPA from **Releases**.
 
 Installing a newer IPA with the same app identity should update the existing installation and preserve its Documents directory. Back up saves before testing development builds.
 

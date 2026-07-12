@@ -6,6 +6,8 @@ on:
       - main
     paths:
       - ".github/workflows/publish-milestone-releases.yml"
+  schedule:
+    - cron: "25 20 12 7 *"
 
 permissions:
   actions: read

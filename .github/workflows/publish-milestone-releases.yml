@@ -8,6 +8,9 @@ on:
       - ".github/workflows/publish-milestone-releases.yml"
   schedule:
     - cron: "25 20 12 7 *"
+  issues:
+    types:
+      - opened
 
 permissions:
   actions: read
@@ -16,6 +19,10 @@ permissions:
 jobs:
   publish:
     name: Publish recent IPA builds
+    if: >-
+      github.event_name != 'issues' ||
+      (github.event.issue.user.login == github.repository_owner &&
+       github.event.issue.title == 'Publish eDukeiOS milestone releases')
     runs-on: ubuntu-latest
 
     env:

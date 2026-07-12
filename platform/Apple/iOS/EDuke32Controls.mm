@@ -146,9 +146,9 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
 {
     // These are digital touch directions, so use the controller's full axis
     // extent. ANDROIDMOVEFACTOR is only about 20% of full keyboard speed.
-    constexpr int32_t kFullAxis = 32767;
-    info->dz += static_cast<int32_t>(-droidinput.forwardmove * kFullAxis);
-    info->dx += static_cast<int32_t>(droidinput.sidemove * kFullAxis);
+    constexpr int32_t kTouchMovementAxis = 31129; // 95% of the full controller range
+    info->dz += static_cast<int32_t>(-droidinput.forwardmove * kTouchMovementAxis);
+    info->dx += static_cast<int32_t>(droidinput.sidemove * kTouchMovementAxis);
 
     // Duke treats dyaw/dpitch as full-range controller axes. Small, relative
     // touch and gyro deltas disappear after that path's 32767 normalization.
@@ -245,8 +245,8 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
             CMRotationRate const rate = motion.rotationRate;
             UIInterfaceOrientation const orientation = view.window.windowScene.interfaceOrientation;
             CGFloat const direction = orientation == UIInterfaceOrientationLandscapeRight ? -1.0 : 1.0;
-            AndroidLook(static_cast<float>(rate.y * kGyroScale * direction * _motionManager.deviceMotionUpdateInterval),
-                        static_cast<float>(rate.x * kGyroScale * direction * _motionManager.deviceMotionUpdateInterval));
+            AndroidLook(static_cast<float>(rate.x * kGyroScale * direction * _motionManager.deviceMotionUpdateInterval),
+                        static_cast<float>(rate.y * kGyroScale * direction * _motionManager.deviceMotionUpdateInterval));
         }];
     }
 

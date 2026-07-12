@@ -14,10 +14,14 @@ permissions:
 jobs:
   signal:
     name: Authorize trusted release publisher
-    if: >-
-      github.event.pull_request.user.login == github.repository_owner &&
-      github.event.pull_request.title == 'Publish milestone IPA releases'
     runs-on: ubuntu-latest
     steps:
-      - name: Confirm owner request
-        run: echo "Owner-authorized release publication signal"
+      - name: Verify owner request
+        env:
+          REQUEST_ACTOR: ${{ github.actor }}
+          REPOSITORY_OWNER: ${{ github.repository_owner }}
+          REQUEST_TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          test "$REQUEST_ACTOR" = "$REPOSITORY_OWNER"
+          test "$REQUEST_TITLE" = "Publish milestone IPA releases"
+          echo "Owner-authorized release publication signal"

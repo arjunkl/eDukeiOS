@@ -2,7 +2,7 @@
  * softsurface.cpp
  *  An 8-bit rendering surface that can quickly upscale and blit 8-bit paletted buffers to an external 32-bit buffer.
  *
- * Copyright © 2018, Alex Dawson. All rights reserved.
+ * Copyright Â© 2018, Alex Dawson. All rights reserved.
  */
 
 #include "softsurface.h"
@@ -185,6 +185,28 @@ void softsurface_blitBufferInternal(UINTTYPE* destBuffer)
     }
 }
 
+#ifdef EDUKE32_IOS
+template <typename UINTTYPE>
+static void softsurface_blitBufferIOS(UINTTYPE *destBuffer)
+{
+    if (bufferRes.x <= 0 || bufferRes.y <= 0 || destBufferRes.x <= 0 || destBufferRes.y <= 0)
+        return;
+
+    for (int32_t y = 0; y < destBufferRes.y; ++y)
+    {
+        int32_t const srcY = min((int64_t)y * bufferRes.y / destBufferRes.y, (int64_t)bufferRes.y - 1);
+        UINTTYPE *dst = destBuffer + (size_t)y * destBufferRes.x;
+        uint8_t const *src = buffer + (size_t)srcY * bufferRes.x;
+
+        for (int32_t x = 0; x < destBufferRes.x; ++x)
+        {
+            int32_t const srcX = min((int64_t)x * bufferRes.x / destBufferRes.x, (int64_t)bufferRes.x - 1);
+            dst[x] = (UINTTYPE)pPal[src[srcX]];
+        }
+    }
+}
+#endif
+
 void softsurface_blitBuffer(uint32_t* destBuffer,
                             uint32_t destBpp)
 {
@@ -197,11 +219,19 @@ void softsurface_blitBuffer(uint32_t* destBuffer,
     {
     case 15:
     case 16:
+#ifdef EDUKE32_IOS
+        softsurface_blitBufferIOS<uint16_t>((uint16_t *)destBuffer);
+#else
         softsurface_blitBufferInternal<uint16_t>((uint16_t*) destBuffer);
+#endif
         break;
     case 24:
     case 32:
+#ifdef EDUKE32_IOS
+        softsurface_blitBufferIOS<uint32_t>(destBuffer);
+#else
         softsurface_blitBufferInternal<uint32_t>(destBuffer);
+#endif
         break;
     default:
         return;

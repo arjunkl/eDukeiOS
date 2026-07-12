@@ -1,0 +1,163 @@
+name: iOS build probe
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/ios-build.yml"
+      - "platform/Apple/**"
+      - "source/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  legacy-ios-target:
+    name: Legacy EDuke32-iOS target
+    runs-on: macos-26
+    timeout-minutes: 30
+
+    steps:
+      - name: Check out eDukeiOS
+        uses: actions/checkout@v6
+
+      - name: Generate iOS app icon assets
+        run: |
+          set -e
+          iconset="platform/Apple/iOS/Images.xcassets/AppIcon.appiconset"
+          source="$RUNNER_TEMP/eDukeiOS-AppIcon.jpg"
+          /usr/bin/base64 -D -i platform/Apple/iOS/AppIcon1024.jpg.base64 -o "$source"
+
+          while read -r name size; do
+            /usr/bin/sips -s format png -z "$size" "$size" "$source" \
+              --out "$iconset/$name.png" >/dev/null
+          done <<'ICON_SIZES'
+          iphone-20@2x 40
+          iphone-20@3x 60
+          iphone-29@2x 58
+          iphone-29@3x 87
+          iphone-40@2x 80
+          iphone-40@3x 120
+          iphone-60@2x 120
+          iphone-60@3x 180
+          ipad-20@1x 20
+          ipad-20@2x 40
+          ipad-29@1x 29
+          ipad-29@2x 58
+          ipad-40@1x 40
+          ipad-40@2x 80
+          ipad-76@1x 76
+          ipad-76@2x 152
+          ipad-83.5@2x 167
+          ios-marketing 1024
+          ICON_SIZES
+
+      - name: Fetch SDL2 beside the repository
+        run: git clone --depth 1 --branch SDL2 https://github.com/libsdl-org/SDL.git ../SDL
+
+      - name: Configure generated VoidSW iOS target
+        run: |
+          if ! ruby -e 'require "xcodeproj"' 2>/dev/null; then
+            gem install xcodeproj --no-document
+          fi
+          ruby platform/Apple/iOS/configure_voidsw_target.rb
+
+      - name: Record Apple toolchain
+        run: |
+          xcodebuild -version
+          xcrun --sdk iphoneos --show-sdk-version
+          xcrun --sdk iphoneos --show-sdk-path
+          uname -m
+
+      - name: List Xcode targets
+        run: |
+          xcodebuild -list -project platform/Apple/EDuke32.xcodeproj
+          xcodebuild -list -project ../SDL/Xcode/SDL/SDL.xcodeproj
+
+      - name: Build unsigned arm64 dependencies and app
+        run: |
+          set -o pipefail
+
+          common_settings=(
+            -configuration Debug
+            -sdk iphoneos
+            ARCHS=arm64
+            ONLY_ACTIVE_ARCH=NO
+            IPHONEOS_DEPLOYMENT_TARGET=15.0
+            CODE_SIGNING_ALLOWED=NO
+            CODE_SIGNING_REQUIRED=NO
+            COMPILER_INDEX_STORE_ENABLE=NO
+            DEBUG_INFORMATION_FORMAT=dwarf-with-dsym
+            COPY_PHASE_STRIP=NO
+            STRIP_INSTALLED_PRODUCT=NO
+            SYMROOT="$GITHUB_WORKSPACE/platform/Apple/build"
+          )
+
+          xcodebuild \
+            -project ../SDL/Xcode/SDL/SDL.xcodeproj \
+            -target "Static Library-iOS" \
+            "${common_settings[@]}" \
+            build 2>&1 | tee ios-build.log
+
+          for target in BUILD-iOS MACT-iOS AudioLib-iOS EDuke32-iOS VoidSW-iOS; do
+            xcodebuild \
+              -project platform/Apple/EDuke32.xcodeproj \
+              -target "$target" \
+              "${common_settings[@]}" \
+              build 2>&1 | tee -a ios-build.log
+          done
+
+      - name: Package unsigned IPA
+        run: |
+          mkdir Payload
+          cp -R platform/Apple/build/Debug-iphoneos/EDuke32-iOS.app Payload/
+          test -x Payload/EDuke32-iOS.app/EDuke32-iOS
+          file Payload/EDuke32-iOS.app/EDuke32-iOS
+          /usr/bin/zip -qry eDukeiOS-unsigned.ipa Payload
+
+      - name: Package unsigned VoidSW IPA
+        run: |
+          mkdir -p VoidSWPayload/Payload
+          cp -R platform/Apple/build/Debug-iphoneos/VoidSW-iOS.app VoidSWPayload/Payload/
+          test -x VoidSWPayload/Payload/VoidSW-iOS.app/VoidSW-iOS
+          file VoidSWPayload/Payload/VoidSW-iOS.app/VoidSW-iOS
+          cd VoidSWPayload
+          /usr/bin/zip -qry ../VoidSW-iOS-unsigned.ipa Payload
+
+      - name: Upload unsigned IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: eDukeiOS-unsigned-ipa
+          path: eDukeiOS-unsigned.ipa
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Upload unsigned VoidSW IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: VoidSW-iOS-unsigned-ipa
+          path: VoidSW-iOS-unsigned.ipa
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Upload diagnostic symbols
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-debug-symbols
+          path: |
+            platform/Apple/build/Debug-iphoneos/EDuke32-iOS.app.dSYM
+            platform/Apple/build/Debug-iphoneos/EDuke32-iOS.app/EDuke32-iOS
+            platform/Apple/build/Debug-iphoneos/VoidSW-iOS.app.dSYM
+            platform/Apple/build/Debug-iphoneos/VoidSW-iOS.app/VoidSW-iOS
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Upload diagnostic log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-build-log
+          path: ios-build.log
+          if-no-files-found: ignore
+          retention-days: 3

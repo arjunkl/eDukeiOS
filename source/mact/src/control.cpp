@@ -19,8 +19,9 @@
 #include "osd.h"
 #include "pragmas.h"
 
-#ifdef __ANDROID__
-#include "android.h"
+#if defined EDUKE32_TOUCH_DEVICES
+extern void CONTROL_Android_ClearButton(int32_t whichbutton);
+extern void CONTROL_Android_PollDevices(ControlInfo *info);
 #endif
 
 // TODO: add mact cvars and make this user configurable
@@ -105,8 +106,19 @@ static void controlUpdateMouseState(ControlInfo *const info)
     vec2f_t finput = { input.x * CONTROL_MouseSensitivityUnit * CONTROL_MouseSensitivity * CONTROL_MouseAxesSensitivity[0],
                        input.y * CONTROL_MouseSensitivityUnit * CONTROL_MouseSensitivity * CONTROL_MouseAxesSensitivity[1] };
 
-    info->mousex = Blrintf(clamp(finput.x, -MAXSCALEDCONTROLVALUE, MAXSCALEDCONTROLVALUE));
-    info->mousey = Blrintf(clamp(finput.y, -MAXSCALEDCONTROLVALUE, MAXSCALEDCONTROLVALUE));
+    int32_t const mousex = Blrintf(clamp(finput.x, -MAXSCALEDCONTROLVALUE, MAXSCALEDCONTROLVALUE));
+    int32_t const mousey = Blrintf(clamp(finput.y, -MAXSCALEDCONTROLVALUE, MAXSCALEDCONTROLVALUE));
+
+#if defined EDUKE32_IOS
+    // CONTROL_Android_PollDevices runs first and injects relative touch/gyro
+    // aim into these fields. Preserve it when the UIKit mouse backend reports
+    // its usual zero delta instead of replacing it.
+    info->mousex += mousex;
+    info->mousey += mousey;
+#else
+    info->mousex = mousex;
+    info->mousey = mousey;
+#endif
 }
 
 static int32_t controlGetTime(void)
@@ -521,7 +533,7 @@ static void controlPollDevices(ControlInfo *const info)
     memset(info, 0, sizeof(ControlInfo));
     handleevents();
 
-#ifdef __ANDROID__
+#if defined EDUKE32_TOUCH_DEVICES
     CONTROL_Android_PollDevices(info);
 #endif
 
@@ -631,7 +643,7 @@ void CONTROL_ClearButton(int whichbutton)
 {
     if (CONTROL_CheckRange(whichbutton)) return;
 
-#ifdef __ANDROID__
+#if defined EDUKE32_TOUCH_DEVICES
     CONTROL_Android_ClearButton(whichbutton);
 #endif
 
@@ -697,9 +709,6 @@ static void controlUpdateGameFunctions(void)
 
 void CONTROL_GetInput(ControlInfo *info)
 {
-#ifdef __ANDROID__
-    CONTROL_Android_PollDevices(info);
-#endif
     controlPollDevices(info);
     controlUpdateGameFunctions();
     inputchecked = 1;

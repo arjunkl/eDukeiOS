@@ -13,6 +13,11 @@
 #include "palette.h"
 #include "renderlayer.h"
 #include "sdl_inc.h"
+#ifdef EDUKE32_IOS
+# include "SDL_main.h"
+extern "C" void EDuke32_IOS_GetRenderSize(int32_t *width, int32_t *height);
+extern "C" char *EDuke32_IOS_SelectGame(void);
+#endif
 #include "softsurface.h"
 
 #if SDL_MAJOR_VERSION >= 2
@@ -323,7 +328,7 @@ void wm_setapptitle(const char *name)
 //
 
 /* XXX: libexecinfo could be used on systems without gnu libc. */
-#if !defined _WIN32 && defined __GNUC__ && !defined __OpenBSD__ && !(defined __APPLE__ && defined __BIG_ENDIAN__) && !defined GEKKO && !defined EDUKE32_TOUCH_DEVICES && !defined __OPENDINGUX__
+#if !defined _WIN32 && defined __GNUC__ && !defined __OpenBSD__ && !(defined __APPLE__ && defined __BIG_ENDIAN__) && !defined GEKKO && (!defined EDUKE32_TOUCH_DEVICES || defined EDUKE32_IOS) && !defined __OPENDINGUX__
 # define PRINTSTACKONSEGV 1
 # include <execinfo.h>
 #endif
@@ -340,7 +345,11 @@ static void attach_debugger_here(void)
 
 static void sighandler(int signum)
 {
+#ifdef EDUKE32_IOS
+    dprintf(fileno(stderr), "\nEDUKE32_IOS_CRASH: caught signal %d\n", signum);
+#else
     UNREFERENCED_PARAMETER(signum);
+#endif
     //    if (signum==SIGSEGV)
     {
         grabmouse_low(0);
@@ -448,6 +457,18 @@ void sdlayer_sethints()
 #if defined SDL_HINT_MOUSE_RELATIVE_SCALING
     SDL_SetHint(SDL_HINT_MOUSE_RELATIVE_SCALING, "0");
 #endif
+
+#ifdef EDUKE32_IOS
+# if defined SDL_HINT_ACCELEROMETER_AS_JOYSTICK
+    // Gyro aiming is provided by EDuke32Controls.mm through Core Motion.
+    SDL_SetHint(SDL_HINT_ACCELEROMETER_AS_JOYSTICK, "0");
+# endif
+# ifdef USE_OPENGL
+    // The legacy iOS target does not yet create a modern GLES context. Use the
+    // classic software renderer for the first playable iOS milestone.
+    nogl = 1;
+# endif
+#endif
 }
 
 #ifdef _WIN32
@@ -457,7 +478,7 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpCmdLine, int nC
 extern "C" int eduke32_android_main(int argc, char const *argv[]);
 # endif
 int eduke32_android_main(int argc, char const *argv[])
-#elif defined GEKKO
+#elif defined GEKKO || defined EDUKE32_IOS
 int SDL_main(int argc, char *argv[])
 #else
 int main(int argc, char *argv[])
@@ -477,6 +498,18 @@ int main(int argc, char *argv[])
     argv[argc] = NULL;
 #endif
 
+#ifdef EDUKE32_IOS
+    // Choose the main game before allocator/log/search-path initialization.
+    // The returned filename lives in Documents and remains valid for app_main.
+    char *iosSelectedGrp = EDuke32_IOS_SelectGame();
+    char *iosArgv[4] = { argv[0], (char *)"-gamegrp", iosSelectedGrp, nullptr };
+    if (iosSelectedGrp != nullptr)
+    {
+        argc = 3;
+        argv = iosArgv;
+    }
+#endif
+
     engineSetupAllocator();
 
 #ifndef __ANDROID__
@@ -484,6 +517,10 @@ int main(int argc, char *argv[])
     signal(SIGILL, sighandler);  /* clang -fcatch-undefined-behavior uses an ill. insn */
     signal(SIGABRT, sighandler);
     signal(SIGFPE, sighandler);
+#ifdef EDUKE32_IOS
+    signal(SIGBUS, sighandler);
+    signal(SIGTRAP, sighandler);
+#endif
 #endif
 
     engineSetupLogging(argc, argv);
@@ -1413,12 +1450,33 @@ void videoGetModes(int display)
         }
     }
 
+#ifdef EDUKE32_IOS
+    // SDL's UIKit mode list may report only a legacy 3:2 surface. Add an
+    // exact device-aspect software mode obtained from UIScreen so the renderer
+    // fills modern iPhone and iPad displays without stretching.
+    int32_t mobileWidth = 0;
+    int32_t mobileHeight = 0;
+    EDuke32_IOS_GetRenderSize(&mobileWidth, &mobileHeight);
+    if (SDL_CHECKMODE(mobileWidth, mobileHeight))
+    {
+        SDL_ADDMODE(mobileWidth, mobileHeight, 8, 1);
+        SDL_ADDMODE(mobileWidth, mobileHeight, 8, 0);
+        maxx = max(maxx, mobileWidth);
+        maxy = max(maxy, mobileHeight);
+        LOG_F(INFO, "UIKit device-aspect render mode: %dx%d.", mobileWidth, mobileHeight);
+    }
+#endif
+
     SDL_CHECKFSMODES(maxx, maxy);
 
     // add windowed modes next
     // SDL sorts display modes largest to smallest, so we can just compare with mode 0
     // to make sure we aren't adding modes that are larger than the actual screen res
-    SDL_GetDisplayMode(display, 0, &dispmode);
+    if (SDL_GetDisplayMode(display, 0, &dispmode) < 0)
+    {
+        dispmode.w = maxx;
+        dispmode.h = maxy;
+    }
 
     for (i = 0; g_defaultVideoModes[i].x; i++)
     {
@@ -1624,7 +1682,9 @@ void sdlayer_setvideomode_opengl(void)
 
 int32_t setvideomode_sdlcommon(int32_t *x, int32_t *y, int32_t c, int32_t fs, int32_t *regrab)
 {
-    if ((r_displayindex == g_displayindex) && (fs == fullscreen) && (*x == xres) && (*y == yres) && (c == bpp) && !videomodereset)
+    // A matching mode is only a no-op after a real window has been created.
+    // On UIKit the startup defaults can otherwise match before SDL_CreateWindow.
+    if (sdl_window && (r_displayindex == g_displayindex) && (fs == fullscreen) && (*x == xres) && (*y == yres) && (c == bpp) && !videomodereset)
         return 0;
 
     if (videoCheckMode(x, y, c, fs, 0) < 0)
@@ -1809,6 +1869,12 @@ int setvideomode_sdlcommonpost(int32_t x, int32_t y, int32_t c, int32_t fs, int3
 int32_t videoSetMode(int32_t x, int32_t y, int32_t c, int32_t fs)
 {
     int32_t regrab = 0, ret;
+
+#ifdef EDUKE32_IOS
+    EDuke32_IOS_GetRenderSize(&x, &y);
+    c = 8;
+    fs = 1;
+#endif
 
     ret = setvideomode_sdlcommon(&x, &y, c, fs, &regrab);
 
@@ -2180,9 +2246,34 @@ void videoShowFrame(int32_t w)
         while (lockcount) videoEndDrawing();
     }
 
+#ifdef EDUKE32_IOS
+    static uint32_t iOSPresentTraceCount;
+    bool const iOSPresentTrace = iOSPresentTraceCount++ < 8;
+    if (iOSPresentTrace)
+    LOG_F(INFO, "iOS present: surface=%dx%d pitch=%d bpp=%d pixels=%p soft=%dx%d",
+          sdl_surface ? sdl_surface->w : -1,
+          sdl_surface ? sdl_surface->h : -1,
+          sdl_surface ? sdl_surface->pitch : -1,
+          (sdl_surface && sdl_surface->format) ? sdl_surface->format->BitsPerPixel : -1,
+          sdl_surface ? sdl_surface->pixels : nullptr,
+          softsurface_getDestinationBufferResolution().x,
+          softsurface_getDestinationBufferResolution().y);
+#endif
     if (SDL_MUSTLOCK(sdl_surface)) SDL_LockSurface(sdl_surface);
+#ifdef EDUKE32_IOS
+    if (iOSPresentTrace)
+        LOG_F(INFO, "iOS present checkpoint: before software blit");
+#endif
     softsurface_blitBuffer((uint32_t*) sdl_surface->pixels, sdl_surface->format->BitsPerPixel);
+#ifdef EDUKE32_IOS
+    if (iOSPresentTrace)
+        LOG_F(INFO, "iOS present checkpoint: after software blit");
+#endif
     if (SDL_MUSTLOCK(sdl_surface)) SDL_UnlockSurface(sdl_surface);
+#ifdef EDUKE32_IOS
+    if (iOSPresentTrace)
+        LOG_F(INFO, "iOS present checkpoint: before SDL_UpdateWindowSurface");
+#endif
 #if SDL_MAJOR_VERSION >= 2
     if (SDL_UpdateWindowSurface(sdl_window))
     {
@@ -2191,6 +2282,10 @@ void videoShowFrame(int32_t w)
         sdl_surface = SDL_GetWindowSurface(sdl_window);
         SDL_UpdateWindowSurface(sdl_window);
     }
+#ifdef EDUKE32_IOS
+    if (iOSPresentTrace)
+        LOG_F(INFO, "iOS present checkpoint: after SDL_UpdateWindowSurface");
+#endif
 #else
     SDL_Flip(sdl_surface);
 #endif
@@ -2339,7 +2434,6 @@ int32_t handleevents_sdlcommon(SDL_Event *ev)
 {
     switch (ev->type)
     {
-#if !defined EDUKE32_IOS
         case SDL_MOUSEMOTION:
 #ifndef GEKKO
             g_mouseAbs.x = ev->motion.x;
@@ -2414,13 +2508,14 @@ int32_t handleevents_sdlcommon(SDL_Event *ev)
                 g_mouseCallback(j+1, ev->button.state == SDL_PRESSED);
             break;
         }
-#else
+#ifdef EDUKE32_IOS
 # if SDL_MAJOR_VERSION >= 2
         case SDL_FINGERUP:
             g_mouseClickState = MOUSE_RELEASED;
             break;
         case SDL_FINGERDOWN:
             g_mouseClickState = MOUSE_PRESSED;
+            fallthrough__;
         case SDL_FINGERMOTION:
             g_mouseAbs.x = Blrintf(ev->tfinger.x * xdim);
             g_mouseAbs.y = Blrintf(ev->tfinger.y * ydim);

@@ -115,6 +115,9 @@ char *Bgethomedir(void)
     if (loaded)
         FreeLibrary(hShell32);
     return NULL;
+#elif defined EDUKE32_IOS
+    char const *home = getenv("HOME");
+    return home && home[0] ? Xstrdup(home) : nullptr;
 #elif defined EDUKE32_OSX
     return osx_gethomedir();
 #elif defined(GEKKO)

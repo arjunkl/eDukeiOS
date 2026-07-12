@@ -134,7 +134,6 @@
 		0008E9F219F1AD9B0091588D /* grpscan.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0008E9BC19F1AD9B0091588D /* grpscan.cpp */; };
 		0008E9F319F1AD9B0091588D /* input.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0008E9BE19F1AD9B0091588D /* input.cpp */; };
 		0008E9F419F1AD9B0091588D /* menus.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0008E9C219F1AD9B0091588D /* menus.cpp */; };
-		0008E9F519F1AD9B0091588D /* namesdyn.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0008E9C519F1AD9B0091588D /* namesdyn.cpp */; };
 		0008E9F619F1AD9B0091588D /* network.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0008E9C719F1AD9B0091588D /* network.cpp */; };
 		0008E9F719F1AD9B0091588D /* osdcmds.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0008E9C919F1AD9B0091588D /* osdcmds.cpp */; };
 		0008E9F819F1AD9B0091588D /* osdfuncs.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0008E9CB19F1AD9B0091588D /* osdfuncs.cpp */; };
@@ -145,7 +144,7 @@
 		0008E9FD19F1AD9B0091588D /* savegame.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0008E9D519F1AD9B0091588D /* savegame.cpp */; };
 		0008EA0019F1AD9B0091588D /* sector.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0008E9DA19F1AD9B0091588D /* sector.cpp */; };
 		0008EA0119F1AD9B0091588D /* sounds.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0008E9DD19F1AD9B0091588D /* sounds.cpp */; };
-		0008EA0219F1AD9B0091588D /* soundsdyn.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0008E9DF19F1AD9B0091588D /* soundsdyn.cpp */; };
+		0008EA0219F1AD9B0091588D /* dnames.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0008E9DF19F1AD9B0091588D /* dnames.cpp */; };
 		0008EA0319F1AD9B0091588D /* startosx.game.mm in Sources */ = {isa = PBXBuildFile; fileRef = 0008E9E219F1AD9B0091588D /* startosx.game.mm */; };
 		0008EA0719F1ADC90091588D /* common.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0008EA0519F1ADC90091588D /* common.cpp */; };
 		0008EA0819F1ADC90091588D /* common.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0008EA0519F1ADC90091588D /* common.cpp */; };
@@ -191,7 +190,6 @@
 		000C48A519F35601006E6B52 /* grpscan.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0008E9BC19F1AD9B0091588D /* grpscan.cpp */; };
 		000C48A619F35601006E6B52 /* input.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0008E9BE19F1AD9B0091588D /* input.cpp */; };
 		000C48A719F35601006E6B52 /* menus.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0008E9C219F1AD9B0091588D /* menus.cpp */; };
-		000C48A819F35601006E6B52 /* namesdyn.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0008E9C519F1AD9B0091588D /* namesdyn.cpp */; };
 		000C48A919F35601006E6B52 /* network.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0008E9C719F1AD9B0091588D /* network.cpp */; };
 		000C48AA19F35601006E6B52 /* osdcmds.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0008E9C919F1AD9B0091588D /* osdcmds.cpp */; };
 		000C48AB19F35601006E6B52 /* osdfuncs.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0008E9CB19F1AD9B0091588D /* osdfuncs.cpp */; };
@@ -202,7 +200,7 @@
 		000C48B019F35601006E6B52 /* savegame.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0008E9D519F1AD9B0091588D /* savegame.cpp */; };
 		000C48B219F35601006E6B52 /* sector.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0008E9DA19F1AD9B0091588D /* sector.cpp */; };
 		000C48B319F35601006E6B52 /* sounds.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0008E9DD19F1AD9B0091588D /* sounds.cpp */; };
-		000C48B419F35601006E6B52 /* soundsdyn.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0008E9DF19F1AD9B0091588D /* soundsdyn.cpp */; };
+		000C48B419F35601006E6B52 /* dnames.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0008E9DF19F1AD9B0091588D /* dnames.cpp */; };
 		000C48D519F35D7A006E6B52 /* libSDL2.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 000C48D419F35D6E006E6B52 /* libSDL2.a */; };
 		000C48D719F35D92006E6B52 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 000C48D619F35D92006E6B52 /* UIKit.framework */; };
 		000C48D919F35DA3006E6B52 /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0008EA8119F1B1E20091588D /* AudioToolbox.framework */; };
@@ -355,15 +353,10 @@
 		2044C99D1E08A74100A8C543 /* tiles.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2044C99B1E08A74100A8C543 /* tiles.cpp */; };
 		204D6B5F1C98973F001FA505 /* Math.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 204D6B571C98973F001FA505 /* Math.hpp */; };
 		204D6B601C98973F001FA505 /* ProcessCommon.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 204D6B581C98973F001FA505 /* ProcessCommon.hpp */; };
-		204D6B611C98973F001FA505 /* ProcessRGB.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 204D6B591C98973F001FA505 /* ProcessRGB.cpp */; };
 		204D6B621C98973F001FA505 /* ProcessRGB.h in Headers */ = {isa = PBXBuildFile; fileRef = 204D6B5A1C98973F001FA505 /* ProcessRGB.h */; };
-		204D6B631C98973F001FA505 /* Tables.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 204D6B5B1C98973F001FA505 /* Tables.cpp */; };
 		204D6B641C98973F001FA505 /* Tables.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 204D6B5C1C98973F001FA505 /* Tables.hpp */; };
 		204D6B651C98973F001FA505 /* Types.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 204D6B5D1C98973F001FA505 /* Types.hpp */; };
 		204D6B661C98973F001FA505 /* Vector.hpp in Headers */ = {isa = PBXBuildFile; fileRef = 204D6B5E1C98973F001FA505 /* Vector.hpp */; };
-		206B3A081B074F3800E5DBD0 /* jwzglesI.h in Headers */ = {isa = PBXBuildFile; fileRef = 206B3A061B074F3000E5DBD0 /* jwzglesI.h */; settings = {ATTRIBUTES = (Public, ); }; };
-		206B3A0A1B074F4300E5DBD0 /* jwzgles.h in Headers */ = {isa = PBXBuildFile; fileRef = 206B3A051B074F3000E5DBD0 /* jwzgles.h */; settings = {ATTRIBUTES = (Public, ); }; };
-		206B3A0C1B074F6400E5DBD0 /* jwzgles.c in Sources */ = {isa = PBXBuildFile; fileRef = 206B3A0B1B074F6400E5DBD0 /* jwzgles.c */; };
 		2085BEBA1A8F23B9002BF4CE /* libSystem.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 2085BEB91A8F23B9002BF4CE /* libSystem.dylib */; };
 		20A63CB923BF23000007D142 /* communityapi.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 20A63CB823BF23000007D142 /* communityapi.cpp */; };
 		20A63CBA23BF23000007D142 /* communityapi.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 20A63CB823BF23000007D142 /* communityapi.cpp */; };
@@ -371,8 +364,6 @@
 		20A63CBD23BF23070007D142 /* cpuid.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 20A63CBB23BF23070007D142 /* cpuid.cpp */; };
 		20A63CBF23BF23100007D142 /* enet.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 20A63CBE23BF23100007D142 /* enet.cpp */; };
 		20A63CC023BF23100007D142 /* enet.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 20A63CBE23BF23100007D142 /* enet.cpp */; };
-		20A63CC323BF231C0007D142 /* fix16_str.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 20A63CC123BF231C0007D142 /* fix16_str.cpp */; };
-		20A63CC423BF231C0007D142 /* fix16_str.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 20A63CC123BF231C0007D142 /* fix16_str.cpp */; };
 		20A63CC523BF231C0007D142 /* fix16.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 20A63CC223BF231C0007D142 /* fix16.cpp */; };
 		20A63CC623BF231C0007D142 /* fix16.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 20A63CC223BF231C0007D142 /* fix16.cpp */; };
 		20A63CC823BF23230007D142 /* glsurface.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 20A63CC723BF23230007D142 /* glsurface.cpp */; };
@@ -391,8 +382,28 @@
 		20A63CDB23BF23700007D142 /* timer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 20A63CD923BF23700007D142 /* timer.cpp */; };
 		20A63CDD23BF23750007D142 /* vfs.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 20A63CDC23BF23750007D142 /* vfs.cpp */; };
 		20A63CDE23BF23750007D142 /* vfs.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 20A63CDC23BF23750007D142 /* vfs.cpp */; };
-		20A63CE023BF23810007D142 /* zpl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 20A63CDF23BF23810007D142 /* zpl.cpp */; };
-		20A63CE123BF23810007D142 /* zpl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 20A63CDF23BF23810007D142 /* zpl.cpp */; };
+		20A63CE023BF23810007D142 /* smmalloc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 20A63CDF23BF23810007D142 /* smmalloc.cpp */; };
+		20A63CE123BF23810007D142 /* smmalloc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 20A63CDF23BF23810007D142 /* smmalloc.cpp */; };
+		F10000000000000000000011 /* smmalloc_generic.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F10000000000000000000001 /* smmalloc_generic.cpp */; };
+		F10000000000000000000012 /* smmalloc_tls.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F10000000000000000000002 /* smmalloc_tls.cpp */; };
+		F10000000000000000000021 /* smmalloc_generic.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F10000000000000000000001 /* smmalloc_generic.cpp */; };
+		F10000000000000000000022 /* smmalloc_tls.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F10000000000000000000002 /* smmalloc_tls.cpp */; };
+		F20000000000000000000021 /* imgui.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F20000000000000000000001 /* imgui.cpp */; };
+		F20000000000000000000022 /* imgui_demo.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F20000000000000000000002 /* imgui_demo.cpp */; };
+		F20000000000000000000023 /* imgui_draw.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F20000000000000000000003 /* imgui_draw.cpp */; };
+		F20000000000000000000024 /* imgui_impl_opengl3.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F20000000000000000000004 /* imgui_impl_opengl3.cpp */; };
+		F20000000000000000000025 /* imgui_impl_sdl2.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F20000000000000000000005 /* imgui_impl_sdl2.cpp */; };
+		F20000000000000000000026 /* imgui_tables.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F20000000000000000000006 /* imgui_tables.cpp */; };
+		F20000000000000000000027 /* imgui_widgets.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F20000000000000000000007 /* imgui_widgets.cpp */; };
+		F30000000000000000000001 /* glad.c in Sources */ = {isa = PBXBuildFile; fileRef = 20C607CB23BF1F0000672309 /* glad.c */; };
+		F40000000000000000000021 /* driver_sf2.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F40000000000000000000001 /* driver_sf2.cpp */; };
+		F50000000000000000000021 /* AVFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F50000000000000000000001 /* AVFoundation.framework */; };
+		F50000000000000000000022 /* CoreHaptics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F50000000000000000000002 /* CoreHaptics.framework */; };
+		F50000000000000000000023 /* Metal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F50000000000000000000003 /* Metal.framework */; };
+		F60000000000000000000021 /* loguru.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F60000000000000000000001 /* loguru.cpp */; };
+		F60000000000000000000022 /* screentext.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F60000000000000000000002 /* screentext.cpp */; };
+		F60000000000000000000023 /* gamestructures.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0008E9B519F1AD9B0091588D /* gamestructures.cpp */; };
+		F70000000000000000000021 /* EDuke32Controls.mm in Sources */ = {isa = PBXBuildFile; fileRef = F70000000000000000000001 /* EDuke32Controls.mm */; };
 		20A63CE623BF24D10007D142 /* linklist.h in Headers */ = {isa = PBXBuildFile; fileRef = 0008E6DF19F1AAFF0091588D /* linklist.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		20A63CE723BF24D30007D142 /* linklist.h in Headers */ = {isa = PBXBuildFile; fileRef = 0008E6DF19F1AAFF0091588D /* linklist.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		20A63CEC23BF25330007D142 /* _midi.h in Headers */ = {isa = PBXBuildFile; fileRef = 0008E99A19F1AD9B0091588D /* _midi.h */; };
@@ -860,8 +871,6 @@
 		0008E9C219F1AD9B0091588D /* menus.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.c; path = menus.cpp; sourceTree = "<group>"; };
 		0008E9C319F1AD9B0091588D /* menus.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = menus.h; sourceTree = "<group>"; };
 		0008E9C419F1AD9B0091588D /* names.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = names.h; sourceTree = "<group>"; };
-		0008E9C519F1AD9B0091588D /* namesdyn.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.c; path = namesdyn.cpp; sourceTree = "<group>"; };
-		0008E9C619F1AD9B0091588D /* namesdyn.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = namesdyn.h; sourceTree = "<group>"; };
 		0008E9C719F1AD9B0091588D /* network.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.c; path = network.cpp; sourceTree = "<group>"; };
 		0008E9C819F1AD9B0091588D /* network.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = network.h; sourceTree = "<group>"; };
 		0008E9C919F1AD9B0091588D /* osdcmds.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.c; path = osdcmds.cpp; sourceTree = "<group>"; };
@@ -884,8 +893,8 @@
 		0008E9DC19F1AD9B0091588D /* soundefs.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = soundefs.h; sourceTree = "<group>"; };
 		0008E9DD19F1AD9B0091588D /* sounds.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.c; path = sounds.cpp; sourceTree = "<group>"; };
 		0008E9DE19F1AD9B0091588D /* sounds.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = sounds.h; sourceTree = "<group>"; };
-		0008E9DF19F1AD9B0091588D /* soundsdyn.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.c; path = soundsdyn.cpp; sourceTree = "<group>"; };
-		0008E9E019F1AD9B0091588D /* soundsdyn.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = soundsdyn.h; sourceTree = "<group>"; };
+		0008E9DF19F1AD9B0091588D /* dnames.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.c; path = dnames.cpp; sourceTree = "<group>"; };
+		0008E9E019F1AD9B0091588D /* dnames.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = dnames.h; sourceTree = "<group>"; };
 		0008E9E119F1AD9B0091588D /* standard.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = standard.h; sourceTree = "<group>"; };
 		0008E9E219F1AD9B0091588D /* startosx.game.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = startosx.game.mm; sourceTree = "<group>"; };
 		0008EA0419F1ADC90091588D /* common_game.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = common_game.h; sourceTree = "<group>"; };
@@ -912,7 +921,7 @@
 		000C486D19F35516006E6B52 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		000C486F19F35516006E6B52 /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
 		000C487519F35517006E6B52 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		000C487719F35517006E6B52 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = SOURCE_ROOT; };
+		000C487719F35517006E6B52 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		000C487F19F35517006E6B52 /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Images.xcassets; sourceTree = "<group>"; };
 		000C48CE19F35D6E006E6B52 /* SDL.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = SDL.xcodeproj; path = "../../../SDL/Xcode-iOS/SDL/SDL.xcodeproj"; sourceTree = SOURCE_ROOT; };
 		000C48D619F35D92006E6B52 /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
@@ -945,20 +954,14 @@
 		204D6B4F1C9896B0001FA505 /* inv.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.h; fileEncoding = 4; path = inv.h; sourceTree = "<group>"; };
 		204D6B571C98973F001FA505 /* Math.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = Math.hpp; sourceTree = "<group>"; };
 		204D6B581C98973F001FA505 /* ProcessCommon.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = ProcessCommon.hpp; sourceTree = "<group>"; };
-		204D6B591C98973F001FA505 /* ProcessRGB.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ProcessRGB.cpp; sourceTree = "<group>"; };
 		204D6B5A1C98973F001FA505 /* ProcessRGB.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = ProcessRGB.h; sourceTree = "<group>"; };
-		204D6B5B1C98973F001FA505 /* Tables.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Tables.cpp; sourceTree = "<group>"; };
 		204D6B5C1C98973F001FA505 /* Tables.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = Tables.hpp; sourceTree = "<group>"; };
 		204D6B5D1C98973F001FA505 /* Types.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = Types.hpp; sourceTree = "<group>"; };
 		204D6B5E1C98973F001FA505 /* Vector.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = Vector.hpp; sourceTree = "<group>"; };
-		206B3A051B074F3000E5DBD0 /* jwzgles.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = jwzgles.h; sourceTree = "<group>"; };
-		206B3A061B074F3000E5DBD0 /* jwzglesI.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = jwzglesI.h; sourceTree = "<group>"; };
-		206B3A0B1B074F6400E5DBD0 /* jwzgles.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = jwzgles.c; sourceTree = "<group>"; };
 		2085BEB91A8F23B9002BF4CE /* libSystem.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libSystem.dylib; path = usr/lib/libSystem.dylib; sourceTree = SDKROOT; };
 		20A63CB823BF23000007D142 /* communityapi.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = communityapi.cpp; sourceTree = "<group>"; };
 		20A63CBB23BF23070007D142 /* cpuid.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = cpuid.cpp; sourceTree = "<group>"; };
 		20A63CBE23BF23100007D142 /* enet.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = enet.cpp; sourceTree = "<group>"; };
-		20A63CC123BF231C0007D142 /* fix16_str.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = fix16_str.cpp; sourceTree = "<group>"; };
 		20A63CC223BF231C0007D142 /* fix16.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = fix16.cpp; sourceTree = "<group>"; };
 		20A63CC723BF23230007D142 /* glsurface.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = glsurface.cpp; sourceTree = "<group>"; };
 		20A63CCA23BF232F0007D142 /* klzw.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = klzw.cpp; sourceTree = "<group>"; };
@@ -968,7 +971,23 @@
 		20A63CD623BF23690007D142 /* tilepacker.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = tilepacker.cpp; sourceTree = "<group>"; };
 		20A63CD923BF23700007D142 /* timer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = timer.cpp; sourceTree = "<group>"; };
 		20A63CDC23BF23750007D142 /* vfs.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = vfs.cpp; sourceTree = "<group>"; };
-		20A63CDF23BF23810007D142 /* zpl.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = zpl.cpp; sourceTree = "<group>"; };
+		20A63CDF23BF23810007D142 /* smmalloc.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = smmalloc.cpp; sourceTree = "<group>"; };
+		F10000000000000000000001 /* smmalloc_generic.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = smmalloc_generic.cpp; sourceTree = "<group>"; };
+		F10000000000000000000002 /* smmalloc_tls.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = smmalloc_tls.cpp; sourceTree = "<group>"; };
+		F20000000000000000000001 /* imgui.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ../../source/imgui/src/imgui.cpp; sourceTree = SOURCE_ROOT; };
+		F20000000000000000000002 /* imgui_demo.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ../../source/imgui/src/imgui_demo.cpp; sourceTree = SOURCE_ROOT; };
+		F20000000000000000000003 /* imgui_draw.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ../../source/imgui/src/imgui_draw.cpp; sourceTree = SOURCE_ROOT; };
+		F20000000000000000000004 /* imgui_impl_opengl3.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ../../source/imgui/src/imgui_impl_opengl3.cpp; sourceTree = SOURCE_ROOT; };
+		F20000000000000000000005 /* imgui_impl_sdl2.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ../../source/imgui/src/imgui_impl_sdl2.cpp; sourceTree = SOURCE_ROOT; };
+		F20000000000000000000006 /* imgui_tables.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ../../source/imgui/src/imgui_tables.cpp; sourceTree = SOURCE_ROOT; };
+		F20000000000000000000007 /* imgui_widgets.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ../../source/imgui/src/imgui_widgets.cpp; sourceTree = SOURCE_ROOT; };
+		F40000000000000000000001 /* driver_sf2.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ../../source/audiolib/src/driver_sf2.cpp; sourceTree = SOURCE_ROOT; };
+		F50000000000000000000001 /* AVFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AVFoundation.framework; path = System/Library/Frameworks/AVFoundation.framework; sourceTree = SDKROOT; };
+		F50000000000000000000002 /* CoreHaptics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreHaptics.framework; path = System/Library/Frameworks/CoreHaptics.framework; sourceTree = SDKROOT; };
+		F50000000000000000000003 /* Metal.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Metal.framework; path = System/Library/Frameworks/Metal.framework; sourceTree = SDKROOT; };
+		F60000000000000000000001 /* loguru.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ../../source/build/src/loguru.cpp; sourceTree = SOURCE_ROOT; };
+		F60000000000000000000002 /* screentext.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ../../source/build/src/screentext.cpp; sourceTree = SOURCE_ROOT; };
+		F70000000000000000000001 /* EDuke32Controls.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = iOS/EDuke32Controls.mm; sourceTree = SOURCE_ROOT; };
 		20A63CF223BF26520007D142 /* events_defs.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = events_defs.h; sourceTree = "<group>"; };
 		20A63CF323BF26B90007D142 /* mapster32.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = mapster32.h; sourceTree = "<group>"; };
 		20A63CF423BF27340007D142 /* al_midi.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = al_midi.h; sourceTree = "<group>"; };
@@ -1168,6 +1187,9 @@
 			files = (
 				2085BEBA1A8F23B9002BF4CE /* libSystem.dylib in Frameworks */,
 				0013832719F366440007DA6C /* CoreMotion.framework in Frameworks */,
+				F50000000000000000000021 /* AVFoundation.framework in Frameworks */,
+				F50000000000000000000022 /* CoreHaptics.framework in Frameworks */,
+				F50000000000000000000023 /* Metal.framework in Frameworks */,
 				20F70F131A8F25CE00F71870 /* libc++.dylib in Frameworks */,
 				0013832519F366280007DA6C /* QuartzCore.framework in Frameworks */,
 				0013832319F365D20007DA6C /* OpenGLES.framework in Frameworks */,
@@ -1394,8 +1416,6 @@
 				20C6090823BF20C900672309 /* glsurface.h */,
 				20CEFB1D1E08A8FD0077879C /* hash.h */,
 				0008E8AF19F1AC530091588D /* hightile.h */,
-				206B3A051B074F3000E5DBD0 /* jwzgles.h */,
-				206B3A061B074F3000E5DBD0 /* jwzglesI.h */,
 				20C6090B23BF20E200672309 /* klzw.h */,
 				0008E8B019F1AC530091588D /* kplib.h */,
 				2038AE951A8F122D0093B7B2 /* libdivide.h */,
@@ -1464,13 +1484,11 @@
 				0008E8E619F1AC530091588D /* engine.cpp */,
 				0008E8E719F1AC540091588D /* engine_oldmap.h */,
 				0008E8E819F1AC540091588D /* engine_priv.h */,
-				20A63CC123BF231C0007D142 /* fix16_str.cpp */,
 				20A63CC223BF231C0007D142 /* fix16.cpp */,
 				0008E8E919F1AC540091588D /* glbuild.cpp */,
 				20A63CC723BF23230007D142 /* glsurface.cpp */,
 				20CEFB171E08A8830077879C /* hash.cpp */,
 				0008E8EB19F1AC540091588D /* hightile.cpp */,
-				206B3A0B1B074F6400E5DBD0 /* jwzgles.c */,
 				20A63CCA23BF232F0007D142 /* klzw.cpp */,
 				0008E8EC19F1AC540091588D /* kplib.cpp */,
 				0008E8EE19F1AC540091588D /* lz4.c */,
@@ -1510,7 +1528,9 @@
 				20A63CDC23BF23750007D142 /* vfs.cpp */,
 				0008E91F19F1AC540091588D /* voxmodel.cpp */,
 				0008E92219F1AC540091588D /* xxhash.c */,
-				20A63CDF23BF23810007D142 /* zpl.cpp */,
+				20A63CDF23BF23810007D142 /* smmalloc.cpp */,
+				F10000000000000000000001 /* smmalloc_generic.cpp */,
+				F10000000000000000000002 /* smmalloc_tls.cpp */,
 			);
 			path = src;
 			sourceTree = "<group>";
@@ -1562,8 +1582,6 @@
 			children = (
 				204D6B571C98973F001FA505 /* Math.hpp */,
 				204D6B581C98973F001FA505 /* ProcessCommon.hpp */,
-				204D6B591C98973F001FA505 /* ProcessRGB.cpp */,
-				204D6B5B1C98973F001FA505 /* Tables.cpp */,
 				204D6B5C1C98973F001FA505 /* Tables.hpp */,
 				204D6B5D1C98973F001FA505 /* Types.hpp */,
 				204D6B5E1C98973F001FA505 /* Vector.hpp */,
@@ -1757,8 +1775,6 @@
 				0008E9C219F1AD9B0091588D /* menus.cpp */,
 				0008E9C319F1AD9B0091588D /* menus.h */,
 				0008E9C419F1AD9B0091588D /* names.h */,
-				0008E9C519F1AD9B0091588D /* namesdyn.cpp */,
-				0008E9C619F1AD9B0091588D /* namesdyn.h */,
 				0008E9C719F1AD9B0091588D /* network.cpp */,
 				0008E9C819F1AD9B0091588D /* network.h */,
 				0008E9C919F1AD9B0091588D /* osdcmds.cpp */,
@@ -1783,8 +1799,8 @@
 				0008E9DC19F1AD9B0091588D /* soundefs.h */,
 				0008E9DD19F1AD9B0091588D /* sounds.cpp */,
 				0008E9DE19F1AD9B0091588D /* sounds.h */,
-				0008E9DF19F1AD9B0091588D /* soundsdyn.cpp */,
-				0008E9E019F1AD9B0091588D /* soundsdyn.h */,
+				0008E9DF19F1AD9B0091588D /* dnames.cpp */,
+				0008E9E019F1AD9B0091588D /* dnames.h */,
 				0008E9E119F1AD9B0091588D /* standard.h */,
 				0008E9E219F1AD9B0091588D /* startosx.game.mm */,
 				20F7124B1C6C19E5006B68D0 /* text.cpp */,
@@ -2016,7 +2032,6 @@
 				20C6092B23BF216700672309 /* timer.h in Headers */,
 				001382C219F361B60007DA6C /* sdlappicon.h in Headers */,
 				204D6B661C98973F001FA505 /* Vector.hpp in Headers */,
-				206B3A0A1B074F4300E5DBD0 /* jwzgles.h in Headers */,
 				001382C319F361B60007DA6C /* tracker.hpp in Headers */,
 				204D6B651C98973F001FA505 /* Types.hpp in Headers */,
 				20C6091723BF20F500672309 /* miniz.h in Headers */,
@@ -2037,7 +2052,6 @@
 				20C6093123BF218A00672309 /* zpl.h in Headers */,
 				001382CB19F361B60007DA6C /* kplib.h in Headers */,
 				001382CC19F361B60007DA6C /* lz4.h in Headers */,
-				206B3A081B074F3800E5DBD0 /* jwzglesI.h in Headers */,
 				001382CF19F361B60007DA6C /* baselayer.h in Headers */,
 				001382D019F361B60007DA6C /* scriptfile.h in Headers */,
 				20C6092E23BF217100672309 /* vfs.h in Headers */,
@@ -2405,10 +2419,8 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				2038AEA31A8F137E0093B7B2 /* DUKE.RTS in Resources */,
 				000C487819F35517006E6B52 /* InfoPlist.strings in Resources */,
 				000C488019F35517006E6B52 /* Images.xcassets in Resources */,
-				00CD003219F374ED00636963 /* duke3d.grp in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2502,11 +2514,10 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				0008E9F519F1AD9B0091588D /* namesdyn.cpp in Sources */,
 				20E16CE81C7022DE00EE8446 /* screens.cpp in Sources */,
 				0008E9EB19F1AD9B0091588D /* gamedef.cpp in Sources */,
 				20F7124D1C6C19E5006B68D0 /* text.cpp in Sources */,
-				0008EA0219F1AD9B0091588D /* soundsdyn.cpp in Sources */,
+				0008EA0219F1AD9B0091588D /* dnames.cpp in Sources */,
 				0008E9EF19F1AD9B0091588D /* gamevars.cpp in Sources */,
 				0008E9EC19F1AD9B0091588D /* gameexec.cpp in Sources */,
 				20F712511C6C19F4006B68D0 /* sbar.cpp in Sources */,
@@ -2591,7 +2602,6 @@
 				00970E3419F207F000873EB9 /* a-c.cpp in Sources */,
 				20A63CD723BF23690007D142 /* tilepacker.cpp in Sources */,
 				20A63CBC23BF23070007D142 /* cpuid.cpp in Sources */,
-				20A63CC323BF231C0007D142 /* fix16_str.cpp in Sources */,
 				20A63CC523BF231C0007D142 /* fix16.cpp in Sources */,
 				0008E98319F1AC540091588D /* textfont.cpp in Sources */,
 				0008E96D19F1AC540091588D /* mdsprite.cpp in Sources */,
@@ -2607,7 +2617,9 @@
 				0008E97719F1AC540091588D /* polymost.cpp in Sources */,
 				20A63CD423BF23600007D142 /* softsurface.cpp in Sources */,
 				0008E96819F1AC540091588D /* hightile.cpp in Sources */,
-				20A63CE023BF23810007D142 /* zpl.cpp in Sources */,
+				20A63CE023BF23810007D142 /* smmalloc.cpp in Sources */,
+				F10000000000000000000011 /* smmalloc_generic.cpp in Sources */,
+				F10000000000000000000012 /* smmalloc_tls.cpp in Sources */,
 				0008E96119F1AC540091588D /* dxtfilter.cpp in Sources */,
 				20A63CCB23BF232F0007D142 /* klzw.cpp in Sources */,
 				0008E96B19F1AC540091588D /* lz4.c in Sources */,
@@ -2694,10 +2706,12 @@
 				000C489B19F35601006E6B52 /* anim.cpp in Sources */,
 				000C48B319F35601006E6B52 /* sounds.cpp in Sources */,
 				000C48AE19F35601006E6B52 /* rev.cpp in Sources */,
-				000C48B419F35601006E6B52 /* soundsdyn.cpp in Sources */,
+				000C48B419F35601006E6B52 /* dnames.cpp in Sources */,
 				000C48A519F35601006E6B52 /* grpscan.cpp in Sources */,
 				000C48AB19F35601006E6B52 /* osdfuncs.cpp in Sources */,
 				000C489F19F35601006E6B52 /* gamedef.cpp in Sources */,
+				F60000000000000000000023 /* gamestructures.cpp in Sources */,
+				F70000000000000000000021 /* EDuke32Controls.mm in Sources */,
 				000C48A019F35601006E6B52 /* gameexec.cpp in Sources */,
 				000C48AD19F35601006E6B52 /* premap.cpp in Sources */,
 				000C489E19F35601006E6B52 /* game.cpp in Sources */,
@@ -2714,7 +2728,6 @@
 				20F712561C6C1A07006B68D0 /* cheats.cpp in Sources */,
 				000C48A719F35601006E6B52 /* menus.cpp in Sources */,
 				000C48A919F35601006E6B52 /* network.cpp in Sources */,
-				000C48A819F35601006E6B52 /* namesdyn.cpp in Sources */,
 				000C48B219F35601006E6B52 /* sector.cpp in Sources */,
 				000C48AA19F35601006E6B52 /* osdcmds.cpp in Sources */,
 				000C489A19F35601006E6B52 /* actors.cpp in Sources */,
@@ -2732,7 +2745,6 @@
 				0013828E19F361B60007DA6C /* engine.cpp in Sources */,
 				0013828F19F361B60007DA6C /* voxmodel.cpp in Sources */,
 				0013829119F361B60007DA6C /* pragmas.cpp in Sources */,
-				206B3A0C1B074F6400E5DBD0 /* jwzgles.c in Sources */,
 				20A63CD223BF23570007D142 /* sjson.cpp in Sources */,
 				20CEFB131E08A86B0077879C /* 2d.cpp in Sources */,
 				20A63CBA23BF23000007D142 /* communityapi.cpp in Sources */,
@@ -2755,13 +2767,23 @@
 				0013829C19F361B60007DA6C /* a-c.cpp in Sources */,
 				2038AE9D1A8F126C0093B7B2 /* md4.cpp in Sources */,
 				0013829D19F361B60007DA6C /* textfont.cpp in Sources */,
-				204D6B611C98973F001FA505 /* ProcessRGB.cpp in Sources */,
 				20A63CDB23BF23700007D142 /* timer.cpp in Sources */,
-				20A63CE123BF23810007D142 /* zpl.cpp in Sources */,
+				20A63CE123BF23810007D142 /* smmalloc.cpp in Sources */,
+				F10000000000000000000021 /* smmalloc_generic.cpp in Sources */,
+				F10000000000000000000022 /* smmalloc_tls.cpp in Sources */,
+				F20000000000000000000021 /* imgui.cpp in Sources */,
+				F20000000000000000000022 /* imgui_demo.cpp in Sources */,
+				F20000000000000000000023 /* imgui_draw.cpp in Sources */,
+				F20000000000000000000024 /* imgui_impl_opengl3.cpp in Sources */,
+				F20000000000000000000025 /* imgui_impl_sdl2.cpp in Sources */,
+				F20000000000000000000026 /* imgui_tables.cpp in Sources */,
+				F20000000000000000000027 /* imgui_widgets.cpp in Sources */,
+				F30000000000000000000001 /* glad.c in Sources */,
+				F60000000000000000000021 /* loguru.cpp in Sources */,
+				F60000000000000000000022 /* screentext.cpp in Sources */,
 				0013829E19F361B60007DA6C /* mdsprite.cpp in Sources */,
 				0013829F19F361B60007DA6C /* defs.cpp in Sources */,
 				2044C9911E08A6BC00A8C543 /* screenshot.cpp in Sources */,
-				204D6B631C98973F001FA505 /* Tables.cpp in Sources */,
 				001382A019F361B60007DA6C /* baselayer.cpp in Sources */,
 				20A63CCF23BF23420007D142 /* pngwrite.cpp in Sources */,
 				20A63CC923BF23230007D142 /* glsurface.cpp in Sources */,
@@ -2770,7 +2792,6 @@
 				20B02C5123BF30DF00896299 /* miniz_tinfl.c in Sources */,
 				20A63CDE23BF23750007D142 /* vfs.cpp in Sources */,
 				2044C99A1E08A72200A8C543 /* mhk.cpp in Sources */,
-				20A63CC423BF231C0007D142 /* fix16_str.cpp in Sources */,
 				001382A219F361B60007DA6C /* scriptfile.cpp in Sources */,
 				001382A319F361B60007DA6C /* polymost.cpp in Sources */,
 				20E014DB23BF366100CC954F /* polymost1Frag.glsl.cpp in Sources */,
@@ -2810,6 +2831,7 @@
 				001382FC19F361BB0007DA6C /* formats.cpp in Sources */,
 				001382FD19F361BB0007DA6C /* flac.cpp in Sources */,
 				00CAC13319F4E0EA00317AE6 /* driver_sdl.cpp in Sources */,
+				F40000000000000000000021 /* driver_sf2.cpp in Sources */,
 				20C608D623BF1FB400672309 /* xm_load.c in Sources */,
 				001382FE19F361BB0007DA6C /* mixst.cpp in Sources */,
 				20CEFB1C1E08A8CB0077879C /* xmp.cpp in Sources */,
@@ -3020,7 +3042,7 @@
 				GCC_PRECOMPILE_PREFIX_HEADER = NO;
 				GCC_PREFIX_HEADER = "";
 				GCC_PREPROCESSOR_DEFINITIONS = (
-					"DEBUG=1",
+					"DEBUGGINGAIDS=1",
 					"$(inherited)",
 				);
 				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
@@ -3046,6 +3068,9 @@
 					/usr/local/include,
 					/usr/local/include/SDL2,
 					"$(SRCROOT)/../../source/glad/include",
+					"$(SRCROOT)/../../source/build/include",
+					"$(SRCROOT)/../../source/audiolib/include",
+					"$(SRCROOT)/../../source/imgui/include",
 					"$(SRCROOT)/../../source/libxmp-lite/include",
 				);
 				INFOPLIST_FILE = "$(SRCROOT)/bundles/EDuke32.app/Contents/Info.plist";
@@ -3169,6 +3194,9 @@
 					/usr/local/include,
 					/usr/local/include/SDL2,
 					"$(SRCROOT)/../../source/glad/include",
+					"$(SRCROOT)/../../source/build/include",
+					"$(SRCROOT)/../../source/audiolib/include",
+					"$(SRCROOT)/../../source/imgui/include",
 					"$(SRCROOT)/../../source/libxmp-lite/include",
 				);
 				INFOPLIST_FILE = "$(SRCROOT)/bundles/EDuke32.app/Contents/Info.plist";
@@ -3272,7 +3300,7 @@
 				GCC_PRECOMPILE_PREFIX_HEADER = NO;
 				GCC_PREFIX_HEADER = "";
 				GCC_PREPROCESSOR_DEFINITIONS = (
-					"DEBUG=1",
+					"DEBUGGINGAIDS=1",
 					"$(inherited)",
 				);
 				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
@@ -3298,6 +3326,9 @@
 					/usr/local/include,
 					/usr/local/include/SDL2,
 					"$(SRCROOT)/../../source/glad/include",
+					"$(SRCROOT)/../../source/build/include",
+					"$(SRCROOT)/../../source/audiolib/include",
+					"$(SRCROOT)/../../source/imgui/include",
 					"$(SRCROOT)/../../source/libxmp-lite/include",
 				);
 				INFOPLIST_FILE = "$(SRCROOT)/bundles/Mapster32.app/Contents/Info.plist";
@@ -3421,6 +3452,9 @@
 					/usr/local/include,
 					/usr/local/include/SDL2,
 					"$(SRCROOT)/../../source/glad/include",
+					"$(SRCROOT)/../../source/build/include",
+					"$(SRCROOT)/../../source/audiolib/include",
+					"$(SRCROOT)/../../source/imgui/include",
 					"$(SRCROOT)/../../source/libxmp-lite/include",
 				);
 				INFOPLIST_FILE = "$(SRCROOT)/bundles/Mapster32.app/Contents/Info.plist";
@@ -3517,7 +3551,7 @@
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_PRECOMPILE_PREFIX_HEADER = NO;
 				GCC_PREPROCESSOR_DEFINITIONS = (
-					"DEBUG=1",
+					"DEBUGGINGAIDS=1",
 					"$(inherited)",
 				);
 				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
@@ -3542,6 +3576,9 @@
 					/usr/local/include,
 					/usr/local/include/SDL2,
 					"$(SRCROOT)/../../source/glad/include",
+					"$(SRCROOT)/../../source/build/include",
+					"$(SRCROOT)/../../source/audiolib/include",
+					"$(SRCROOT)/../../source/imgui/include",
 					"$(SRCROOT)/../../source/libxmp-lite/include",
 				);
 				LIBRARY_SEARCH_PATHS = /usr/local/lib;
@@ -3654,6 +3691,9 @@
 					/usr/local/include,
 					/usr/local/include/SDL2,
 					"$(SRCROOT)/../../source/glad/include",
+					"$(SRCROOT)/../../source/build/include",
+					"$(SRCROOT)/../../source/audiolib/include",
+					"$(SRCROOT)/../../source/imgui/include",
 					"$(SRCROOT)/../../source/libxmp-lite/include",
 				);
 				LIBRARY_SEARCH_PATHS = /usr/local/lib;
@@ -3747,7 +3787,7 @@
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_PRECOMPILE_PREFIX_HEADER = NO;
 				GCC_PREPROCESSOR_DEFINITIONS = (
-					"DEBUG=1",
+					"DEBUGGINGAIDS=1",
 					"$(inherited)",
 				);
 				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
@@ -3772,6 +3812,9 @@
 					/usr/local/include,
 					/usr/local/include/SDL2,
 					"$(SRCROOT)/../../source/glad/include",
+					"$(SRCROOT)/../../source/build/include",
+					"$(SRCROOT)/../../source/audiolib/include",
+					"$(SRCROOT)/../../source/imgui/include",
 					"$(SRCROOT)/../../source/libxmp-lite/include",
 				);
 				LIBRARY_SEARCH_PATHS = /usr/local/lib;
@@ -3884,6 +3927,9 @@
 					/usr/local/include,
 					/usr/local/include/SDL2,
 					"$(SRCROOT)/../../source/glad/include",
+					"$(SRCROOT)/../../source/build/include",
+					"$(SRCROOT)/../../source/audiolib/include",
+					"$(SRCROOT)/../../source/imgui/include",
 					"$(SRCROOT)/../../source/libxmp-lite/include",
 				);
 				LIBRARY_SEARCH_PATHS = /usr/local/lib;
@@ -3976,7 +4022,7 @@
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_PRECOMPILE_PREFIX_HEADER = NO;
 				GCC_PREPROCESSOR_DEFINITIONS = (
-					"DEBUG=1",
+					"DEBUGGINGAIDS=1",
 					"$(inherited)",
 				);
 				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
@@ -4001,6 +4047,9 @@
 					/usr/local/include,
 					/usr/local/include/SDL2,
 					"$(SRCROOT)/../../source/glad/include",
+					"$(SRCROOT)/../../source/build/include",
+					"$(SRCROOT)/../../source/audiolib/include",
+					"$(SRCROOT)/../../source/imgui/include",
 					"$(SRCROOT)/../../source/libxmp-lite/include",
 				);
 				LIBRARY_SEARCH_PATHS = /usr/local/lib;
@@ -4112,6 +4161,9 @@
 					/usr/local/include,
 					/usr/local/include/SDL2,
 					"$(SRCROOT)/../../source/glad/include",
+					"$(SRCROOT)/../../source/build/include",
+					"$(SRCROOT)/../../source/audiolib/include",
+					"$(SRCROOT)/../../source/imgui/include",
 					"$(SRCROOT)/../../source/libxmp-lite/include",
 				);
 				LIBRARY_SEARCH_PATHS = /usr/local/lib;
@@ -4247,7 +4299,7 @@
 				GCC_PRECOMPILE_PREFIX_HEADER = NO;
 				GCC_PREFIX_HEADER = "";
 				GCC_PREPROCESSOR_DEFINITIONS = (
-					"DEBUG=1",
+					"DEBUGGINGAIDS=1",
 					"$(inherited)",
 				);
 				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
@@ -4272,6 +4324,9 @@
 					../../../SDL/include,
 					"$(SRCROOT)/../../source/libxmp-lite/include",
 					"$(SRCROOT)/../../source/glad/include",
+					"$(SRCROOT)/../../source/build/include",
+					"$(SRCROOT)/../../source/audiolib/include",
+					"$(SRCROOT)/../../source/imgui/include",
 				);
 				INFOPLIST_FILE = iOS/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
@@ -4288,7 +4343,6 @@
 					"-DRENDERTYPESDL=1",
 					"-DMIXERTYPESDL=1",
 					"-DUSE_OPENGL",
-					"-DHAVE_JWZGLES",
 					"-DUSING_LTO",
 					"-DNOASM",
 					"-DNETCODE_DISABLE",
@@ -4388,6 +4442,9 @@
 					../../../SDL/include,
 					"$(SRCROOT)/../../source/libxmp-lite/include",
 					"$(SRCROOT)/../../source/glad/include",
+					"$(SRCROOT)/../../source/build/include",
+					"$(SRCROOT)/../../source/audiolib/include",
+					"$(SRCROOT)/../../source/imgui/include",
 				);
 				INFOPLIST_FILE = iOS/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
@@ -4404,7 +4461,6 @@
 					"-DRENDERTYPESDL=1",
 					"-DMIXERTYPESDL=1",
 					"-DUSE_OPENGL",
-					"-DHAVE_JWZGLES",
 					"-DUSING_LTO",
 					"-DNOASM",
 					"-DNETCODE_DISABLE",
@@ -4479,7 +4535,7 @@
 				GCC_PRECOMPILE_PREFIX_HEADER = NO;
 				GCC_PREFIX_HEADER = "";
 				GCC_PREPROCESSOR_DEFINITIONS = (
-					"DEBUG=1",
+					"DEBUGGINGAIDS=1",
 					"$(inherited)",
 				);
 				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
@@ -4504,6 +4560,9 @@
 					../../../SDL/include,
 					"$(SRCROOT)/../../source/libxmp-lite/include",
 					"$(SRCROOT)/../../source/glad/include",
+					"$(SRCROOT)/../../source/build/include",
+					"$(SRCROOT)/../../source/audiolib/include",
+					"$(SRCROOT)/../../source/imgui/include",
 				);
 				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				LIBRARY_SEARCH_PATHS = /usr/local/lib;
@@ -4517,7 +4576,6 @@
 					"-DRENDERTYPESDL=1",
 					"-DMIXERTYPESDL=1",
 					"-DUSE_OPENGL",
-					"-DHAVE_JWZGLES",
 					"-DUSING_LTO",
 					"-DNOASM",
 					"-DNETCODE_DISABLE",
@@ -4612,6 +4670,9 @@
 					../../../SDL/include,
 					"$(SRCROOT)/../../source/libxmp-lite/include",
 					"$(SRCROOT)/../../source/glad/include",
+					"$(SRCROOT)/../../source/build/include",
+					"$(SRCROOT)/../../source/audiolib/include",
+					"$(SRCROOT)/../../source/imgui/include",
 				);
 				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				LIBRARY_SEARCH_PATHS = /usr/local/lib;
@@ -4625,7 +4686,6 @@
 					"-DRENDERTYPESDL=1",
 					"-DMIXERTYPESDL=1",
 					"-DUSE_OPENGL",
-					"-DHAVE_JWZGLES",
 					"-DUSING_LTO",
 					"-DNOASM",
 					"-DNETCODE_DISABLE",
@@ -4699,7 +4759,7 @@
 				GCC_PRECOMPILE_PREFIX_HEADER = NO;
 				GCC_PREFIX_HEADER = "";
 				GCC_PREPROCESSOR_DEFINITIONS = (
-					"DEBUG=1",
+					"DEBUGGINGAIDS=1",
 					"$(inherited)",
 				);
 				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
@@ -4724,6 +4784,9 @@
 					../../../SDL/include,
 					"$(SRCROOT)/../../source/libxmp-lite/include",
 					"$(SRCROOT)/../../source/glad/include",
+					"$(SRCROOT)/../../source/build/include",
+					"$(SRCROOT)/../../source/audiolib/include",
+					"$(SRCROOT)/../../source/imgui/include",
 				);
 				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				LIBRARY_SEARCH_PATHS = /usr/local/lib;
@@ -4737,7 +4800,6 @@
 					"-DRENDERTYPESDL=1",
 					"-DMIXERTYPESDL=1",
 					"-DUSE_OPENGL",
-					"-DHAVE_JWZGLES",
 					"-DUSING_LTO",
 					"-DNOASM",
 					"-DNETCODE_DISABLE",
@@ -4832,6 +4894,9 @@
 					../../../SDL/include,
 					"$(SRCROOT)/../../source/libxmp-lite/include",
 					"$(SRCROOT)/../../source/glad/include",
+					"$(SRCROOT)/../../source/build/include",
+					"$(SRCROOT)/../../source/audiolib/include",
+					"$(SRCROOT)/../../source/imgui/include",
 				);
 				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				LIBRARY_SEARCH_PATHS = /usr/local/lib;
@@ -4845,7 +4910,6 @@
 					"-DRENDERTYPESDL=1",
 					"-DMIXERTYPESDL=1",
 					"-DUSE_OPENGL",
-					"-DHAVE_JWZGLES",
 					"-DUSING_LTO",
 					"-DNOASM",
 					"-DNETCODE_DISABLE",
@@ -4919,7 +4983,7 @@
 				GCC_PRECOMPILE_PREFIX_HEADER = NO;
 				GCC_PREFIX_HEADER = "";
 				GCC_PREPROCESSOR_DEFINITIONS = (
-					"DEBUG=1",
+					"DEBUGGINGAIDS=1",
 					"$(inherited)",
 				);
 				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
@@ -4944,6 +5008,9 @@
 					../../../SDL/include,
 					"$(SRCROOT)/../../source/libxmp-lite/include",
 					"$(SRCROOT)/../../source/glad/include",
+					"$(SRCROOT)/../../source/build/include",
+					"$(SRCROOT)/../../source/audiolib/include",
+					"$(SRCROOT)/../../source/imgui/include",
 				);
 				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				LIBRARY_SEARCH_PATHS = /usr/local/lib;
@@ -4957,7 +5024,6 @@
 					"-DRENDERTYPESDL=1",
 					"-DMIXERTYPESDL=1",
 					"-DUSE_OPENGL",
-					"-DHAVE_JWZGLES",
 					"-DUSING_LTO",
 					"-DNOASM",
 					"-DNETCODE_DISABLE",
@@ -5052,6 +5118,9 @@
 					../../../SDL/include,
 					"$(SRCROOT)/../../source/libxmp-lite/include",
 					"$(SRCROOT)/../../source/glad/include",
+					"$(SRCROOT)/../../source/build/include",
+					"$(SRCROOT)/../../source/audiolib/include",
+					"$(SRCROOT)/../../source/imgui/include",
 				);
 				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				LIBRARY_SEARCH_PATHS = /usr/local/lib;
@@ -5065,7 +5134,6 @@
 					"-DRENDERTYPESDL=1",
 					"-DMIXERTYPESDL=1",
 					"-DUSE_OPENGL",
-					"-DHAVE_JWZGLES",
 					"-DUSING_LTO",
 					"-DNOASM",
 					"-DNETCODE_DISABLE",

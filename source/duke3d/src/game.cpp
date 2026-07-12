@@ -6964,14 +6964,32 @@ int app_main(int argc, char const* const* argv)
         S_MusicStartup();
     }
 
+#ifdef EDUKE32_IOS
+    LOG_F(INFO, "iOS checkpoint: before G_InitText");
+#endif
     G_InitText();
+#ifdef EDUKE32_IOS
+    LOG_F(INFO, "iOS checkpoint: after G_InitText");
+#endif
 
     if (g_networkMode != NET_DEDICATED_SERVER)
     {
+#ifdef EDUKE32_IOS
+        LOG_F(INFO, "iOS checkpoint: before Menu_Init");
+#endif
         Menu_Init();
+#ifdef EDUKE32_IOS
+        LOG_F(INFO, "iOS checkpoint: after Menu_Init");
+#endif
     }
 
+#ifdef EDUKE32_IOS
+    LOG_F(INFO, "iOS checkpoint: before ReadSaveGameHeaders");
+#endif
     ReadSaveGameHeaders();
+#ifdef EDUKE32_IOS
+    LOG_F(INFO, "iOS checkpoint: after ReadSaveGameHeaders");
+#endif
 
 #if 0
     // previously, passing -0 through -9 on the command line would load the save in that slot #
@@ -6991,13 +7009,25 @@ int app_main(int argc, char const* const* argv)
     }
 #endif
 
+#ifdef EDUKE32_IOS
+    LOG_F(INFO, "iOS checkpoint: before sound cleanup");
+#endif
     FX_StopAllSounds();
     S_ClearSoundLocks();
+#ifdef EDUKE32_IOS
+    LOG_F(INFO, "iOS checkpoint: after sound cleanup");
+#endif
 
     //    getpackets();
     //dukeCreateFrameRoutine();
 
+#ifdef EDUKE32_IOS
+    LOG_F(INFO, "iOS checkpoint: before EVENT_INITCOMPLETE");
+#endif
     VM_OnEvent(EVENT_INITCOMPLETE);
+#ifdef EDUKE32_IOS
+    LOG_F(INFO, "iOS checkpoint: after EVENT_INITCOMPLETE");
+#endif
 
 MAIN_LOOP_RESTART:
     totalclock = 0;
@@ -7008,7 +7038,13 @@ MAIN_LOOP_RESTART:
     for (int32_t & q : user_quote_time)
         q = 0;
 
+#ifdef EDUKE32_IOS
+    LOG_F(INFO, "iOS checkpoint: before Menu_Change");
+#endif
     Menu_Change(MENU_MAIN);
+#ifdef EDUKE32_IOS
+    LOG_F(INFO, "iOS checkpoint: after Menu_Change");
+#endif
 
     if(g_netClient)
     {
@@ -7018,8 +7054,14 @@ MAIN_LOOP_RESTART:
 
     if (g_networkMode != NET_DEDICATED_SERVER)
     {
+#ifdef EDUKE32_IOS
+        LOG_F(INFO, "iOS checkpoint: before crosshair setup");
+#endif
         G_GetCrosshairColor();
         G_SetCrosshairColor(CrosshairColors.r, CrosshairColors.g, CrosshairColors.b);
+#ifdef EDUKE32_IOS
+        LOG_F(INFO, "iOS checkpoint: after crosshair setup");
+#endif
     }
 
     if (myplayer.gm & MODE_NEWGAME)
@@ -7054,7 +7096,15 @@ MAIN_LOOP_RESTART:
                 Net_WaitForServer();
             }
             else if (g_networkMode != NET_DEDICATED_SERVER)
+            {
+#ifdef EDUKE32_IOS
+                LOG_F(INFO, "iOS checkpoint: before G_DisplayLogo");
+#endif
                 G_DisplayLogo();
+#ifdef EDUKE32_IOS
+                LOG_F(INFO, "iOS checkpoint: after G_DisplayLogo");
+#endif
+            }
 
             if (g_networkMode != NET_DEDICATED_SERVER)
             {

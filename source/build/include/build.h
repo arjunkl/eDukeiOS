@@ -62,8 +62,15 @@ enum rendmode_t {
 
 # define MAXXDIM 10240
 # define MAXYDIM 4320
-# define MINXDIM 640
-# define MINYDIM 480
+# ifdef EDUKE32_IOS
+// Modern iPhones have landscape viewports shorter than the desktop 480-line
+// minimum (for example 430 points). Accept the native UIKit display mode.
+#  define MINXDIM 320
+#  define MINYDIM 200
+# else
+#  define MINXDIM 640
+#  define MINYDIM 480
+# endif
 
 // additional space beyond wall, in walltypes:
 # define M32_FIXME_WALLS 512

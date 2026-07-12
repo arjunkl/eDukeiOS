@@ -2583,7 +2583,7 @@ static void Menu_Pre(MenuID_t cm)
         MenuEntry_HideOnCondition(&ME_DISPLAYSETUP_VOXELS, !g_haveVoxels);
 #ifdef USE_OPENGL
         MenuEntry_HideOnCondition(&ME_DISPLAYSETUP_UPSCALING, videoGetRenderMode() > REND_CLASSIC);
-#ifndef EDUKE32_STANDALONE
+#ifndef EDUKE32_RETAIL_MENU
         MenuEntry_HideOnCondition(&ME_DISPLAYSETUP_RENDERER, videoGetRenderMode() < REND_POLYMOST);
 #endif
 #ifdef TEXFILTER_MENU_OPTIONS

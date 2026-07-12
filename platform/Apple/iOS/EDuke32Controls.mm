@@ -507,6 +507,37 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
     for (UITouch *touch in touches)
     {
         CGPoint const point = [touch locationInView:self];
+
+        if (_layoutEditing)
+        {
+            if (!_editTouch)
+            {
+                [self ensureControlLayout];
+                NSInteger nearest = kNoControl;
+                CGFloat nearestDistance = CGFLOAT_MAX;
+                for (NSInteger control = 0; control < kControlCount; ++control)
+                {
+                    CGFloat const distance = hypot(point.x - _controlCenters[control].x,
+                                                   point.y - _controlCenters[control].y);
+                    if (distance <= _controlRadii[control] + 18.0 && distance < nearestDistance)
+                    {
+                        nearest = control;
+                        nearestDistance = distance;
+                    }
+                }
+
+                if (nearest != kNoControl)
+                {
+                    _editTouch = touch;
+                    _editingControl = nearest;
+                    _editingResize = nearestDistance >= _controlRadii[nearest] * 0.62;
+                    UISelectionFeedbackGenerator *feedback = [[[UISelectionFeedbackGenerator alloc] init] autorelease];
+                    [feedback selectionChanged];
+                }
+            }
+            continue;
+        }
+
         NSInteger const action = [self actionAtPoint:point];
         fprintf(stderr, "EDUKE32_IOS_TOUCH: began x=%.1f y=%.1f action=%ld\n",
                 point.x, point.y, (long)action);
@@ -557,6 +588,29 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
     for (UITouch *touch in touches)
     {
         CGPoint const point = [touch locationInView:self];
+
+        if (_layoutEditing)
+        {
+            if (touch == _editTouch && _editingControl != kNoControl)
+            {
+                if (_editingResize)
+                {
+                    CGFloat const distance = hypot(point.x - _controlCenters[_editingControl].x,
+                                                   point.y - _controlCenters[_editingControl].y);
+                    _controlRadii[_editingControl] = fmax(20.0, fmin(64.0, distance));
+                }
+                else
+                {
+                    CGFloat const radius = _controlRadii[_editingControl];
+                    _controlCenters[_editingControl] = CGPointMake(
+                        fmax(radius + 4.0, fmin(CGRectGetWidth(self.bounds) - radius - 4.0, point.x)),
+                        fmax(radius + 4.0, fmin(CGRectGetHeight(self.bounds) - radius - 4.0, point.y)));
+                }
+                [self setNeedsDisplay];
+            }
+            continue;
+        }
+
         if ([self touchMode] == TOUCH_SCREEN_GAME)
         {
             if (touch == _moveTouch)
@@ -598,6 +652,16 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
 {
     for (UITouch *touch in touches)
     {
+        if (_layoutEditing && touch == _editTouch)
+        {
+            _editTouch = nil;
+            _editingControl = kNoControl;
+            _editingResize = NO;
+            [self saveControlLayout];
+            [self setNeedsDisplay];
+            continue;
+        }
+
         NSValue *key = [NSValue valueWithNonretainedObject:touch];
         NSNumber *action = [_touchActions objectForKey:key];
         if (action)
@@ -663,23 +727,83 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
     [self finishTouches:touches cancelled:YES];
 }
 
-- (void)drawCircleAt:(CGPoint)center radius:(CGFloat)radius label:(NSString *)label active:(BOOL)active
+- (NSString *)symbolForControl:(NSInteger)control
 {
-    CGContextRef const context = UIGraphicsGetCurrentContext();
-    UIColor *fill = [UIColor colorWithWhite:active ? 0.95 : 0.12 alpha:active ? 0.45 : 0.30];
-    UIColor *stroke = [UIColor colorWithWhite:1.0 alpha:0.58];
-    CGContextSetFillColorWithColor(context, fill.CGColor);
-    CGContextSetStrokeColorWithColor(context, stroke.CGColor);
-    CGContextSetLineWidth(context, 1.5);
-    CGContextAddEllipseInRect(context, CircleRect(center, radius));
-    CGContextDrawPath(context, kCGPathFillStroke);
+    switch (control)
+    {
+        case kControlUse: return @"hand.tap.fill";
+        case kControlJump: return @"arrow.up";
+        case kControlCrouch: return @"arrow.down.to.line";
+        case kControlWeapon: return @"arrow.triangle.2.circlepath";
+        case kControlPause: return @"pause.fill";
+        default: return @"circle.fill";
+    }
+}
 
-    NSDictionary *attributes = @{
-        NSFontAttributeName: [UIFont boldSystemFontOfSize:11.0],
-        NSForegroundColorAttributeName: [UIColor colorWithWhite:1.0 alpha:0.85]
-    };
-    CGSize const size = [label sizeWithAttributes:attributes];
-    [label drawAtPoint:CGPointMake(center.x - size.width * 0.5, center.y - size.height * 0.5) withAttributes:attributes];
+- (UIColor *)accentForControl:(NSInteger)control
+{
+    switch (control)
+    {
+        case kControlUse: return [UIColor colorWithRed:0.05 green:0.78 blue:0.90 alpha:1.0];
+        case kControlJump: return [UIColor colorWithRed:1.00 green:0.47 blue:0.08 alpha:1.0];
+        case kControlCrouch: return [UIColor colorWithRed:0.48 green:0.36 blue:0.92 alpha:1.0];
+        case kControlWeapon: return [UIColor colorWithRed:0.96 green:0.72 blue:0.08 alpha:1.0];
+        case kControlPause: return [UIColor colorWithRed:0.93 green:0.20 blue:0.18 alpha:1.0];
+        default: return UIColor.whiteColor;
+    }
+}
+
+- (void)drawControl:(NSInteger)control active:(BOOL)active
+{
+    CGPoint const center = [self centerForControl:control];
+    CGFloat const radius = [self radiusForControl:control];
+    CGContextRef const context = UIGraphicsGetCurrentContext();
+    UIColor *accent = [self accentForControl:control];
+    CGRect const circle = CircleRect(center, radius);
+
+    CGContextSaveGState(context);
+    CGContextSetShadowWithColor(context, CGSizeMake(0.0, 2.0), active ? 10.0 : 5.0,
+                                [accent colorWithAlphaComponent:active ? 0.85 : 0.42].CGColor);
+    CGContextSetFillColorWithColor(context, [accent colorWithAlphaComponent:active ? 0.72 : 0.34].CGColor);
+    CGContextSetStrokeColorWithColor(context, [UIColor colorWithWhite:1.0 alpha:0.78].CGColor);
+    CGContextSetLineWidth(context, active ? 3.0 : 1.8);
+    CGContextAddEllipseInRect(context, circle);
+    CGContextDrawPath(context, kCGPathFillStroke);
+    CGContextRestoreGState(context);
+
+    CGRect const inset = CGRectInset(circle, radius * 0.16, radius * 0.16);
+    CGContextSetStrokeColorWithColor(context, [accent colorWithAlphaComponent:0.58].CGColor);
+    CGContextSetLineWidth(context, 1.0);
+    CGContextStrokeEllipseInRect(context, inset);
+
+    UIImageSymbolConfiguration *configuration =
+        [UIImageSymbolConfiguration configurationWithPointSize:radius * 0.78
+                                                        weight:UIImageSymbolWeightBold];
+    UIImage *symbol = [[UIImage systemImageNamed:[self symbolForControl:control]]
+                        imageByApplyingSymbolConfiguration:configuration];
+    symbol = [symbol imageWithTintColor:[UIColor colorWithWhite:1.0 alpha:0.94]
+                         renderingMode:UIImageRenderingModeAlwaysOriginal];
+    CGSize const symbolSize = symbol.size;
+    [symbol drawAtPoint:CGPointMake(center.x - symbolSize.width * 0.5,
+                                    center.y - symbolSize.height * 0.5)];
+
+    if (_layoutEditing)
+    {
+        CGFloat dash[] = { 5.0, 4.0 };
+        CGContextSaveGState(context);
+        CGContextSetLineDash(context, 0.0, dash, 2);
+        CGContextSetStrokeColorWithColor(context, [accent colorWithAlphaComponent:0.95].CGColor);
+        CGContextSetLineWidth(context, 2.0);
+        CGContextStrokeEllipseInRect(context, CGRectInset(circle, -5.0, -5.0));
+        CGContextRestoreGState(context);
+
+        CGPoint const handle = CGPointMake(center.x + radius * 0.72, center.y + radius * 0.72);
+        CGContextSetFillColorWithColor(context, UIColor.whiteColor.CGColor);
+        CGContextFillEllipseInRect(context, CircleRect(handle, 5.5));
+        CGContextSetStrokeColorWithColor(context, accent.CGColor);
+        CGContextSetLineWidth(context, 2.0);
+        CGContextStrokeEllipseInRect(context, CircleRect(handle, 5.5));
+    }
 }
 
 - (BOOL)isActionActive:(NSInteger)action
@@ -690,14 +814,14 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
 - (void)drawRect:(CGRect)rect
 {
     (void)rect;
-    if ([self touchMode] == TOUCH_SCREEN_GAME)
+    if ([self touchMode] == TOUCH_SCREEN_GAME || _layoutEditing)
     {
-        [self drawCircleAt:self.useCenter radius:31.0 label:@"USE" active:[self isActionActive:gamefunc_Open]];
-        [self drawCircleAt:self.jumpCenter radius:31.0 label:@"JUMP" active:[self isActionActive:gamefunc_Jump]];
-        [self drawCircleAt:self.crouchCenter radius:28.0 label:@"DUCK" active:[self isActionActive:gamefunc_Crouch]];
-        [self drawCircleAt:self.weaponCenter radius:27.0 label:@"NEXT" active:[self isActionActive:gamefunc_Next_Weapon]];
+        [self drawControl:kControlUse active:[self isActionActive:gamefunc_Open]];
+        [self drawControl:kControlJump active:[self isActionActive:gamefunc_Jump]];
+        [self drawControl:kControlCrouch active:[self isActionActive:gamefunc_Crouch]];
+        [self drawControl:kControlWeapon active:[self isActionActive:gamefunc_Next_Weapon]];
     }
-    [self drawCircleAt:self.pauseCenter radius:25.0 label:@"II" active:NO];
+    [self drawControl:kControlPause active:NO];
 }
 
 @end

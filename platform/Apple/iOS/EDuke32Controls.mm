@@ -22,9 +22,10 @@ static void EDuke32UncaughtExceptionHandler(NSException *exception)
     fflush(stderr);
 }
 
-constexpr CGFloat kStickRadius = 58.0;
+constexpr CGFloat kMovementDeadZone = 10.0;
 constexpr CGFloat kLookScale = 0.018;
-constexpr CGFloat kGyroScale = 8.0;
+constexpr CGFloat kGyroScale = 6.0;
+constexpr CGFloat kDirectMouseFactor = 2048.0;
 
 static CGPoint g_mapDelta = CGPointZero;
 
@@ -144,8 +145,27 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
 {
     info->dz += static_cast<int32_t>(-droidinput.forwardmove * ANDROIDMOVEFACTOR);
     info->dx += static_cast<int32_t>(droidinput.sidemove * ANDROIDMOVEFACTOR);
-    info->dpitch += static_cast<int32_t>(droidinput.pitch * ANDROIDLOOKFACTOR);
-    info->dyaw += static_cast<int32_t>(-droidinput.yaw * ANDROIDLOOKFACTOR);
+
+    // Duke treats dyaw/dpitch as full-range controller axes. Small, relative
+    // touch and gyro deltas disappear after that path's 32767 normalization.
+    // Feed relative aim through the mouse channels instead, where values are
+    // consumed directly, and force free-look on for vertical aim.
+    double const lookYaw = droidinput.yaw;
+    double const lookPitch = droidinput.pitch;
+    info->mousex += static_cast<int32_t>(nearbyint(lookYaw * kDirectMouseFactor));
+    info->mousey += static_cast<int32_t>(nearbyint(lookPitch * kDirectMouseFactor));
+    if (lookYaw != 0.0 || lookPitch != 0.0)
+    {
+        g_myAimMode = 1;
+        static int32_t aimDiagnosticCount = 0;
+        if (aimDiagnosticCount < 20)
+        {
+            fprintf(stderr, "EDUKE32_IOS_AIM: yaw=%.4f pitch=%.4f mouse=(%d,%d)\n",
+                    lookYaw, lookPitch, info->mousex, info->mousey);
+            fflush(stderr);
+            ++aimDiagnosticCount;
+        }
+    }
 
     droidinput.pitch = 0.0;
     droidinput.yaw = 0.0;
@@ -205,6 +225,9 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
     [self addSubview:_gyroStatusLabel];
 
     _motionManager = [[CMMotionManager alloc] init];
+    fprintf(stderr, "EDUKE32_IOS_GYRO: available=%d enabled=%d\n",
+            _motionManager.deviceMotionAvailable ? 1 : 0, _gyroEnabled ? 1 : 0);
+    fflush(stderr);
     if (_motionManager.deviceMotionAvailable)
     {
         _motionManager.deviceMotionUpdateInterval = 1.0 / 100.0;
@@ -336,9 +359,14 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
         {
             if (touch == _moveTouch)
             {
-                CGFloat const dx = fmax(-kStickRadius, fmin(kStickRadius, point.x - _moveOrigin.x));
-                CGFloat const dy = fmax(-kStickRadius, fmin(kStickRadius, point.y - _moveOrigin.y));
-                AndroidMove(static_cast<float>(-dy / kStickRadius), static_cast<float>(dx / kStickRadius));
+                CGFloat const dx = point.x - _moveOrigin.x;
+                CGFloat const dy = point.y - _moveOrigin.y;
+
+                // Deliberately digital, like keyboard movement: each active
+                // axis immediately reaches full speed, including diagonals.
+                float const strafe = fabs(dx) >= kMovementDeadZone ? (dx < 0.0 ? -1.f : 1.f) : 0.f;
+                float const forward = fabs(dy) >= kMovementDeadZone ? (dy < 0.0 ? 1.f : -1.f) : 0.f;
+                AndroidMove(forward, strafe);
             }
             else if (touch == _lookTouch)
             {

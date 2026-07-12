@@ -1080,7 +1080,6 @@ typedef void (^EDuke32LaunchCompletion)(NSString *grpName);
     ];
     gradient.startPoint = CGPointMake(0.0, 0.0);
     gradient.endPoint = CGPointMake(1.0, 1.0);
-    gradient.autoresizingMask = kCALayerWidthSizable | kCALayerHeightSizable;
     [root.layer addSublayer:gradient];
 
     UILabel *title = [[[UILabel alloc] initWithFrame:CGRectZero] autorelease];

@@ -49,6 +49,11 @@ jobs:
             CODE_SIGNING_ALLOWED=NO
             CODE_SIGNING_REQUIRED=NO
             COMPILER_INDEX_STORE_ENABLE=NO
+            ENABLE_ADDRESS_SANITIZER=YES
+            ENABLE_UNDEFINED_BEHAVIOR_SANITIZER=YES
+            DEBUG_INFORMATION_FORMAT=dwarf-with-dsym
+            COPY_PHASE_STRIP=NO
+            STRIP_INSTALLED_PRODUCT=NO
             SYMROOT="$GITHUB_WORKSPACE/platform/Apple/build"
           )
 
@@ -80,6 +85,17 @@ jobs:
           name: eDukeiOS-unsigned-ipa
           path: eDukeiOS-unsigned.ipa
           if-no-files-found: error
+          retention-days: 14
+
+      - name: Upload diagnostic symbols
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-debug-symbols
+          path: |
+            platform/Apple/build/Debug-iphoneos/EDuke32-iOS.app.dSYM
+            platform/Apple/build/Debug-iphoneos/EDuke32-iOS.app/EDuke32-iOS
+          if-no-files-found: warn
           retention-days: 14
 
       - name: Upload diagnostic log

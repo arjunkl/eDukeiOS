@@ -1232,24 +1232,46 @@ extern "C" char *EDuke32_IOS_SelectGame(void)
 {
     g_launcherActive = YES;
     __block NSString *selected = nil;
+    __block UIWindow *launcherWindow = nil;
     dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
 
     void (^showLauncher)(void) = ^{
-        UIWindow *window = [EDuke32ControlsInstaller activeWindow];
-        if (!window)
-            window = UIApplication.sharedApplication.windows.firstObject;
-
         EDuke32LauncherViewController *launcher =
             [[[EDuke32LauncherViewController alloc] initWithCompletion:^(NSString *grpName) {
                 selected = [grpName copy];
                 dispatch_semaphore_signal(semaphore);
             }] autorelease];
-        launcher.view.tag = 0x45444C41;
-        launcher.view.frame = window.bounds;
-        launcher.view.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
-        [window addSubview:launcher.view];
-        objc_setAssociatedObject(launcher.view, "EDuke32LauncherController", launcher,
-                                 OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+
+        CGRect frame = UIScreen.mainScreen.bounds;
+        if (@available(iOS 13.0, *))
+        {
+            UIWindowScene *windowScene = nil;
+            for (UIScene *scene in UIApplication.sharedApplication.connectedScenes)
+            {
+                if ([scene isKindOfClass:UIWindowScene.class] &&
+                    (scene.activationState == UISceneActivationStateForegroundActive ||
+                     scene.activationState == UISceneActivationStateForegroundInactive))
+                {
+                    windowScene = (UIWindowScene *)scene;
+                    break;
+                }
+            }
+
+            if (windowScene)
+            {
+                launcherWindow = [[UIWindow alloc] initWithWindowScene:windowScene];
+                frame = windowScene.coordinateSpace.bounds;
+            }
+        }
+
+        if (!launcherWindow)
+            launcherWindow = [[UIWindow alloc] initWithFrame:frame];
+
+        launcherWindow.frame = frame;
+        launcherWindow.backgroundColor = UIColor.blackColor;
+        launcherWindow.windowLevel = UIWindowLevelAlert;
+        launcherWindow.rootViewController = launcher;
+        [launcherWindow makeKeyAndVisible];
     };
 
     if (NSThread.isMainThread)
@@ -1266,16 +1288,10 @@ extern "C" char *EDuke32_IOS_SelectGame(void)
     }
 
     void (^removeLauncher)(void) = ^{
-        for (UIWindow *window in UIApplication.sharedApplication.windows)
-        {
-            UIView *view = [window viewWithTag:0x45444C41];
-            if (view)
-            {
-                objc_setAssociatedObject(view, "EDuke32LauncherController", nil,
-                                         OBJC_ASSOCIATION_ASSIGN);
-                [view removeFromSuperview];
-            }
-        }
+        launcherWindow.hidden = YES;
+        launcherWindow.rootViewController = nil;
+        [launcherWindow release];
+        launcherWindow = nil;
     };
     if (NSThread.isMainThread)
         removeLauncher();

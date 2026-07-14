@@ -14,6 +14,8 @@
 
 namespace
 {
+static BOOL g_usePolymost = NO;
+
 static void EDuke32UncaughtExceptionHandler(NSException *exception)
 {
     fprintf(stderr, "\nEDUKE32_IOS_OBJC_EXCEPTION: %s: %s\n%s\n",
@@ -1221,12 +1223,18 @@ typedef void (^EDuke32LaunchCompletion)(NSString *grpName);
     if (sender.tag == 2 && ![self writeFuryMetadataForFile:file])
         return;
 
+    g_usePolymost = sender.tag == 2;
     _statusLabel.text = [NSString stringWithFormat:@"Starting %@…", file];
     if (_completion)
         _completion(file);
 }
 
 @end
+
+extern "C" int EDuke32_IOS_WantsPolymost(void)
+{
+    return g_usePolymost ? 1 : 0;
+}
 
 extern "C" char *EDuke32_IOS_SelectGame(void)
 {

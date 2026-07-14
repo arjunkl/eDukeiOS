@@ -711,8 +711,10 @@ int osdcmd_glinfo(osdcmdptr_t UNUSED(parm))
 
     VLOG_F(LOG_GFX, "OpenGL driver: %s %s", glinfo.renderer, glinfo.version);
 
+#if !defined EDUKE32_GL4ES
     if (GLVersion.major)
         VLOG_F(LOG_GFX, "OpenGL context: version %d.%d", GLVersion.major, GLVersion.minor);
+#endif
 
     if (!glinfo.filled)
         return OSDCMD_OK;

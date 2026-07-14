@@ -17,6 +17,7 @@
 # include "SDL_main.h"
 extern "C" void EDuke32_IOS_GetRenderSize(int32_t *width, int32_t *height);
 extern "C" char *EDuke32_IOS_SelectGame(void);
+extern "C" int EDuke32_IOS_WantsPolymost(void);
 #endif
 #include "softsurface.h"
 
@@ -32,6 +33,10 @@ extern "C" char *EDuke32_IOS_SelectGame(void);
 # include "glad/glad.h"
 # include "glbuild.h"
 # include "glsurface.h"
+#endif
+
+#if defined EDUKE32_GL4ES
+extern "C" void initialize_gl4es(void);
 #endif
 
 #if defined HAVE_GTK2
@@ -464,9 +469,9 @@ void sdlayer_sethints()
     SDL_SetHint(SDL_HINT_ACCELEROMETER_AS_JOYSTICK, "0");
 # endif
 # ifdef USE_OPENGL
-    // The legacy iOS target does not yet create a modern GLES context. Use the
-    // classic software renderer for the first playable iOS milestone.
-    nogl = 1;
+    // Keep the proven software path for Duke/custom data. Ion Fury requests
+    // Polymost explicitly because its game flags prohibit the classic renderer.
+    nogl = !EDuke32_IOS_WantsPolymost();
 # endif
 #endif
 }
@@ -1872,7 +1877,7 @@ int32_t videoSetMode(int32_t x, int32_t y, int32_t c, int32_t fs)
 
 #ifdef EDUKE32_IOS
     EDuke32_IOS_GetRenderSize(&x, &y);
-    c = 8;
+    c = EDuke32_IOS_WantsPolymost() ? 32 : 8;
     fs = 1;
 #endif
 
@@ -1915,12 +1920,19 @@ int32_t videoSetMode(int32_t x, int32_t y, int32_t c, int32_t fs)
             int32_t value;
         } sdlayer_gl_attributes[] =
         {
+#if defined EDUKE32_GL4ES
+              { SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES },
+              { SDL_GL_CONTEXT_MAJOR_VERSION, 2 },
+              { SDL_GL_CONTEXT_MINOR_VERSION, 0 },
+              { SDL_GL_CONTEXT_FLAGS, 0 },
+#else
               { SDL_GL_CONTEXT_FLAGS,
 #ifndef NDEBUG
               SDL_GL_CONTEXT_DEBUG_FLAG |
 #endif
               SDL_GL_CONTEXT_ROBUST_ACCESS_FLAG },
               { SDL_GL_CONTEXT_RESET_NOTIFICATION, SDL_GL_CONTEXT_RESET_LOSE_CONTEXT },
+#endif
               { SDL_GL_DOUBLEBUFFER, 1 },
 
               { SDL_GL_STENCIL_SIZE, 1 },
@@ -1947,16 +1959,32 @@ int32_t videoSetMode(int32_t x, int32_t y, int32_t c, int32_t fs)
             nogl = 1;
         }
 
-#ifndef EDUKE32_GLES
+#if defined EDUKE32_GL4ES
+        if (!nogl)
+        {
+            initialize_gl4es();
+            char const *version = (char const *)glGetString(GL_VERSION);
+            char const *renderer = (char const *)glGetString(GL_RENDERER);
+            LOG_F(INFO, "GL4ES initialized: version=%s renderer=%s.",
+                  version ? version : "unknown", renderer ? renderer : "unknown");
+            if (!version)
+            {
+                LOG_F(ERROR, "GL4ES did not expose an OpenGL context; Polymost is unavailable.");
+                nogl = 1;
+            }
+        }
+#elif !defined EDUKE32_GLES
         gladLoadGLLoader(SDL_GL_GetProcAddress);
 #else
         gladLoadGLES2Loader(SDL_GL_GetProcAddress);
 #endif
+#if !defined EDUKE32_GL4ES
         if (GLVersion.major < 2)
         {
             LOG_F(ERROR, "Video driver does not support OpenGL version 2 or greater; all OpenGL modes are unavailable.");
             nogl = 1;
         }
+#endif
 
         if (nogl)
         {

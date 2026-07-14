@@ -68,7 +68,7 @@ extern GLuint samplerObjectIDs[NUM_SAMPLERS];
 #define TEXUNIT_INDEX_FROM_NAME(x) (x - GL_TEXTURE0)
 #define ACTIVETEX (gl.currentActiveTexture ? TEXUNIT_INDEX_FROM_NAME(gl.currentActiveTexture) : 0)
 
-#ifndef EDUKE32_GLES
+#if !defined EDUKE32_GLES || defined EDUKE32_GL4ES
 # define buildgl_debugMessageCallback glDebugMessageCallbackARB
 # define buildgl_debugMessageControl glDebugMessageControlARB
 # define buildgl_debugMessageInsert glDebugMessageInsertARB

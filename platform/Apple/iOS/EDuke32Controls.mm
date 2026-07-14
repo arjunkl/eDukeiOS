@@ -985,6 +985,7 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
 
 @interface EDuke32ControlsInstaller : NSObject
 + (UIWindow *)activeWindow;
++ (void)scheduleRefresh;
 @end
 
 typedef void (^EDuke32LaunchCompletion)(NSString *grpName);
@@ -1334,8 +1335,24 @@ extern "C" char *EDuke32_IOS_SelectGame(void)
                                                  selector:@selector(installControls)
                                                      name:UIApplicationDidBecomeActiveNotification
                                                    object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(installControls)
+                                                     name:UIWindowDidBecomeKeyNotification
+                                                   object:nil];
         [self performSelector:@selector(installControls) withObject:nil afterDelay:0.75];
     });
+}
+
++ (void)scheduleRefresh
+{
+    // Menus, loading screens, and gameplay all share one UIKit overlay.  The
+    // engine can change MODE_MENU/MODE_GAME without causing UIKit to redraw,
+    // so refresh the inexpensive transparent overlay while the app is active.
+    [NSObject cancelPreviousPerformRequestsWithTarget:self
+                                             selector:@selector(installControls)
+                                               object:nil];
+    if (UIApplication.sharedApplication.applicationState == UIApplicationStateActive)
+        [self performSelector:@selector(installControls) withObject:nil afterDelay:0.15];
 }
 
 + (UIWindow *)activeWindow
@@ -1367,12 +1384,21 @@ extern "C" char *EDuke32_IOS_SelectGame(void)
     }
 
     NSInteger const tag = 0x4544554B;
-    if ([window viewWithTag:tag])
+    UIView *existing = [window viewWithTag:tag];
+    if (existing)
+    {
+        existing.frame = window.bounds;
+        [window bringSubviewToFront:existing];
+        [existing setNeedsDisplay];
+        [self scheduleRefresh];
         return;
+    }
 
     EDuke32ControlsView *controls = [[[EDuke32ControlsView alloc] initWithFrame:window.bounds] autorelease];
     controls.tag = tag;
     [window addSubview:controls];
+    [controls setNeedsDisplay];
+    [self scheduleRefresh];
 }
 
 @end

@@ -1231,6 +1231,13 @@ void G_DisplayRest(int32_t smoothratio)
             {
                 crosshairpos.x = scale(crosshairpos.x - (320<<15), ydim << 2, xdim * 3) + (320<<15);
                 crosshairpos.y = scale(crosshairpos.y - (200<<15), (ydim << 2) * 6, (xdim * 3) * 5) + (200<<15);
+#if defined EDUKE32_IOS
+                // Touch and gyro aim keep the view itself centered.  Fury's
+                // desktop mouse-look event can return a displaced reticle,
+                // which is especially misleading on a touch screen.
+                crosshairpos.x = 160 << 16;
+                crosshairpos.y = 100 << 16;
+#endif
                 crosshair_scale = scale(crosshair_scale, ydim << 2, xdim * 3) >> 1;
                 crosshair_pal = 0;
                 crosshair_o |= 1024;

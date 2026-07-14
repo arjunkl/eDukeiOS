@@ -1962,11 +1962,36 @@ int32_t videoSetMode(int32_t x, int32_t y, int32_t c, int32_t fs)
 #if defined EDUKE32_GL4ES
         if (!nogl)
         {
+            // Prefer correctness over GL4ES' desktop-GL fast paths on iOS.
+            // The renderer still submits desktop-style BGRA and fixed-function
+            // state, so ask GL4ES to convert those explicitly instead of using
+            // driver extensions and caches that have produced corrupt textures.
+            SDL_setenv("LIBGL_NOBGRA", "1", 1);
+            SDL_setenv("LIBGL_NOVAOCACHE", "1", 1);
+            SDL_setenv("LIBGL_USEVBO", "0", 1);
+            SDL_setenv("LIBGL_MIPMAP", "3", 1);
+            SDL_setenv("LIBGL_FORCENPOT", "1", 1);
+            SDL_setenv("LIBGL_ALPHAHACK", "1", 1);
+
+            // Keep shader failures, unsupported calls, and native crash stacks
+            // in the ordinary EDuke32 log so device-only failures are actionable.
+            SDL_setenv("LIBGL_LOGSHADERERROR", "1", 1);
+            SDL_setenv("LIBGL_SILENTSTUB", "0", 1);
+            SDL_setenv("LIBGL_STACKTRACE", "1", 1);
+
+            LOG_F(INFO, "GL4ES iOS safe mode enabled (BGRA conversion, no VAO cache/VBO, no mipmaps).");
             initialize_gl4es();
             char const *version = (char const *)glGetString(GL_VERSION);
             char const *renderer = (char const *)glGetString(GL_RENDERER);
+            char const *vendor = (char const *)glGetString(GL_VENDOR);
+            GLint maxTextureSize = 0, maxTextureUnits = 0, maxVertexAttribs = 0;
+            glGetIntegerv(GL_MAX_TEXTURE_SIZE, &maxTextureSize);
+            glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &maxTextureUnits);
+            glGetIntegerv(GL_MAX_VERTEX_ATTRIBS, &maxVertexAttribs);
             LOG_F(INFO, "GL4ES initialized: version=%s renderer=%s.",
                   version ? version : "unknown", renderer ? renderer : "unknown");
+            LOG_F(INFO, "GL4ES capabilities: vendor=%s maxTexture=%d textureUnits=%d vertexAttribs=%d.",
+                  vendor ? vendor : "unknown", maxTextureSize, maxTextureUnits, maxVertexAttribs);
             if (!version)
             {
                 LOG_F(ERROR, "GL4ES did not expose an OpenGL context; Polymost is unavailable.");

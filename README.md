@@ -28,7 +28,7 @@ The primary Duke port is working:
 
 Experimental support is included in the game launcher.
 
-Place `FURY.GRP` in the app's Files folder. eDukeiOS calculates its size and CRC and generates the runtime metadata required by the shared Duke game layer.
+Place `FURY.GRP` in the app's Files folder. eDukeiOS calculates its size and CRC, generates the runtime metadata required by the shared Duke game layer, and selects the correct root DEF for either the original game (`fury.def`) or Aftershock (`ashock.def`). A loose `FURY.DEF` may also be placed beside the GRP for retail packages that provide it separately.
 
 Ion Fury still requires device testing and may need compatibility fixes for particular retail or expansion versions.
 
@@ -73,6 +73,7 @@ For Duke Nukem 3D, copy:
 For Ion Fury, copy:
 
 - `FURY.GRP`
+- `FURY.DEF` only if your retail package provides it as a separate file
 - Any legally owned accompanying loose files required by your edition
 
 For the separate VoidSW diagnostic app, use:

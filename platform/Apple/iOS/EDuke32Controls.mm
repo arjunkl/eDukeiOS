@@ -1100,7 +1100,7 @@ typedef void (^EDuke32LaunchCompletion)(NSString *grpName);
         [self gameButtonWithTitle:@"Duke Nukem 3D"
                          subtitle:@"DUKE3D.GRP" tag:1 enabled:YES],
         [self gameButtonWithTitle:@"Ion Fury"
-                         subtitle:@"FURY.GRP" tag:2 enabled:YES],
+                         subtitle:@"FURY.GRP · base game or Aftershock" tag:2 enabled:YES],
         [self gameButtonWithTitle:@"Shadow Warrior"
                          subtitle:@"SW.GRP · VoidSW engine coming next" tag:3 enabled:YES],
         [self gameButtonWithTitle:@"Custom"
@@ -1167,16 +1167,26 @@ typedef void (^EDuke32LaunchCompletion)(NSString *grpName);
     unsigned long long size = [attributes fileSize];
     _statusLabel.text = @"Preparing Ion Fury…";
     uint32_t crc = [self crc32ForFileAtPath:path];
+
+    // Aftershock packages use ashock.def as their root definition file,
+    // while the original Ion Fury package uses fury.def. The released
+    // Aftershock GRP is substantially larger than every base-game GRP; keep
+    // the published CRC as an exact match and the size check for later retail
+    // revisions of the same package.
+    BOOL const aftershock = (size == UINT64_C(160826590) && crc == UINT32_C(0xE175FB41))
+                         || size > UINT64_C(125000000);
+    NSString *gameName = aftershock ? @"Ion Fury: Aftershock" : @"Ion Fury";
+    NSString *definitions = aftershock ? @"ashock.def" : @"fury.def";
     NSString *metadata = [NSString stringWithFormat:
         @"grpinfo\n{\n"
-         "    name \"Ion Fury\"\n"
+         "    name \"%@\"\n"
          "    scriptname \"scripts/main.con\"\n"
-         "    defname \"fury.def\"\n"
+         "    defname \"%@\"\n"
          "    size %llu\n"
          "    crc 0x%08X\n"
          "    flags 1664\n"
          "    dependency 0\n"
-         "}\n", size, crc];
+         "}\n", gameName, definitions, size, crc];
     NSString *metadataPath = [_documentsPath stringByAppendingPathComponent:@"edukeios-fury.grpinfo"];
     NSError *error = nil;
     BOOL ok = [metadata writeToFile:metadataPath atomically:YES

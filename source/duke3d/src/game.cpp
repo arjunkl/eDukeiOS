@@ -6822,13 +6822,48 @@ int app_main(int argc, char const* const* argv)
 
     Anim_Init();
 
-    char const * const deffile = G_DefFile();
+    char const *deffile = G_DefFile();
     uint32_t stime = timerGetTicks();
-    if (!loaddefinitionsfile(deffile))
+    int32_t definitionsStatus = loaddefinitionsfile(deffile);
+
+    // Original Ion Fury uses fury.def, while Aftershock uses ashock.def.
+    // Prefer the GRP metadata selection, but recover from missing or generated
+    // metadata and from packages extracted under a top-level directory.
+    if (definitionsStatus && FURY)
+    {
+        static char const * const alternatives[] =
+        {
+            "ashock.def",
+            "fury.def",
+            "fury/fury.def",
+            "fury/ashock.def",
+        };
+
+        for (char const * const candidate : alternatives)
+        {
+            if (!Bstrcasecmp(candidate, deffile))
+                continue;
+
+            buildvfs_kfd const probe = kopen4load(candidate, 0);
+            if (probe == buildvfs_kfd_invalid)
+                continue;
+
+            kclose(probe);
+            LOG_F(INFO, "Definitions file '%s' was unavailable; trying '%s'.", deffile, candidate);
+            deffile = candidate;
+            definitionsStatus = loaddefinitionsfile(deffile);
+            if (!definitionsStatus)
+                break;
+        }
+    }
+
+    if (!definitionsStatus)
     {
         uint32_t etime = timerGetTicks();
         LOG_F(INFO, "Definitions file '%s' loaded in %d ms.", deffile, etime-stime);
     }
+    else
+        LOG_F(ERROR, "Definitions file '%s' was not found. Ion Fury cannot initialize without its DEF palette declarations.", deffile);
     loaddefinitions_game(deffile, FALSE);
 
     for (char * m : g_defModules)

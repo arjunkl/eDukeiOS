@@ -119,7 +119,7 @@ jobs:
             HEADER_SEARCH_PATHS="$GITHUB_WORKSPACE/platform/Apple/iOS/gl4es-shim \$(inherited) $GITHUB_WORKSPACE/../gl4es/include"
             LIBRARY_SEARCH_PATHS="\$(inherited) $GITHUB_WORKSPACE/../gl4es/install/lib"
             OTHER_LDFLAGS="\$(inherited) -lGL"
-            GCC_PREPROCESSOR_DEFINITIONS="\$(inherited) EDUKE32_GL4ES=1"
+            GCC_PREPROCESSOR_DEFINITIONS="\$(inherited) EDUKE32_GL4ES=1 HAVE_VORBIS=1"
             EXCLUDED_SOURCE_FILE_NAMES=glad.c
           )
 
@@ -136,6 +136,13 @@ jobs:
               "${common_settings[@]}" \
               build 2>&1 | tee -a ios-build.log
           done
+
+          APP_BINARY="platform/Apple/build/Debug-iphoneos/EDuke32-iOS.app/EDuke32-iOS"
+          test -x "$APP_BINARY"
+          if strings "$APP_BINARY" | grep -Fq "OggVorbis support not included in this binary"; then
+            echo "Ion Fury requires Vorbis, but the iOS binary contains the no-Vorbis stub." >&2
+            exit 1
+          fi
 
       - name: Package unsigned IPA
         run: |

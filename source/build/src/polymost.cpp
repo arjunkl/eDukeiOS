@@ -44,18 +44,52 @@ int32_t r_polygonmode;     // 0:GL_FILL,1:GL_LINE,2:GL_POINT //FUK
 int32_t r_polymostDebug;
 int32_t r_shadeinterpolate = 1;
 int32_t r_skyzbufferhack;
+#if defined EDUKE32_GL4ES
+// GL4ES can expose the desktop GL_RED indexed-texture path while translating it
+// incorrectly on iOS GLES.  Expand indexed art to RGBA on the CPU instead.
+int32_t r_useindexedcolortextures = 0;
+#else
 int32_t r_useindexedcolortextures = 1;
+#endif
 int32_t r_usenewshading = 4;
+#if defined EDUKE32_GL4ES
+int32_t r_usesamplerobjects = 0;
+#else
 int32_t r_usesamplerobjects = 1;
+#endif
 int32_t r_usetileshades = 1;
+#if defined EDUKE32_GL4ES
+int32_t r_vertexarrays = 0;
+#else
 int32_t r_vertexarrays = 1;
+#endif
 int32_t r_yshearing;
+#if defined EDUKE32_GL4ES
+int32_t r_persistentStreamBuffer = 0;
+#else
 int32_t r_persistentStreamBuffer = 1;
+#endif
 
 extern char textfont[2048], smalltextfont[2048];
 
 int32_t rendmode=0;
+#if defined EDUKE32_GL4ES
+int32_t usemodels=0;
+#else
 int32_t usemodels=1;
+#endif
+
+#if defined EDUKE32_GL4ES
+static void Polymost_GL4ESCheckpoint(char const *stage)
+{
+    int errors = 0;
+    for (GLenum error = glGetError(); error != GL_NO_ERROR && errors < 16; error = glGetError(), ++errors)
+        LOG_F(ERROR, "GL4ES error at %s: 0x%04x.", stage, (unsigned)error);
+
+    if (errors == 0)
+        LOG_F(INFO, "GL4ES checkpoint passed: %s.", stage);
+}
+#endif
 
 typedef struct { float x, cy[2], fy[2]; int32_t tag; int16_t n, p, ctag, ftag; } vsptyp;
 #define VSPMAX 2048 //<- careful!
@@ -952,6 +986,33 @@ void polymost_initdrawpoly(void)
 
 void polymost_glinit()
 {
+#if defined EDUKE32_GL4ES
+    // Config files survive app updates, so defaults alone are insufficient.
+    // Keep the known-problematic emulated paths off until they are individually
+    // validated on iOS.  Sprite fallbacks preserve gameplay without models or
+    // voxels while the base renderer is stabilized.
+    r_useindexedcolortextures = 0;
+    r_usesamplerobjects = 0;
+    r_vertexarrays = 0;
+    r_persistentStreamBuffer = 0;
+    usemodels = 0;
+    usevoxels = 0;
+    glusetexcompr = 0;
+
+    // Do not let GL4ES' advertised desktop capabilities select paths whose
+    // GLES translations are incomplete.  Power-of-two padding also avoids the
+    // repeated/cropped large sprites seen in the Ion Fury menus.
+    glinfo.bgra = 0;
+    glinfo.texnpot = 0;
+    glinfo.texcompr = 0;
+    glinfo.samplerobjects = 0;
+    glinfo.bufferstorage = 0;
+    glinfo.sync = 0;
+
+    LOG_F(INFO, "GL4ES safe mode: native RGBA/POT art, texture compression off, sampler objects off, vertex arrays off, models/voxels off.");
+    Polymost_GL4ESCheckpoint("polymost_glinit entry");
+#endif
+
     buildgl_resetStateAccounting();
 
     glHint(GL_FOG_HINT, GL_NICEST);
@@ -968,6 +1029,10 @@ void polymost_glinit()
     //glEnable(GL_LINE_SMOOTH);
 
     polymost_initdrawpoly();
+
+#if defined EDUKE32_GL4ES
+    Polymost_GL4ESCheckpoint("stream buffer initialization");
+#endif
 
     //POGOTODO: require a max texture size >= 2048
     tilesheetSize = glinfo.maxTextureSize;
@@ -1210,6 +1275,10 @@ void polymost_glinit()
 
 #if defined EDUKE32_GLES
     Polymost_DetermineTextureFormatSupport();
+#endif
+
+#if defined EDUKE32_GL4ES
+    Polymost_GL4ESCheckpoint("polymost_glinit complete");
 #endif
 }
 
@@ -2212,10 +2281,12 @@ void gloadtile_art(int32_t dapic, int32_t dapal, int32_t tintpalnum, int32_t das
                         hictinting_applypixcolor(wpptr, tintpalnum, true);
                     }
 
-                    //swap r & b so that we deal with the data as BGRA
+#if !defined EDUKE32_GL4ES
+                    // Swap r & b so that desktop GL receives BGRA data.
                     uint8_t tmpR = wpptr->r;
                     wpptr->r = wpptr->b;
                     wpptr->b = tmpR;
+#endif
                 }
             }
         }
@@ -2268,7 +2339,13 @@ void gloadtile_art(int32_t dapic, int32_t dapal, int32_t tintpalnum, int32_t das
                 doalloc = true;
             }
         }
+#if defined EDUKE32_GL4ES
+        // Avoid GL4ES' BGRA translation for the overwhelmingly common ART
+        // upload path.  The pixels above remain native RGBA on iOS.
+        uploadtexture(doalloc, siz, GL_RGBA, pic, tsiz,
+#else
         uploadtexture(doalloc, siz, GL_BGRA, pic, tsiz,
+#endif
                       dameth | DAMETH_ARTIMMUNITY |
                       ((dapic >= MAXUSERTILES) * (DAMETH_NOTEXCOMPRESS|DAMETH_NODOWNSIZE)) | /* never process these short-lived tiles */
                       (hasfullbright * DAMETH_HASFULLBRIGHT) |

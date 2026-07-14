@@ -58,8 +58,9 @@ jobs:
       - name: Build GL4ES for Polymost on iOS
         run: |
           set -euxo pipefail
-          git clone --depth 1 https://github.com/ptitSeb/gl4es.git ../gl4es
+          git clone --depth 1 --branch v1.1.6 https://github.com/ptitSeb/gl4es.git ../gl4es
           git clone --depth 1 https://github.com/leetal/ios-cmake.git ../ios-cmake
+          git -C ../gl4es apply "$GITHUB_WORKSPACE/platform/Apple/iOS/gl4es-darwin.patch"
           cmake \
             -S ../gl4es \
             -B ../gl4es/build-ios \

@@ -455,10 +455,21 @@ static GLuint polymost2_compileShader(GLenum shaderType, const char* const sourc
         return 0;
     }
 
+#if defined EDUKE32_GL4ES
+    // GL4ES's OpenGL compatibility header predates the const-correct
+    // glShaderSource prototype used by GLAD. Keep its mutable pointer local;
+    // neither GL4ES nor GLES modifies the shader text itself.
+    GLchar const * gl4esSource = source;
+    glShaderSource(shaderID,
+                   1,
+                   &gl4esSource,
+                   pLength);
+#else
     glShaderSource(shaderID,
                    1,
                    &source,
                    pLength);
+#endif
     glCompileShader(shaderID);
 
     GLint compileStatus;
@@ -918,6 +929,7 @@ void polymost_initdrawpoly(void)
 
     buildgl_bindBuffer(GL_ARRAY_BUFFER, drawpolyVertsID);
 
+#if !defined EDUKE32_GLES
     if (persistentStreamBuffer)
     {
         GLbitfield flags = GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT;
@@ -927,6 +939,7 @@ void polymost_initdrawpoly(void)
         drawpolyVerts = (float*) glMapBufferRange(GL_ARRAY_BUFFER, 0, 3*drawpolyVertsBufferLength*sizeof(float)*5, flags);
     }
     else
+#endif
     {
         drawpolyVerts = defaultDrawpolyVertsArray;
         glBufferData(GL_ARRAY_BUFFER, drawpolyVertsBufferLength*sizeof(float)*5, NULL, GL_STREAM_DRAW);

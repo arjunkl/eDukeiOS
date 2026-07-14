@@ -15,6 +15,11 @@ extern "C" void EDuke32_IOS_GetRenderSize(int32_t *width, int32_t *height)
     *height = static_cast<int32_t>(floor(shortEdge * renderScale)) & ~1;
 }
 
+extern "C" int EDuke32_IOS_WantsPolymost(void)
+{
+    return 0;
+}
+
 extern "C" char *EDuke32_IOS_SelectGame(void)
 {
     return strdup("SW.GRP");

@@ -921,9 +921,11 @@ void polymost_initdrawpoly(void)
     glGenBuffers(1, &drawpolyVertsID);
 
     // reset the sync objects, as old ones we had from any last GL context are gone now
+#if !defined EDUKE32_GLES
     for (int i=0; i<ARRAY_SSIZE(drawpolyVertsSync); i++)
         if (glIsSync(drawpolyVertsSync[i]))
             glDeleteSync(drawpolyVertsSync[i]);
+#endif
 
     Bmemset(drawpolyVertsSync, 0, sizeof(drawpolyVertsSync));
 
@@ -3013,6 +3015,7 @@ void polymost_updatePalette()
     }
 }
 
+#if !defined EDUKE32_GLES
 static void polymost_lockSubBuffer(uint32_t subBufferIndex)
 {
     if (drawpolyVertsSync[subBufferIndex])
@@ -3069,6 +3072,7 @@ static void polymost_waitForSubBuffer(uint32_t subBufferIndex)
     }
     while (true);
 }
+#endif
 
 static void polymost_updaterotmat(void)
 {
@@ -3154,6 +3158,7 @@ void polymost_startBufferedDrawing(int nn)
 {
     if (nn * 5 + drawpolyVertsOffset > (drawpolyVertsSubBufferIndex + 1) * drawpolyVertsBufferLength)
     {
+#if !defined EDUKE32_GLES
         if (persistentStreamBuffer)
         {
             // lock this sub buffer
@@ -3165,6 +3170,7 @@ void polymost_startBufferedDrawing(int nn)
             polymost_waitForSubBuffer(drawpolyVertsSubBufferIndex);
         }
         else
+#endif
         {
             glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 5 * drawpolyVertsBufferLength, NULL, GL_STREAM_DRAW);
             drawpolyVertsOffset = 0;

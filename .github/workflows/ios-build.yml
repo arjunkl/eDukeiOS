@@ -75,8 +75,8 @@ jobs:
             -DDEFAULT_ES=2 \
             -DNO_INIT_CONSTRUCTOR=ON
           cmake --build ../gl4es/build-ios --config Release --target GL
-          GL4ES_LIBRARY="$(find ../gl4es/build-ios -name libGL.a -print -quit)"
-          test -n "$GL4ES_LIBRARY"
+          GL4ES_LIBRARY="../gl4es/lib/Release/libGL.a"
+          test -f "$GL4ES_LIBRARY"
           mkdir -p ../gl4es/install/lib
           cp "$GL4ES_LIBRARY" ../gl4es/install/lib/libGL.a
 
@@ -114,6 +114,7 @@ jobs:
             COMPILER_INDEX_STORE_ENABLE=NO
             DEBUG_INFORMATION_FORMAT=dwarf-with-dsym
             COPY_PHASE_STRIP=NO
+            STRIP_INSTALLED_PRODUCT=NO
             SYMROOT="$GITHUB_WORKSPACE/platform/Apple/build"
             HEADER_SEARCH_PATHS="$GITHUB_WORKSPACE/platform/Apple/iOS/gl4es-shim \$(inherited) $GITHUB_WORKSPACE/../gl4es/include"
             LIBRARY_SEARCH_PATHS="\$(inherited) $GITHUB_WORKSPACE/../gl4es/install/lib"

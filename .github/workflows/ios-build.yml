@@ -120,6 +120,7 @@ jobs:
             LIBRARY_SEARCH_PATHS="\$(inherited) $GITHUB_WORKSPACE/../gl4es/install/lib"
             OTHER_LDFLAGS="\$(inherited) -lGL"
             GCC_PREPROCESSOR_DEFINITIONS="\$(inherited) EDUKE32_GL4ES=1"
+            EXCLUDED_SOURCE_FILE_NAMES=glad.c
           )
 
           xcodebuild \

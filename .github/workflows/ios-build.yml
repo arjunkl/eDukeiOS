@@ -65,6 +65,7 @@ jobs:
             -S ../gl4es \
             -B ../gl4es/build-ios \
             -G Xcode \
+            -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
             -DCMAKE_TOOLCHAIN_FILE="$GITHUB_WORKSPACE/../ios-cmake/ios.toolchain.cmake" \
             -DPLATFORM=OS64 \
             -DDEPLOYMENT_TARGET=15.0 \
@@ -113,7 +114,6 @@ jobs:
             COMPILER_INDEX_STORE_ENABLE=NO
             DEBUG_INFORMATION_FORMAT=dwarf-with-dsym
             COPY_PHASE_STRIP=NO
-            STRIP_INSTALLED_PRODUCT=NO
             SYMROOT="$GITHUB_WORKSPACE/platform/Apple/build"
             HEADER_SEARCH_PATHS="$GITHUB_WORKSPACE/platform/Apple/iOS/gl4es-shim \$(inherited) $GITHUB_WORKSPACE/../gl4es/include"
             LIBRARY_SEARCH_PATHS="\$(inherited) $GITHUB_WORKSPACE/../gl4es/install/lib"

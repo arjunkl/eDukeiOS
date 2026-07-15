@@ -73,6 +73,7 @@ public:
                   m_savedOffset, rotatesprite_yxaspect);
             logged = true;
         }
+        ++rotatesprite_force_native_y;
         rotatesprite_y_offset = 0;
         rotatesprite_yxaspect = 65536;
     }
@@ -83,6 +84,7 @@ public:
         {
             rotatesprite_y_offset = m_savedOffset;
             rotatesprite_yxaspect = m_savedAspect;
+            --rotatesprite_force_native_y;
         }
     }
 
@@ -1260,6 +1262,12 @@ void G_DisplayRest(int32_t smoothratio)
 
     if (g_player[myconnectindex].ps->newowner == -1 && ud.overhead_on == 0 && ud.crosshair && ud.camerasprite == -1)
     {
+#ifdef EDUKE32_IOS
+        // Keep this active across EVENT_DISPLAYCROSSHAIR as Fury may draw the
+        // reticle directly from CON instead of returning a tile for this code
+        // to draw afterward.
+        IOSFury2DOffsetGuard const iosFury2DOffsetGuard;
+#endif
         ud.returnvar[0] = (160<<16) - (g_player[myconnectindex].ps->look_ang<<15);
         ud.returnvar[1] = 100<<16;
         int32_t a = VM_OnEventWithReturn(EVENT_DISPLAYCROSSHAIR, g_player[screenpeek].ps->i, screenpeek, CROSSHAIR);
@@ -1288,9 +1296,6 @@ void G_DisplayRest(int32_t smoothratio)
                 renderSetAspect(viewingrange, 65536);
             }
 
-#ifdef EDUKE32_IOS
-            IOSFury2DOffsetGuard const iosFury2DOffsetGuard;
-#endif
             rotatesprite_win(crosshairpos.x, crosshairpos.y, crosshair_scale, 0, a, 0, crosshair_pal, crosshair_o);
 
             if (FURY)

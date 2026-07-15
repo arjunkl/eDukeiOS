@@ -7776,8 +7776,10 @@ void dorotspr_handle_bit2(int32_t *sxptr, int32_t *syptr, int32_t *z, int32_t da
 
         int32_t zoomsc, sx=*sxptr, sy=*syptr;
         int32_t ouryxaspect = yxaspect, ourxyaspect = xyaspect;
+        int32_t const drawYOffset = rotatesprite_force_native_y ? 0 : rotatesprite_y_offset;
+        int32_t const drawYXAspect = rotatesprite_force_native_y ? 65536 : rotatesprite_yxaspect;
 
-        sy += rotatesprite_y_offset;
+        sy += drawYOffset;
 
         if (!(dastat & RS_STRETCH) && 4*ydim <= 3*xdim)
         {
@@ -7793,8 +7795,8 @@ void dorotspr_handle_bit2(int32_t *sxptr, int32_t *syptr, int32_t *z, int32_t da
             ourxyaspect = (10<<16)/12;
         }
 
-        ouryxaspect = mulscale16(ouryxaspect, rotatesprite_yxaspect);
-        ourxyaspect = divscale16(ourxyaspect, rotatesprite_yxaspect);
+        ouryxaspect = mulscale16(ouryxaspect, drawYXAspect);
+        ourxyaspect = divscale16(ourxyaspect, drawYXAspect);
 
         // screen center to s[xy], 320<<16 coords.
         const int32_t normxofs = sx-(320<<15), normyofs = sy-(200<<15);
@@ -7810,7 +7812,7 @@ void dorotspr_handle_bit2(int32_t *sxptr, int32_t *syptr, int32_t *z, int32_t da
             sx = ((twice_midcx)<<15) + scaledxofs;
 
             zoomsc = xdimenscale;   //= scale(xdimen,yxaspect,320);
-            zoomsc = mulscale16(zoomsc, rotatesprite_yxaspect);
+            zoomsc = mulscale16(zoomsc, drawYXAspect);
 
             if ((dastat & RS_ALIGN_MASK) == RS_ALIGN_MASK)
                 zoomsc = scale(zoomsc, ydim, oydim);
@@ -9236,6 +9238,7 @@ int32_t engineInit(void)
 
     rotatesprite_y_offset = 0;
     rotatesprite_yxaspect = 65536;
+    rotatesprite_force_native_y = 0;
 
     showinvisibility = 0;
 

@@ -53,6 +53,7 @@ public:
     {
         if (m_active)
         {
+            ++rotatesprite_force_native_y;
             rotatesprite_y_offset = 0;
             rotatesprite_yxaspect = 65536;
         }
@@ -64,6 +65,7 @@ public:
         {
             rotatesprite_y_offset = m_savedOffset;
             rotatesprite_yxaspect = m_savedAspect;
+            --rotatesprite_force_native_y;
         }
     }
 

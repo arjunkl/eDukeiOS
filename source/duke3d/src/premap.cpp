@@ -593,33 +593,6 @@ void G_UpdateScreenArea(void)
         v2.y = ud.returnvar[2];
     }
 
-#if defined EDUKE32_IOS
-    // Ion Fury draws its HUD as an overlay. Its BOTTOMSTATUSBAR artwork is much
-    // taller than Duke's conventional solid status bar, so reserving that tile's
-    // height leaves only a short strip at the top for the 3D view. Besides making
-    // the vertical FOV look cropped, rotatesprite_win() then correctly centres the
-    // crosshair and menu elements inside that wrongly shortened viewport.
-    //
-    // Keep the world viewport full-screen on iOS and let Fury draw the HUD over it.
-    if (FURY)
-    {
-        static bool loggedFuryViewportOverride = false;
-
-        if (!loggedFuryViewportOverride)
-        {
-            LOG_F(INFO,
-                  "iOS Fury: overriding computed viewport (%d,%d)-(%d,%d) with full %dx%d "
-                  "(screen size %d, status mode %d, status tile height %d, status scale %d).",
-                  v1.x, v1.y, v2.x - 1, v2.y - 1, xdim, ydim, ud.screen_size,
-                  ud.statusbarmode, bottomStatusY, ud.statusbarscale);
-            loggedFuryViewportOverride = true;
-        }
-
-        v1 = { 0, 0 };
-        v2 = { xdim, ydim };
-    }
-#endif
-
     videoSetViewableArea(v1.x, v1.y, v2.x-1, v2.y-1);
 
     G_GetCrosshairColor();

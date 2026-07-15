@@ -950,20 +950,6 @@ void G_DrawRooms(int32_t playerNum, int32_t smoothRatio)
         else
             renderSetAspect(mulscale16(vr, viewingrange), yxaspect);
 
-#if defined EDUKE32_IOS
-        if (FURY)
-        {
-            static bool loggedFuryFinalProjection = false;
-            if (!loggedFuryFinalProjection)
-            {
-                LOG_F(INFO,
-                      "iOS Fury final projection: viewingrange=%d yxaspect=%d xdimenscale=%d.",
-                      viewingrange, yxaspect, xdimenscale);
-                loggedFuryFinalProjection = true;
-            }
-        }
-#endif
-
         if (!g_screenCapture)
         {
             if (screenTilting)

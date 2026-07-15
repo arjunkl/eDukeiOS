@@ -49,52 +49,6 @@ double g_moveActorsTime, g_moveWorldTime;  // in ms, smoothed
 int32_t g_noLogoAnim = 0;
 int32_t g_noLogo = 0;
 
-#ifdef EDUKE32_IOS
-// Ion Fury's desktop scripts can apply a global vertical rotatesprite offset
-// and scale.  On the extra-wide iPhone canvas those transforms are applied
-// after the engine's normal 320x200-to-screen conversion, enlarging the UI
-// vertically and moving content beyond the top edge.  Scope their removal to
-// full-screen/menu UI so the independently positioned gameplay HUD remains
-// unchanged.
-class IOSFury2DOffsetGuard
-{
-public:
-    IOSFury2DOffsetGuard()
-        : m_active(FURY), m_savedOffset(rotatesprite_y_offset),
-          m_savedAspect(rotatesprite_yxaspect)
-    {
-        if (!m_active)
-            return;
-
-        static bool logged = false;
-        if (!logged)
-        {
-            LOG_F(INFO, "iOS Fury 2D layout: neutralizing draw_y offset %d and draw_yxaspect %d.",
-                  m_savedOffset, rotatesprite_yxaspect);
-            logged = true;
-        }
-        ++rotatesprite_force_native_y;
-        rotatesprite_y_offset = 0;
-        rotatesprite_yxaspect = 65536;
-    }
-
-    ~IOSFury2DOffsetGuard()
-    {
-        if (m_active)
-        {
-            rotatesprite_y_offset = m_savedOffset;
-            rotatesprite_yxaspect = m_savedAspect;
-            --rotatesprite_force_native_y;
-        }
-    }
-
-private:
-    bool m_active;
-    int32_t m_savedOffset;
-    int32_t m_savedAspect;
-};
-#endif
-
 ////////// OFTEN-USED FEW-LINERS //////////
 #ifndef EDUKE32_STANDALONE
 static void G_HandleEventsWhileNoInput(void)
@@ -1264,17 +1218,7 @@ void G_DisplayRest(int32_t smoothratio)
     {
         ud.returnvar[0] = (160<<16) - (g_player[myconnectindex].ps->look_ang<<15);
         ud.returnvar[1] = 100<<16;
-#if defined EDUKE32_IOS
-        // Fury's EVENT_DISPLAYCROSSHAIR draws its own reticle before returning
-        // to this code.  That script-owned reticle uses desktop coordinates
-        // and appears far above the physical center on an extra-wide iPhone.
-        // Bypass the event for Fury and use the exact engine-owned path that
-        // produces Duke's correctly centered iOS crosshair.
-        int32_t a = FURY ? CROSSHAIR
-                         : VM_OnEventWithReturn(EVENT_DISPLAYCROSSHAIR, g_player[screenpeek].ps->i, screenpeek, CROSSHAIR);
-#else
         int32_t a = VM_OnEventWithReturn(EVENT_DISPLAYCROSSHAIR, g_player[screenpeek].ps->i, screenpeek, CROSSHAIR);
-#endif
         if ((unsigned) a < MAXTILES)
         {
             vec2_t crosshairpos = { ud.returnvar[0], ud.returnvar[1] };
@@ -1282,49 +1226,21 @@ void G_DisplayRest(int32_t smoothratio)
             uint32_t crosshair_o = 1|2;
             uint32_t crosshair_scale = divscale16(ud.crosshairscale, 100);
 
-#if !defined EDUKE32_IOS
             auto const oyxaspect = yxaspect;
-#endif
             if (FURY)
             {
-#if defined EDUKE32_IOS
-                // Deliberately retain Duke's 320x200 center mapping and flags.
-                // Only Fury's palette differs.
-                crosshairpos.x = 160 << 16;
-                crosshairpos.y = 100 << 16;
-                crosshair_pal = 0;
-#else
                 crosshairpos.x = scale(crosshairpos.x - (320<<15), ydim << 2, xdim * 3) + (320<<15);
                 crosshairpos.y = scale(crosshairpos.y - (200<<15), (ydim << 2) * 6, (xdim * 3) * 5) + (200<<15);
                 crosshair_scale = scale(crosshair_scale, ydim << 2, xdim * 3) >> 1;
                 crosshair_pal = 0;
                 crosshair_o |= 1024;
                 renderSetAspect(viewingrange, 65536);
-#endif
             }
 
-#if defined EDUKE32_IOS
-            IOSFury2DOffsetGuard const iosFuryCrosshairGuard;
-            if (FURY)
-            {
-                static bool loggedFuryCrosshair = false;
-                if (!loggedFuryCrosshair)
-                {
-                    LOG_F(INFO,
-                          "iOS Fury crosshair: tile=%d virtual=(%d,%d) scale=%u flags=%u "
-                          "screen=%dx%d viewport=(%d,%d)-(%d,%d).",
-                          a, crosshairpos.x, crosshairpos.y, crosshair_scale, crosshair_o,
-                          xdim, ydim, windowxy1.x, windowxy1.y, windowxy2.x, windowxy2.y);
-                    loggedFuryCrosshair = true;
-                }
-            }
-#endif
             rotatesprite_win(crosshairpos.x, crosshairpos.y, crosshair_scale, 0, a, 0, crosshair_pal, crosshair_o);
 
-#if !defined EDUKE32_IOS
             if (FURY)
                 renderSetAspect(viewingrange, oyxaspect);
-#endif
         }
     }
 
@@ -1467,12 +1383,7 @@ void G_DisplayRest(int32_t smoothratio)
         if (g_player[myconnectindex].ps->gm&MODE_TYPE)
             Net_SendMessage();
         else
-        {
-#ifdef EDUKE32_IOS
-            IOSFury2DOffsetGuard const iosFury2DOffsetGuard;
-#endif
             M_DisplayMenus();
-        }
     }
 
     {
@@ -1552,9 +1463,6 @@ void fadepal(int32_t r, int32_t g, int32_t b, int32_t start, int32_t end, int32_
 // START and END limits are always inclusive!
 static void fadepaltile(int32_t r, int32_t g, int32_t b, int32_t start, int32_t end, int32_t step, int32_t tile)
 {
-#ifdef EDUKE32_IOS
-    IOSFury2DOffsetGuard const iosFury2DOffsetGuard;
-#endif
     if (ud.screenfade == 0)
       return;
 
@@ -1585,9 +1493,6 @@ int inExtraScreens = 0;
 
 void gameDisplayTENScreen()
 {
-#ifdef EDUKE32_IOS
-    IOSFury2DOffsetGuard const iosFury2DOffsetGuard;
-#endif
 #ifdef __ANDROID__
     inExtraScreens = 1;
 #endif
@@ -1612,9 +1517,6 @@ void gameDisplayTENScreen()
 
 void gameDisplaySharewareScreens()
 {
-#ifdef EDUKE32_IOS
-    IOSFury2DOffsetGuard const iosFury2DOffsetGuard;
-#endif
 #ifdef __ANDROID__
     inExtraScreens = 1;
 #endif
@@ -1655,9 +1557,6 @@ void G_DisplayExtraScreens(void)
 
 void gameDisplay3DRScreen()
 {
-#ifdef EDUKE32_IOS
-    IOSFury2DOffsetGuard const iosFury2DOffsetGuard;
-#endif
     if (!I_GeneralTrigger() && g_noLogoAnim == 0)
     {
         buildvfs_kfd i;
@@ -1712,9 +1611,6 @@ void gameDisplay3DRScreen()
 
 void gameDisplayTitleScreen(void)
 {
-#ifdef EDUKE32_IOS
-    IOSFury2DOffsetGuard const iosFury2DOffsetGuard;
-#endif
     int titlesound  = 0;
     int32_t const logoflags = G_GetLogoFlags();
 

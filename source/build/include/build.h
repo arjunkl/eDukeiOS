@@ -772,9 +772,6 @@ EXTERN intptr_t *ylookup;
 
 EXTERN int32_t rotatesprite_y_offset;
 EXTERN int32_t rotatesprite_yxaspect;
-// Scoped engine-level override used when game scripts must not alter the
-// vertical placement/aspect of 2D draws (for example, mobile-safe UI passes).
-EXTERN int32_t rotatesprite_force_native_y;
 
 #ifndef GEKKO
 #define MAXVALIDMODES 256

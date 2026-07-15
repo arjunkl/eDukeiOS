@@ -7776,10 +7776,7 @@ void dorotspr_handle_bit2(int32_t *sxptr, int32_t *syptr, int32_t *z, int32_t da
 
         int32_t zoomsc, sx=*sxptr, sy=*syptr;
         int32_t ouryxaspect = yxaspect, ourxyaspect = xyaspect;
-        int32_t const drawYOffset = rotatesprite_force_native_y ? 0 : rotatesprite_y_offset;
-        int32_t const drawYXAspect = rotatesprite_force_native_y ? 65536 : rotatesprite_yxaspect;
-
-        sy += drawYOffset;
+        sy += rotatesprite_y_offset;
 
         if (!(dastat & RS_STRETCH) && 4*ydim <= 3*xdim)
         {
@@ -7795,8 +7792,8 @@ void dorotspr_handle_bit2(int32_t *sxptr, int32_t *syptr, int32_t *z, int32_t da
             ourxyaspect = (10<<16)/12;
         }
 
-        ouryxaspect = mulscale16(ouryxaspect, drawYXAspect);
-        ourxyaspect = divscale16(ourxyaspect, drawYXAspect);
+        ouryxaspect = mulscale16(ouryxaspect, rotatesprite_yxaspect);
+        ourxyaspect = divscale16(ourxyaspect, rotatesprite_yxaspect);
 
         // screen center to s[xy], 320<<16 coords.
         const int32_t normxofs = sx-(320<<15), normyofs = sy-(200<<15);
@@ -7812,7 +7809,7 @@ void dorotspr_handle_bit2(int32_t *sxptr, int32_t *syptr, int32_t *z, int32_t da
             sx = ((twice_midcx)<<15) + scaledxofs;
 
             zoomsc = xdimenscale;   //= scale(xdimen,yxaspect,320);
-            zoomsc = mulscale16(zoomsc, drawYXAspect);
+            zoomsc = mulscale16(zoomsc, rotatesprite_yxaspect);
 
             if ((dastat & RS_ALIGN_MASK) == RS_ALIGN_MASK)
                 zoomsc = scale(zoomsc, ydim, oydim);
@@ -9238,7 +9235,6 @@ int32_t engineInit(void)
 
     rotatesprite_y_offset = 0;
     rotatesprite_yxaspect = 65536;
-    rotatesprite_force_native_y = 0;
 
     showinvisibility = 0;
 
@@ -11975,6 +11971,19 @@ int32_t videoSetGameMode(char davidoption, int32_t daupscaledxdim, int32_t daups
     PolymostFreeVBOs();
 #endif
     if (videoSetMode(daupscaledxdim,daupscaledydim,dabpp,davidoption) < 0) return -1;
+
+#ifdef EDUKE32_IOS
+    // UIKit may replace the requested desktop-style mode with the drawable's
+    // actual pixel size. Keep Build's logical geometry in lockstep with that
+    // accepted mode; otherwise the renderer presents a 1024x768 canvas through
+    // a 956x440 drawable and every projection/2D coordinate is calculated in
+    // the wrong aspect ratio.
+    if (daupscaledxdim != xres || daupscaledydim != yres)
+        LOG_F(INFO, "UIKit video-mode handoff: replacing requested engine size %dx%d with actual %dx%d.",
+              daupscaledxdim, daupscaledydim, xres, yres);
+    daupscaledxdim = xres;
+    daupscaledydim = yres;
+#endif
 
     // Workaround possible bugs in the GL driver
     makeasmwriteable();

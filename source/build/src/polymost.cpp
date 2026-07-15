@@ -9233,11 +9233,6 @@ void polymost_dorotatesprite(int32_t sx, int32_t sy, int32_t z, int16_t a, int16
                              int8_t dashade, char dapalnum, int32_t dastat, uint8_t daalpha, uint8_t dablend,
                              int32_t cx1, int32_t cy1, int32_t cx2, int32_t cy2, int32_t uniqid)
 {
-#if defined EDUKE32_IOS
-    int32_t const iosInputSX = sx;
-    int32_t const iosInputSY = sy;
-    int32_t const iosInputZ = z;
-#endif
     if (usemodels && tile2model[picnum].hudmem[(dastat&4)>>2])
     {
         polymost_dorotatespritemodel(sx, sy, z, a, picnum, dashade, dapalnum, dastat, daalpha, dablend, uniqid);
@@ -9360,26 +9355,6 @@ void polymost_dorotatesprite(int32_t sx, int32_t sy, int32_t z, int16_t a, int16
 
     int32_t ourxyaspect, ouryxaspect;
     dorotspr_handle_bit2(&sx, &sy, &z, dastat, cx1 + cx2, cy1 + cy2, &ouryxaspect, &ourxyaspect);
-
-#if defined EDUKE32_IOS
-    if (rotatesprite_force_native_y)
-    {
-        static int iosFury2DTraceCount = 0;
-        if (iosFury2DTraceCount < 48)
-        {
-            LOG_F(INFO,
-                  "iOS Fury 2D trace %d: tile=%d flags=%d input=(%d,%d,%d) "
-                  "output=(%d,%d,%d) clip=(%d,%d)-(%d,%d) screen=%dx%d "
-                  "view=%dx%d native-depth=%d.",
-                  iosFury2DTraceCount, picnum, dastat,
-                  iosInputSX, iosInputSY, iosInputZ, sx, sy, z,
-                  cx1, cy1, cx2, cy2, xdim, ydim,
-                  windowxy2.x - windowxy1.x + 1, windowxy2.y - windowxy1.y + 1,
-                  rotatesprite_force_native_y);
-            ++iosFury2DTraceCount;
-        }
-    }
-#endif
 
     int32_t cosang = mulscale14(sintable[(a + 512) & 2047], z);
     int32_t cosang2 = cosang;

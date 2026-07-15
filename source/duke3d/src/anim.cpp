@@ -43,39 +43,6 @@ EDUKE32_STATIC_ASSERT(INT16_MAX >= MAXSOUNDS);
 hashtable_t h_dukeanim = { 8, NULL };
 dukeanim_t * g_animPtr;
 
-#ifdef EDUKE32_IOS
-class IOSFuryAnimOffsetGuard
-{
-public:
-    IOSFuryAnimOffsetGuard()
-        : m_active(FURY), m_savedOffset(rotatesprite_y_offset),
-          m_savedAspect(rotatesprite_yxaspect)
-    {
-        if (m_active)
-        {
-            ++rotatesprite_force_native_y;
-            rotatesprite_y_offset = 0;
-            rotatesprite_yxaspect = 65536;
-        }
-    }
-
-    ~IOSFuryAnimOffsetGuard()
-    {
-        if (m_active)
-        {
-            rotatesprite_y_offset = m_savedOffset;
-            rotatesprite_yxaspect = m_savedAspect;
-            --rotatesprite_force_native_y;
-        }
-    }
-
-private:
-    bool m_active;
-    int32_t m_savedOffset;
-    int32_t m_savedAspect;
-};
-#endif
-
 dukeanim_t *Anim_Find(const char *s)
 {
     intptr_t ptr = hash_findcase(&h_dukeanim, s);
@@ -258,9 +225,6 @@ void Anim_Init(void)
 
 int32_t Anim_Play(const char *fn)
 {
-#ifdef EDUKE32_IOS
-    IOSFuryAnimOffsetGuard const iosFuryAnimOffsetGuard;
-#endif
     dukeanim_t *anim = Anim_Find(fn);
 
     if (!anim)

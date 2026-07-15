@@ -829,9 +829,9 @@ void G_DrawRooms(int32_t playerNum, int32_t smoothRatio)
             if (!loggedFuryAspect)
             {
                 LOG_F(INFO,
-                      "iOS Fury 3D projection: screen=%dx%d viewport=%dx%d viewingrange=%d "
+                      "iOS Fury 3D projection: screen=%dx%d viewingrange=%d "
                       "yxaspect=%d fov=%d.",
-                      xdim, ydim, xdimen, ydimen, viewingrange, yxaspect, ud.fov);
+                      xdim, ydim, viewingrange, yxaspect, ud.fov);
                 loggedFuryAspect = true;
             }
         }

@@ -41,6 +41,7 @@ extern sprstat_t g_spriteStat;
 #endif
 
 extern int32_t dr_yxaspect, dr_viewingrange;
+extern int32_t xdimenscale;
 extern int32_t g_noLogoAnim, g_noLogo;
 extern double g_moveActorsTime, g_moveWorldTime;
 

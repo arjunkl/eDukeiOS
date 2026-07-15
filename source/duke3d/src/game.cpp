@@ -906,17 +906,8 @@ void G_DrawRooms(int32_t playerNum, int32_t smoothRatio)
         int32_t floorZ, ceilZ;
         int32_t tiltcx, tiltcy, tiltcs=0;    // JBF 20030807
 
-#if defined EDUKE32_IOS
-        // Fury's CON can change both the player sprite scale and user FOV.
-        // Those values feed directly into Build's projection and made Fury's
-        // iOS view vertically tighter than Duke's on the same display.  Use
-        // the known-good Duke projection basis for Fury on iOS.
-        int const projectionPlayerYRepeat = FURY ? 36 : sprite[pPlayer->i].yrepeat;
-        int const projectionFov = FURY ? 90 : ud.fov;
-#else
         int const projectionPlayerYRepeat = sprite[pPlayer->i].yrepeat;
         int const projectionFov = ud.fov;
-#endif
 
         int vr            = divscale22(1, projectionPlayerYRepeat + 28);
         int screenTilting = (videoGetRenderMode() == REND_CLASSIC
@@ -930,17 +921,26 @@ void G_DrawRooms(int32_t playerNum, int32_t smoothRatio)
         vr = Blrintf(float(vr) * tanf(projectionFov * (fPI/360.f)));
 
 #if defined EDUKE32_IOS
-        if (FURY)
         {
-            static bool loggedFuryDukeProjection = false;
-            if (!loggedFuryDukeProjection)
+            static bool loggedDukeProjection = false;
+            static bool loggedFuryProjection = false;
+            bool &loggedProjection = FURY ? loggedFuryProjection : loggedDukeProjection;
+            if (!loggedProjection)
             {
+                int const viewportWidth = windowxy2.x - windowxy1.x + 1;
+                int const viewportHeight = windowxy2.y - windowxy1.y + 1;
+                float const verticalFovTan = (float(vr) * viewportHeight * 5.f)
+                                             / (float(yxaspect) * viewportWidth * 4.f);
+                float const verticalFovDegrees = atanf(verticalFovTan) * (360.f / fPI);
                 LOG_F(INFO,
-                      "iOS Fury Duke-parity projection: source yrepeat=%d fov=%d; "
-                      "using yrepeat=%d fov=%d; final vr=%d viewingrange=%d yxaspect=%d.",
-                      sprite[pPlayer->i].yrepeat, ud.fov,
-                      projectionPlayerYRepeat, projectionFov, vr, viewingrange, yxaspect);
-                loggedFuryDukeProjection = true;
+                      "iOS %s projection: screen=%dx%d viewport=(%d,%d)-(%d,%d) "
+                      "yrepeat=%d fov=%d base-vr=%d viewingrange=%d yxaspect=%d "
+                      "calculated-vfov=%.2f degrees r_usenewaspect=%d.",
+                      FURY ? "Fury" : "Duke", xdim, ydim,
+                      windowxy1.x, windowxy1.y, windowxy2.x, windowxy2.y,
+                      projectionPlayerYRepeat, projectionFov, vr, viewingrange, yxaspect,
+                      verticalFovDegrees, r_usenewaspect);
+                loggedProjection = true;
             }
         }
 #endif
@@ -949,6 +949,20 @@ void G_DrawRooms(int32_t playerNum, int32_t smoothRatio)
             renderSetAspect(vr, yxaspect);
         else
             renderSetAspect(mulscale16(vr, viewingrange), yxaspect);
+
+#if defined EDUKE32_IOS
+        if (FURY)
+        {
+            static bool loggedFuryFinalProjection = false;
+            if (!loggedFuryFinalProjection)
+            {
+                LOG_F(INFO,
+                      "iOS Fury final projection: viewingrange=%d yxaspect=%d xdimenscale=%d.",
+                      viewingrange, yxaspect, xdimenscale);
+                loggedFuryFinalProjection = true;
+            }
+        }
+#endif
 
         if (!g_screenCapture)
         {

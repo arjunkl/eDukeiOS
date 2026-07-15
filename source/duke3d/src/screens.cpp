@@ -1303,6 +1303,22 @@ void G_DisplayRest(int32_t smoothratio)
 #endif
             }
 
+#if defined EDUKE32_IOS
+            IOSFury2DOffsetGuard const iosFuryCrosshairGuard;
+            if (FURY)
+            {
+                static bool loggedFuryCrosshair = false;
+                if (!loggedFuryCrosshair)
+                {
+                    LOG_F(INFO,
+                          "iOS Fury crosshair: tile=%d virtual=(%d,%d) scale=%u flags=%u "
+                          "screen=%dx%d viewport=(%d,%d)-(%d,%d).",
+                          a, crosshairpos.x, crosshairpos.y, crosshair_scale, crosshair_o,
+                          xdim, ydim, windowxy1.x, windowxy1.y, windowxy2.x, windowxy2.y);
+                    loggedFuryCrosshair = true;
+                }
+            }
+#endif
             rotatesprite_win(crosshairpos.x, crosshairpos.y, crosshair_scale, 0, a, 0, crosshair_pal, crosshair_o);
 
 #if !defined EDUKE32_IOS

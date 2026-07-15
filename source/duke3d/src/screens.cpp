@@ -49,6 +49,43 @@ double g_moveActorsTime, g_moveWorldTime;  // in ms, smoothed
 int32_t g_noLogoAnim = 0;
 int32_t g_noLogo = 0;
 
+#ifdef EDUKE32_IOS
+// Ion Fury's desktop scripts can apply a global vertical rotatesprite offset.
+// On the extra-wide iPhone canvas that offset is applied after the engine's
+// normal 320x200-to-screen conversion, moving centered UI toward (and beyond)
+// the top edge.  Scope its removal to full-screen/menu UI so the independently
+// positioned gameplay HUD remains unchanged.
+class IOSFury2DOffsetGuard
+{
+public:
+    IOSFury2DOffsetGuard()
+        : m_active(FURY), m_savedOffset(rotatesprite_y_offset)
+    {
+        if (!m_active)
+            return;
+
+        static bool logged = false;
+        if (!logged)
+        {
+            LOG_F(INFO, "iOS Fury 2D layout: neutralizing draw_y offset %d (draw_yxaspect=%d).",
+                  m_savedOffset, rotatesprite_yxaspect);
+            logged = true;
+        }
+        rotatesprite_y_offset = 0;
+    }
+
+    ~IOSFury2DOffsetGuard()
+    {
+        if (m_active)
+            rotatesprite_y_offset = m_savedOffset;
+    }
+
+private:
+    bool m_active;
+    int32_t m_savedOffset;
+};
+#endif
+
 ////////// OFTEN-USED FEW-LINERS //////////
 #ifndef EDUKE32_STANDALONE
 static void G_HandleEventsWhileNoInput(void)
@@ -1244,6 +1281,9 @@ void G_DisplayRest(int32_t smoothratio)
                 renderSetAspect(viewingrange, 65536);
             }
 
+#ifdef EDUKE32_IOS
+            IOSFury2DOffsetGuard const iosFury2DOffsetGuard;
+#endif
             rotatesprite_win(crosshairpos.x, crosshairpos.y, crosshair_scale, 0, a, 0, crosshair_pal, crosshair_o);
 
             if (FURY)
@@ -1390,7 +1430,12 @@ void G_DisplayRest(int32_t smoothratio)
         if (g_player[myconnectindex].ps->gm&MODE_TYPE)
             Net_SendMessage();
         else
+        {
+#ifdef EDUKE32_IOS
+            IOSFury2DOffsetGuard const iosFury2DOffsetGuard;
+#endif
             M_DisplayMenus();
+        }
     }
 
     {
@@ -1470,6 +1515,9 @@ void fadepal(int32_t r, int32_t g, int32_t b, int32_t start, int32_t end, int32_
 // START and END limits are always inclusive!
 static void fadepaltile(int32_t r, int32_t g, int32_t b, int32_t start, int32_t end, int32_t step, int32_t tile)
 {
+#ifdef EDUKE32_IOS
+    IOSFury2DOffsetGuard const iosFury2DOffsetGuard;
+#endif
     if (ud.screenfade == 0)
       return;
 
@@ -1500,6 +1548,9 @@ int inExtraScreens = 0;
 
 void gameDisplayTENScreen()
 {
+#ifdef EDUKE32_IOS
+    IOSFury2DOffsetGuard const iosFury2DOffsetGuard;
+#endif
 #ifdef __ANDROID__
     inExtraScreens = 1;
 #endif
@@ -1524,6 +1575,9 @@ void gameDisplayTENScreen()
 
 void gameDisplaySharewareScreens()
 {
+#ifdef EDUKE32_IOS
+    IOSFury2DOffsetGuard const iosFury2DOffsetGuard;
+#endif
 #ifdef __ANDROID__
     inExtraScreens = 1;
 #endif
@@ -1564,6 +1618,9 @@ void G_DisplayExtraScreens(void)
 
 void gameDisplay3DRScreen()
 {
+#ifdef EDUKE32_IOS
+    IOSFury2DOffsetGuard const iosFury2DOffsetGuard;
+#endif
     if (!I_GeneralTrigger() && g_noLogoAnim == 0)
     {
         buildvfs_kfd i;
@@ -1618,6 +1675,9 @@ void gameDisplay3DRScreen()
 
 void gameDisplayTitleScreen(void)
 {
+#ifdef EDUKE32_IOS
+    IOSFury2DOffsetGuard const iosFury2DOffsetGuard;
+#endif
     int titlesound  = 0;
     int32_t const logoflags = G_GetLogoFlags();
 

@@ -804,10 +804,38 @@ void G_DrawRooms(int32_t playerNum, int32_t smoothRatio)
         return;
     }
 
+#if defined EDUKE32_IOS
+    // Fury's settings are allowed to select the legacy aspect path.  That path
+    // keeps a fixed horizontal field of view, so an extra-wide iPhone canvas
+    // loses visible scene above and below.  The corrected path expands the
+    // horizontal field of view while preserving the vertical field of view.
+    if (FURY && !r_usenewaspect)
+    {
+        LOG_F(INFO, "iOS Fury 3D aspect: enabling vertical-FOV-preserving corrected aspect for %dx%d.",
+              xdim, ydim);
+        r_usenewaspect = 1;
+    }
+#endif
+
     if (r_usenewaspect)
     {
         newaspect_enable = 1;
         videoSetCorrectedAspect();
+
+#if defined EDUKE32_IOS
+        if (FURY)
+        {
+            static bool loggedFuryAspect = false;
+            if (!loggedFuryAspect)
+            {
+                LOG_F(INFO,
+                      "iOS Fury 3D projection: screen=%dx%d viewport=%dx%d viewingrange=%d "
+                      "yxaspect=%d fov=%d.",
+                      xdim, ydim, xdimen, ydimen, viewingrange, yxaspect, ud.fov);
+                loggedFuryAspect = true;
+            }
+        }
+#endif
     }
 
     if (pPlayer->on_crane > -1)

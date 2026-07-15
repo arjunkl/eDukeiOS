@@ -50,16 +50,18 @@ int32_t g_noLogoAnim = 0;
 int32_t g_noLogo = 0;
 
 #ifdef EDUKE32_IOS
-// Ion Fury's desktop scripts can apply a global vertical rotatesprite offset.
-// On the extra-wide iPhone canvas that offset is applied after the engine's
-// normal 320x200-to-screen conversion, moving centered UI toward (and beyond)
-// the top edge.  Scope its removal to full-screen/menu UI so the independently
-// positioned gameplay HUD remains unchanged.
+// Ion Fury's desktop scripts can apply a global vertical rotatesprite offset
+// and scale.  On the extra-wide iPhone canvas those transforms are applied
+// after the engine's normal 320x200-to-screen conversion, enlarging the UI
+// vertically and moving content beyond the top edge.  Scope their removal to
+// full-screen/menu UI so the independently positioned gameplay HUD remains
+// unchanged.
 class IOSFury2DOffsetGuard
 {
 public:
     IOSFury2DOffsetGuard()
-        : m_active(FURY), m_savedOffset(rotatesprite_y_offset)
+        : m_active(FURY), m_savedOffset(rotatesprite_y_offset),
+          m_savedAspect(rotatesprite_yxaspect)
     {
         if (!m_active)
             return;
@@ -67,22 +69,27 @@ public:
         static bool logged = false;
         if (!logged)
         {
-            LOG_F(INFO, "iOS Fury 2D layout: neutralizing draw_y offset %d (draw_yxaspect=%d).",
+            LOG_F(INFO, "iOS Fury 2D layout: neutralizing draw_y offset %d and draw_yxaspect %d.",
                   m_savedOffset, rotatesprite_yxaspect);
             logged = true;
         }
         rotatesprite_y_offset = 0;
+        rotatesprite_yxaspect = 65536;
     }
 
     ~IOSFury2DOffsetGuard()
     {
         if (m_active)
+        {
             rotatesprite_y_offset = m_savedOffset;
+            rotatesprite_yxaspect = m_savedAspect;
+        }
     }
 
 private:
     bool m_active;
     int32_t m_savedOffset;
+    int32_t m_savedAspect;
 };
 #endif
 

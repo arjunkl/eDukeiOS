@@ -48,21 +48,29 @@ class IOSFuryAnimOffsetGuard
 {
 public:
     IOSFuryAnimOffsetGuard()
-        : m_active(FURY), m_savedOffset(rotatesprite_y_offset)
+        : m_active(FURY), m_savedOffset(rotatesprite_y_offset),
+          m_savedAspect(rotatesprite_yxaspect)
     {
         if (m_active)
+        {
             rotatesprite_y_offset = 0;
+            rotatesprite_yxaspect = 65536;
+        }
     }
 
     ~IOSFuryAnimOffsetGuard()
     {
         if (m_active)
+        {
             rotatesprite_y_offset = m_savedOffset;
+            rotatesprite_yxaspect = m_savedAspect;
+        }
     }
 
 private:
     bool m_active;
     int32_t m_savedOffset;
+    int32_t m_savedAspect;
 };
 #endif
 

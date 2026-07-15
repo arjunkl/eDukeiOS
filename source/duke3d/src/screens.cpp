@@ -1262,15 +1262,19 @@ void G_DisplayRest(int32_t smoothratio)
 
     if (g_player[myconnectindex].ps->newowner == -1 && ud.overhead_on == 0 && ud.crosshair && ud.camerasprite == -1)
     {
-#ifdef EDUKE32_IOS
-        // Keep this active across EVENT_DISPLAYCROSSHAIR as Fury may draw the
-        // reticle directly from CON instead of returning a tile for this code
-        // to draw afterward.
-        IOSFury2DOffsetGuard const iosFury2DOffsetGuard;
-#endif
         ud.returnvar[0] = (160<<16) - (g_player[myconnectindex].ps->look_ang<<15);
         ud.returnvar[1] = 100<<16;
+#if defined EDUKE32_IOS
+        // Fury's EVENT_DISPLAYCROSSHAIR draws its own reticle before returning
+        // to this code.  That script-owned reticle uses desktop coordinates
+        // and appears far above the physical center on an extra-wide iPhone.
+        // Bypass the event for Fury and use the exact engine-owned path that
+        // produces Duke's correctly centered iOS crosshair.
+        int32_t a = FURY ? CROSSHAIR
+                         : VM_OnEventWithReturn(EVENT_DISPLAYCROSSHAIR, g_player[screenpeek].ps->i, screenpeek, CROSSHAIR);
+#else
         int32_t a = VM_OnEventWithReturn(EVENT_DISPLAYCROSSHAIR, g_player[screenpeek].ps->i, screenpeek, CROSSHAIR);
+#endif
         if ((unsigned) a < MAXTILES)
         {
             vec2_t crosshairpos = { ud.returnvar[0], ud.returnvar[1] };
@@ -1278,28 +1282,33 @@ void G_DisplayRest(int32_t smoothratio)
             uint32_t crosshair_o = 1|2;
             uint32_t crosshair_scale = divscale16(ud.crosshairscale, 100);
 
+#if !defined EDUKE32_IOS
             auto const oyxaspect = yxaspect;
+#endif
             if (FURY)
             {
-                crosshairpos.x = scale(crosshairpos.x - (320<<15), ydim << 2, xdim * 3) + (320<<15);
-                crosshairpos.y = scale(crosshairpos.y - (200<<15), (ydim << 2) * 6, (xdim * 3) * 5) + (200<<15);
 #if defined EDUKE32_IOS
-                // Touch and gyro aim keep the view itself centered.  Fury's
-                // desktop mouse-look event can return a displaced reticle,
-                // which is especially misleading on a touch screen.
+                // Deliberately retain Duke's 320x200 center mapping and flags.
+                // Only Fury's palette differs.
                 crosshairpos.x = 160 << 16;
                 crosshairpos.y = 100 << 16;
-#endif
+                crosshair_pal = 0;
+#else
+                crosshairpos.x = scale(crosshairpos.x - (320<<15), ydim << 2, xdim * 3) + (320<<15);
+                crosshairpos.y = scale(crosshairpos.y - (200<<15), (ydim << 2) * 6, (xdim * 3) * 5) + (200<<15);
                 crosshair_scale = scale(crosshair_scale, ydim << 2, xdim * 3) >> 1;
                 crosshair_pal = 0;
                 crosshair_o |= 1024;
                 renderSetAspect(viewingrange, 65536);
+#endif
             }
 
             rotatesprite_win(crosshairpos.x, crosshairpos.y, crosshair_scale, 0, a, 0, crosshair_pal, crosshair_o);
 
+#if !defined EDUKE32_IOS
             if (FURY)
                 renderSetAspect(viewingrange, oyxaspect);
+#endif
         }
     }
 

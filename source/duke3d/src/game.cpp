@@ -906,7 +906,19 @@ void G_DrawRooms(int32_t playerNum, int32_t smoothRatio)
         int32_t floorZ, ceilZ;
         int32_t tiltcx, tiltcy, tiltcs=0;    // JBF 20030807
 
-        int vr            = divscale22(1, sprite[pPlayer->i].yrepeat + 28);
+#if defined EDUKE32_IOS
+        // Fury's CON can change both the player sprite scale and user FOV.
+        // Those values feed directly into Build's projection and made Fury's
+        // iOS view vertically tighter than Duke's on the same display.  Use
+        // the known-good Duke projection basis for Fury on iOS.
+        int const projectionPlayerYRepeat = FURY ? 36 : sprite[pPlayer->i].yrepeat;
+        int const projectionFov = FURY ? 90 : ud.fov;
+#else
+        int const projectionPlayerYRepeat = sprite[pPlayer->i].yrepeat;
+        int const projectionFov = ud.fov;
+#endif
+
+        int vr            = divscale22(1, projectionPlayerYRepeat + 28);
         int screenTilting = (videoGetRenderMode() == REND_CLASSIC
                              && ((ud.screen_tilting && pPlayer->rotscrnang
 
@@ -915,7 +927,23 @@ void G_DrawRooms(int32_t playerNum, int32_t smoothRatio)
 #endif
                                   )));
 
-        vr = Blrintf(float(vr) * tanf(ud.fov * (fPI/360.f)));
+        vr = Blrintf(float(vr) * tanf(projectionFov * (fPI/360.f)));
+
+#if defined EDUKE32_IOS
+        if (FURY)
+        {
+            static bool loggedFuryDukeProjection = false;
+            if (!loggedFuryDukeProjection)
+            {
+                LOG_F(INFO,
+                      "iOS Fury Duke-parity projection: source yrepeat=%d fov=%d; "
+                      "using yrepeat=%d fov=%d; final vr=%d viewingrange=%d yxaspect=%d.",
+                      sprite[pPlayer->i].yrepeat, ud.fov,
+                      projectionPlayerYRepeat, projectionFov, vr, viewingrange, yxaspect);
+                loggedFuryDukeProjection = true;
+            }
+        }
+#endif
 
         if (!r_usenewaspect)
             renderSetAspect(vr, yxaspect);

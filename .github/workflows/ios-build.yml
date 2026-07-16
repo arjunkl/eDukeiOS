@@ -139,11 +139,12 @@ jobs:
 
           APP_BINARY="platform/Apple/build/Debug-iphoneos/EDuke32-iOS.app/EDuke32-iOS"
           test -x "$APP_BINARY"
-          if strings "$APP_BINARY" | grep -Fq "OggVorbis support not included in this binary"; then
+          strings "$APP_BINARY" > "$RUNNER_TEMP/edukeios-binary-strings.txt"
+          if grep -Fq "OggVorbis support not included in this binary" "$RUNNER_TEMP/edukeios-binary-strings.txt"; then
             echo "Ion Fury requires Vorbis, but the iOS binary contains the no-Vorbis stub." >&2
             exit 1
           fi
-          if ! strings "$APP_BINARY" | grep -Fq "EDUKE32_IOS_VOXELS:"; then
+          if ! grep -Fq "EDUKE32_IOS_VOXELS:" "$RUNNER_TEMP/edukeios-binary-strings.txt"; then
             echo "The iOS binary is missing the optional Ion Fury voxel loader diagnostics." >&2
             exit 1
           fi

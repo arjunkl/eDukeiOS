@@ -9,7 +9,8 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
+  actions: write
 
 jobs:
   legacy-ios-target:
@@ -20,6 +21,74 @@ jobs:
     steps:
       - name: Check out eDukeiOS
         uses: actions/checkout@v6
+        with:
+          ref: ios-polymost-gl4es
+          fetch-depth: 0
+
+      # BEGIN ONE-SHOT ION FURY VOXEL APPLICATOR
+      - name: Apply staged Ion Fury voxel integration
+        if: ${{ hashFiles('.github/workflows/apply-ion-fury-voxels.yml') != '' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import os
+          from pathlib import Path
+
+          staged = Path(".github/workflows/apply-ion-fury-voxels.yml").read_text()
+          start_marker = "          python3 - <<'PY'\n"
+          end_marker = "\n          PY\n"
+          if start_marker not in staged or end_marker not in staged.split(start_marker, 1)[1]:
+              raise SystemExit("staged voxel patch markers are missing")
+          block = staged.split(start_marker, 1)[1].split(end_marker, 1)[0]
+          script = "\n".join(
+              line[10:] if line.startswith("          ") else line
+              for line in block.splitlines()
+          ) + "\n"
+          output = Path(os.environ["RUNNER_TEMP"]) / "apply-ion-fury-voxels.py"
+          output.write_text(script)
+          print(f"Extracted staged patch to {output}")
+          PY
+
+          python3 "$RUNNER_TEMP/apply-ion-fury-voxels.py"
+          rm .github/workflows/apply-ion-fury-voxels.yml
+
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path(".github/workflows/ios-build.yml")
+          text = path.read_text()
+          begin = "      # BEGIN ONE-SHOT ION FURY VOXEL APPLICATOR\n"
+          end = "      # END ONE-SHOT ION FURY VOXEL APPLICATOR\n"
+          start = text.find(begin)
+          finish = text.find(end)
+          if start < 0 or finish < 0 or finish < start:
+              raise SystemExit("one-shot workflow markers are missing")
+          finish += len(end)
+          path.write_text(text[:start] + text[finish:])
+          PY
+
+          git diff --check
+          git config user.name "eDukeiOS Build Agent"
+          git config user.email "actions@users.noreply.github.com"
+          git add platform/Apple/iOS/EDuke32Controls.mm \
+                  source/build/src/sdlayer.cpp \
+                  README.md \
+                  .github/workflows/ios-build.yml \
+                  .github/workflows/apply-ion-fury-voxels.yml
+          git commit -m "Add optional Ion Fury voxel pack loading"
+          git push origin HEAD:ios-polymost-gl4es
+
+          sleep 3
+          curl --fail-with-body -L \
+            -X POST \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "https://api.github.com/repos/${{ github.repository }}/actions/workflows/ios-build.yml/dispatches" \
+            -d '{"ref":"ios-polymost-gl4es"}'
+      # END ONE-SHOT ION FURY VOXEL APPLICATOR
 
       - name: Generate iOS app icon assets
         run: |

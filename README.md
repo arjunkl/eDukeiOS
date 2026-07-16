@@ -28,9 +28,22 @@ The primary Duke port is working:
 
 Experimental support is included in the game launcher.
 
-Place `FURY.GRP` in the app's Files folder. eDukeiOS calculates its size and CRC and generates the runtime metadata required by the shared Duke game layer.
+Place `FURY.GRP` in the app's Files folder. eDukeiOS calculates its size and CRC, generates the runtime metadata required by the shared Duke game layer, and selects the correct root DEF for either the original game (`fury.def`) or Aftershock (`ashock.def`). A loose `FURY.DEF` may also be placed beside the GRP for retail packages that provide it separately.
 
 Ion Fury still requires device testing and may need compatibility fixes for particular retail or expansion versions.
+
+#### Optional Ion Fury / Aftershock voxel pack
+
+eDukeiOS automatically detects the community [Ion Fury Voxel Pack](https://github.com/Dzierzan/IonFury-Voxel-Pack) when Ion Fury or Aftershock is selected. The pack is loaded as an additional DEF module, leaving the original `fury.def` or `ashock.def` root definitions unchanged.
+
+In `On My iPhone → eDukeiOS`, use either layout:
+
+- Copy `voxels.def`, `KVX`, and optionally `maphacks` directly into the eDukeiOS folder; or
+- Copy the downloaded folder intact. Folder names beginning with `IonFury-Voxel-Pack`, including GitHub's `IonFury-Voxel-Pack-main`, are recognized.
+
+`voxels.def` and the `KVX` directory are required. The launcher displays **voxel pack detected** when the layout is valid. The `maphacks` directory is recommended but optional.
+
+The voxel artwork is not distributed with eDukeiOS. It has a separate noncommercial, attribution-required Voxel Pack Art License and may only be used with a legally acquired copy of Ion Fury. Review the pack's `voxelpack_art_license.txt` before installing it.
 
 ### Shadow Warrior
 
@@ -73,7 +86,9 @@ For Duke Nukem 3D, copy:
 For Ion Fury, copy:
 
 - `FURY.GRP`
+- `FURY.DEF` only if your retail package provides it as a separate file
 - Any legally owned accompanying loose files required by your edition
+- Optional voxel pack files as described in the Ion Fury section above
 
 For the separate VoidSW diagnostic app, use:
 
@@ -167,5 +182,7 @@ The upstream EDuke32 and VoidSW projects remain the foundation of this work. Ple
 ## License and attribution
 
 eDukeiOS is based on EDuke32 and retains its open-source licensing and attribution requirements. See the license files and source headers in this repository for the complete terms.
+
+Optional Ion Fury voxel artwork is created by the contributors to [Dzierzan/IonFury-Voxel-Pack](https://github.com/Dzierzan/IonFury-Voxel-Pack) and remains governed by that project's separate Voxel Pack Art License. It is not included in this repository or its IPA artifacts.
 
 Duke Nukem 3D, Ion Fury, Shadow Warrior, their game data, names, artwork, music, and other proprietary assets belong to their respective owners. This repository distributes source-port code only and does not grant rights to commercial game data.

@@ -14,6 +14,10 @@
 
 namespace
 {
+static BOOL g_usePolymost = NO;
+static NSInteger g_furyVoxelPackMode = 0;
+static char g_furyVoxelPackSearchPath[BMAX_PATH] = {};
+
 static void EDuke32UncaughtExceptionHandler(NSException *exception)
 {
     fprintf(stderr, "\nEDUKE32_IOS_OBJC_EXCEPTION: %s: %s\n%s\n",
@@ -25,6 +29,9 @@ static void EDuke32UncaughtExceptionHandler(NSException *exception)
 
 constexpr CGFloat kMovementDeadZone = 12.0;
 constexpr CGFloat kMovementDiagonalRatio = 0.55;
+constexpr CGFloat kLookGestureDisplacementSlop = 4.0;
+constexpr CGFloat kLookGestureTravelSlop = 6.0;
+constexpr int64_t kLookHoldFireDelayMilliseconds = 125;
 constexpr CGFloat kDefaultLookScale = 0.018;
 constexpr CGFloat kDefaultGyroScale = 6.0;
 constexpr CGFloat kDirectMouseFactor = 2048.0;
@@ -36,6 +43,9 @@ enum IOSControlIndex : NSInteger
     kControlCrouch,
     kControlWeapon,
     kControlPause,
+    // Keep Fire after the existing controls so previously saved layout keys
+    // continue to refer to the same buttons.
+    kControlFire,
     kControlCount
 };
 
@@ -57,6 +67,18 @@ static SDL_Window *ActiveSDLWindow()
     if (!window)
         window = SDL_GetWindowFromID(1);
     return window;
+}
+
+static void PushApplicationEvent(Uint32 type)
+{
+    SDL_Event event = {};
+    event.type = type;
+    if (SDL_PushEvent(&event) < 0)
+    {
+        fprintf(stderr, "EDUKE32_IOS_LIFECYCLE: could not push event %u: %s\n",
+                type, SDL_GetError());
+        fflush(stderr);
+    }
 }
 
 static void PushKey(SDL_Scancode scancode)
@@ -228,6 +250,7 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
     UILongPressGestureRecognizer *_pauseLongPressGesture;
     UILabel *_gyroStatusLabel;
     UIView *_editorPanel;
+    UIButton *_fireToggleButton;
     UIButton *_gyroButton;
     UIButton *_doneButton;
     UILabel *_touchSensitivityLabel;
@@ -235,10 +258,12 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
     UISlider *_touchSensitivitySlider;
     UISlider *_gyroSensitivitySlider;
     BOOL _gyroEnabled;
+    BOOL _fireButtonEnabled;
     float _touchAimScale;
     float _gyroAimScale;
     BOOL _lookMoved;
     BOOL _lookFiring;
+    CGFloat _lookTotalTravel;
 
     BOOL _layoutEditing;
     BOOL _controlLayoutReady;
@@ -251,6 +276,7 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
     UITouch *_pauseTouch;
     BOOL _pauseHoldActivated;
 }
+- (void)cancelActiveTouchesForBackground;
 @end
 
 @implementation EDuke32ControlsView
@@ -270,6 +296,8 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
     NSUserDefaults *preferences = NSUserDefaults.standardUserDefaults;
     _gyroEnabled = [preferences objectForKey:@"eDukeiOS.gyro.enabled"]
         ? [preferences boolForKey:@"eDukeiOS.gyro.enabled"] : YES;
+    _fireButtonEnabled = [preferences objectForKey:@"eDukeiOS.fireButton.enabled"]
+        ? [preferences boolForKey:@"eDukeiOS.fireButton.enabled"] : YES;
     _touchAimScale = [preferences objectForKey:@"eDukeiOS.aim.touch"]
         ? [preferences floatForKey:@"eDukeiOS.aim.touch"] : kDefaultLookScale;
     _gyroAimScale = [preferences objectForKey:@"eDukeiOS.aim.gyro"]
@@ -309,6 +337,13 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
     editorTitle.font = [UIFont boldSystemFontOfSize:14.0];
     [_editorPanel addSubview:editorTitle];
     editorTitle.tag = 7001;
+
+    _fireToggleButton = [[UIButton buttonWithType:UIButtonTypeSystem] retain];
+    _fireToggleButton.titleLabel.font = [UIFont boldSystemFontOfSize:13.0];
+    _fireToggleButton.layer.cornerRadius = 10.0;
+    [_fireToggleButton addTarget:self action:@selector(toggleFireButtonFromEditor:)
+               forControlEvents:UIControlEventTouchUpInside];
+    [_editorPanel addSubview:_fireToggleButton];
 
     _gyroButton = [[UIButton buttonWithType:UIButtonTypeSystem] retain];
     _gyroButton.titleLabel.font = [UIFont boldSystemFontOfSize:13.0];
@@ -387,6 +422,7 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
     [_pauseLongPressGesture release];
     [_gyroStatusLabel release];
     [_editorPanel release];
+    [_fireToggleButton release];
     [_gyroButton release];
     [_doneButton release];
     [_touchSensitivityLabel release];
@@ -408,6 +444,7 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
         case kControlCrouch: return CGPointMake(width - 153.0, height - 42.0);
         case kControlWeapon: return CGPointMake(width - 226.0, height - 46.0);
         case kControlPause: return CGPointMake(width - 35.0, 35.0);
+        case kControlFire: return CGPointMake(width - 72.0, height - 88.0);
         default: return CGPointMake(width * 0.5, height * 0.5);
     }
 }
@@ -421,6 +458,7 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
         case kControlCrouch: return 28.0;
         case kControlWeapon: return 27.0;
         case kControlPause: return 25.0;
+        case kControlFire: return 38.0;
         default: return 28.0;
     }
 }
@@ -507,6 +545,7 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
 - (CGPoint)crouchCenter { return [self centerForControl:kControlCrouch]; }
 - (CGPoint)weaponCenter { return [self centerForControl:kControlWeapon]; }
 - (CGPoint)pauseCenter { return [self centerForControl:kControlPause]; }
+- (CGPoint)fireCenter { return [self centerForControl:kControlFire]; }
 
 - (void)layoutSubviews
 {
@@ -517,7 +556,8 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
     CGFloat const panelWidth = fmin(CGRectGetWidth(self.bounds) - 32.0, 520.0);
     _editorPanel.frame = CGRectMake((CGRectGetWidth(self.bounds) - panelWidth) * 0.5, 12.0, panelWidth, 124.0);
     UILabel *title = (UILabel *)[_editorPanel viewWithTag:7001];
-    title.frame = CGRectMake(16.0, 10.0, 180.0, 30.0);
+    title.frame = CGRectMake(16.0, 10.0, 176.0, 30.0);
+    _fireToggleButton.frame = CGRectMake(panelWidth - 324.0, 9.0, 114.0, 32.0);
     _gyroButton.frame = CGRectMake(panelWidth - 202.0, 9.0, 102.0, 32.0);
     _doneButton.frame = CGRectMake(panelWidth - 92.0, 9.0, 76.0, 32.0);
     _touchSensitivityLabel.frame = CGRectMake(16.0, 47.0, 118.0, 27.0);
@@ -544,22 +584,31 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
     [self toggleControlEditor];
 }
 
-- (void)toggleControlEditor
+- (void)cancelActiveTouchesForBackground
 {
-
-    if (_moveTouch)
-        AndroidMove(0.f, 0.f);
+    AndroidMove(0.f, 0.f);
     if (_lookFiring)
         AndroidAction(0, gamefunc_Fire);
     for (NSNumber *action in _touchActions.allValues)
         AndroidAction(0, action.intValue);
     [_touchActions removeAllObjects];
+
     _moveTouch = nil;
     _lookTouch = nil;
     _lookFiring = NO;
     _lookMoved = NO;
+    _lookTotalTravel = 0.0;
     _editTouch = nil;
     _editingControl = kNoControl;
+    _editingResize = NO;
+    _pauseTouch = nil;
+    _pauseHoldActivated = NO;
+    [self setNeedsDisplay];
+}
+
+- (void)toggleControlEditor
+{
+    [self cancelActiveTouchesForBackground];
 
     _layoutEditing = !_layoutEditing;
     _editorPanel.hidden = !_layoutEditing;
@@ -583,6 +632,13 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
 
 - (void)updateEditorControls
 {
+    [_fireToggleButton setTitle:(_fireButtonEnabled ? @"FIRE ON" : @"FIRE OFF")
+                       forState:UIControlStateNormal];
+    _fireToggleButton.backgroundColor = _fireButtonEnabled
+        ? [UIColor colorWithRed:0.88 green:0.24 blue:0.12 alpha:0.88]
+        : [UIColor colorWithRed:0.48 green:0.16 blue:0.16 alpha:0.85];
+    [_fireToggleButton setTitleColor:UIColor.whiteColor forState:UIControlStateNormal];
+
     [_gyroButton setTitle:(_gyroEnabled ? @"GYRO ON" : @"GYRO OFF") forState:UIControlStateNormal];
     _gyroButton.backgroundColor = _gyroEnabled
         ? [UIColor colorWithRed:0.10 green:0.68 blue:0.35 alpha:0.85]
@@ -600,6 +656,19 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
     (void)sender;
     if (_layoutEditing)
         [self toggleControlEditor];
+}
+
+- (void)toggleFireButtonFromEditor:(UIButton *)sender
+{
+    (void)sender;
+    _fireButtonEnabled = !_fireButtonEnabled;
+    [NSUserDefaults.standardUserDefaults setBool:_fireButtonEnabled
+                                          forKey:@"eDukeiOS.fireButton.enabled"];
+    [self updateEditorControls];
+    [self setNeedsDisplay];
+
+    UISelectionFeedbackGenerator *feedback = [[[UISelectionFeedbackGenerator alloc] init] autorelease];
+    [feedback selectionChanged];
 }
 
 - (void)toggleGyroFromEditor:(UIButton *)sender
@@ -645,6 +714,9 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
     if (CGRectContainsPoint(CircleRect(self.jumpCenter, [self radiusForControl:kControlJump]), point)) return gamefunc_Jump;
     if (CGRectContainsPoint(CircleRect(self.crouchCenter, [self radiusForControl:kControlCrouch]), point)) return gamefunc_Crouch;
     if (CGRectContainsPoint(CircleRect(self.weaponCenter, [self radiusForControl:kControlWeapon]), point)) return gamefunc_Next_Weapon;
+    if (_fireButtonEnabled
+        && CGRectContainsPoint(CircleRect(self.fireCenter, [self radiusForControl:kControlFire]), point))
+        return gamefunc_Fire;
     return -1;
 }
 
@@ -671,6 +743,8 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
                 CGFloat nearestDistance = CGFLOAT_MAX;
                 for (NSInteger control = 0; control < kControlCount; ++control)
                 {
+                    if (control == kControlFire && !_fireButtonEnabled)
+                        continue;
                     CGFloat const distance = hypot(point.x - _controlCenters[control].x,
                                                    point.y - _controlCenters[control].y);
                     if (distance <= _controlRadii[control] + 18.0 && distance < nearestDistance)
@@ -714,12 +788,15 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
             _lookPrevious = point;
             _lookMoved = NO;
             _lookFiring = NO;
+            _lookTotalTravel = 0.0;
 
-            // A quick tap fires once. Holding still briefly begins continuous
-            // fire; after it starts, the same finger may drag to aim.
+            // A quick tap fires once. Holding still begins continuous fire;
+            // any meaningful aim movement permanently cancels firing for this
+            // touch. After hold-fire starts, the finger may still drag to aim.
             if ([self touchMode] == TOUCH_SCREEN_GAME)
             {
-                dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 90 * NSEC_PER_MSEC),
+                dispatch_after(dispatch_time(DISPATCH_TIME_NOW,
+                                                  kLookHoldFireDelayMilliseconds * NSEC_PER_MSEC),
                                dispatch_get_main_queue(), ^{
                     if (self->_lookTouch == touch && !self->_lookMoved && !self->_lookFiring
                         && [self touchMode] == TOUCH_SCREEN_GAME)
@@ -790,7 +867,12 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
             {
                 CGFloat const dx = point.x - _lookPrevious.x;
                 CGFloat const dy = point.y - _lookPrevious.y;
-                if (!_lookFiring && hypot(point.x - _lookOrigin.x, point.y - _lookOrigin.y) >= 12.0)
+                _lookTotalTravel += hypot(dx, dy);
+                CGFloat const displacement =
+                    hypot(point.x - _lookOrigin.x, point.y - _lookOrigin.y);
+                if (!_lookFiring
+                    && (displacement >= kLookGestureDisplacementSlop
+                        || _lookTotalTravel >= kLookGestureTravelSlop))
                     _lookMoved = YES;
                 // Touch coordinates grow downward; gyro is already correct,
                 // so invert only the touch pitch before the shared aim path.
@@ -856,9 +938,11 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
         {
             CGFloat const distance = hypot(point.x - _lookOrigin.x, point.y - _lookOrigin.y);
             BOOL const wasFiring = _lookFiring;
+            BOOL const wasMoved = _lookMoved;
             _lookTouch = nil;
             _lookMoved = NO;
             _lookFiring = NO;
+            _lookTotalTravel = 0.0;
 
             if (wasFiring)
                 AndroidAction(0, gamefunc_Fire);
@@ -867,7 +951,8 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
             {
                 if (mode == TOUCH_SCREEN_GAME)
                 {
-                    if (!wasFiring && distance < 12.0)
+                    if (!wasFiring && !wasMoved
+                        && distance < kLookGestureDisplacementSlop)
                         PulseAction(gamefunc_Fire);
                 }
                 else if (distance < 18.0)
@@ -901,6 +986,7 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
         case kControlCrouch: return @"arrow.down.to.line";
         case kControlWeapon: return @"arrow.triangle.2.circlepath";
         case kControlPause: return @"pause.fill";
+        case kControlFire: return @"scope";
         default: return @"circle.fill";
     }
 }
@@ -974,6 +1060,8 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
         [self drawControl:kControlJump active:[self isActionActive:gamefunc_Jump]];
         [self drawControl:kControlCrouch active:[self isActionActive:gamefunc_Crouch]];
         [self drawControl:kControlWeapon active:[self isActionActive:gamefunc_Next_Weapon]];
+        if (_fireButtonEnabled)
+            [self drawControl:kControlFire active:[self isActionActive:gamefunc_Fire]];
     }
     [self drawControl:kControlPause active:NO];
 }
@@ -983,6 +1071,9 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
 
 @interface EDuke32ControlsInstaller : NSObject
 + (UIWindow *)activeWindow;
++ (void)scheduleRefresh;
++ (void)applicationWillResignActive:(NSNotification *)notification;
++ (void)applicationDidBecomeActive:(NSNotification *)notification;
 @end
 
 typedef void (^EDuke32LaunchCompletion)(NSString *grpName);
@@ -994,6 +1085,8 @@ typedef void (^EDuke32LaunchCompletion)(NSString *grpName);
     UILabel *_statusLabel;
 }
 - (instancetype)initWithCompletion:(EDuke32LaunchCompletion)completion;
+- (NSInteger)detectFuryVoxelPack;
+- (void)showArjukStudiosSplashWithCompletion:(dispatch_block_t)completion;
 @end
 
 @implementation EDuke32LauncherViewController
@@ -1029,6 +1122,65 @@ typedef void (^EDuke32LaunchCompletion)(NSString *grpName);
         if ([file caseInsensitiveCompare:wanted] == NSOrderedSame)
             return file;
     return nil;
+}
+
+- (NSInteger)detectFuryVoxelPack
+{
+    NSFileManager *manager = NSFileManager.defaultManager;
+    g_furyVoxelPackMode = 0;
+    g_furyVoxelPackSearchPath[0] = '\0';
+
+    NSString *rootDef = [_documentsPath stringByAppendingPathComponent:@"voxels.def"];
+    NSString *rootKVX = [_documentsPath stringByAppendingPathComponent:@"KVX"];
+    BOOL isDirectory = NO;
+    BOOL const rootDefExists = [manager fileExistsAtPath:rootDef isDirectory:&isDirectory] && !isDirectory;
+    isDirectory = NO;
+    BOOL const rootKVXExists = [manager fileExistsAtPath:rootKVX isDirectory:&isDirectory] && isDirectory;
+    if (rootDefExists && rootKVXExists)
+    {
+        NSString *maphacks = [_documentsPath stringByAppendingPathComponent:@"maphacks"];
+        isDirectory = NO;
+        BOOL const hasMaphacks = [manager fileExistsAtPath:maphacks isDirectory:&isDirectory] && isDirectory;
+        g_furyVoxelPackMode = 1;
+        fprintf(stderr, "EDUKE32_IOS_VOXELS: flattened detected; module=voxels.def maphacks=%s\n",
+                hasMaphacks ? "present" : "missing");
+        fflush(stderr);
+        return g_furyVoxelPackMode;
+    }
+
+    NSArray<NSString *> *entries = [manager contentsOfDirectoryAtPath:_documentsPath error:nil];
+    for (NSString *entry in entries)
+    {
+        if ([entry rangeOfString:@"IonFury-Voxel-Pack"
+                         options:(NSCaseInsensitiveSearch | NSAnchoredSearch)].location == NSNotFound)
+            continue;
+
+        NSString *base = [_documentsPath stringByAppendingPathComponent:entry];
+        NSString *nestedDef = [base stringByAppendingPathComponent:@"voxels.def"];
+        NSString *nestedKVX = [base stringByAppendingPathComponent:@"KVX"];
+        isDirectory = NO;
+        BOOL const nestedDefExists = [manager fileExistsAtPath:nestedDef isDirectory:&isDirectory] && !isDirectory;
+        isDirectory = NO;
+        BOOL const nestedKVXExists = [manager fileExistsAtPath:nestedKVX isDirectory:&isDirectory] && isDirectory;
+        if (!nestedDefExists || !nestedKVXExists)
+            continue;
+
+        NSString *maphacks = [base stringByAppendingPathComponent:@"maphacks"];
+        isDirectory = NO;
+        BOOL const hasMaphacks = [manager fileExistsAtPath:maphacks isDirectory:&isDirectory] && isDirectory;
+        g_furyVoxelPackMode = 2;
+        Bstrncpyz(g_furyVoxelPackSearchPath, entry.fileSystemRepresentation,
+                  sizeof(g_furyVoxelPackSearchPath));
+        fprintf(stderr,
+                "EDUKE32_IOS_VOXELS: nested detected; search=%s module=voxels.def maphacks=%s\n",
+                g_furyVoxelPackSearchPath, hasMaphacks ? "present" : "missing");
+        fflush(stderr);
+        return g_furyVoxelPackMode;
+    }
+
+    fprintf(stderr, "EDUKE32_IOS_VOXELS: disabled/not found\n");
+    fflush(stderr);
+    return 0;
 }
 
 - (UIButton *)gameButtonWithTitle:(NSString *)title
@@ -1094,11 +1246,16 @@ typedef void (^EDuke32LaunchCompletion)(NSString *grpName);
     subtitle.font = [UIFont systemFontOfSize:12.0 weight:UIFontWeightBold];
     subtitle.textAlignment = NSTextAlignmentCenter;
 
+    NSInteger const voxelPackMode = [self detectFuryVoxelPack];
+    NSString *furySubtitle = voxelPackMode
+        ? @"FURY.GRP · voxel pack detected"
+        : @"FURY.GRP · base game or Aftershock";
+
     UIStackView *cards = [[[UIStackView alloc] initWithArrangedSubviews:@[
         [self gameButtonWithTitle:@"Duke Nukem 3D"
                          subtitle:@"DUKE3D.GRP" tag:1 enabled:YES],
         [self gameButtonWithTitle:@"Ion Fury"
-                         subtitle:@"FURY.GRP" tag:2 enabled:YES],
+                         subtitle:furySubtitle tag:2 enabled:YES],
         [self gameButtonWithTitle:@"Shadow Warrior"
                          subtitle:@"SW.GRP · VoidSW engine coming next" tag:3 enabled:YES],
         [self gameButtonWithTitle:@"Custom"
@@ -1165,16 +1322,26 @@ typedef void (^EDuke32LaunchCompletion)(NSString *grpName);
     unsigned long long size = [attributes fileSize];
     _statusLabel.text = @"Preparing Ion Fury…";
     uint32_t crc = [self crc32ForFileAtPath:path];
+
+    // Aftershock packages use ashock.def as their root definition file,
+    // while the original Ion Fury package uses fury.def. The released
+    // Aftershock GRP is substantially larger than every base-game GRP; keep
+    // the published CRC as an exact match and the size check for later retail
+    // revisions of the same package.
+    BOOL const aftershock = (size == UINT64_C(160826590) && crc == UINT32_C(0xE175FB41))
+                         || size > UINT64_C(125000000);
+    NSString *gameName = aftershock ? @"Ion Fury: Aftershock" : @"Ion Fury";
+    NSString *definitions = aftershock ? @"ashock.def" : @"fury.def";
     NSString *metadata = [NSString stringWithFormat:
         @"grpinfo\n{\n"
-         "    name \"Ion Fury\"\n"
+         "    name \"%@\"\n"
          "    scriptname \"scripts/main.con\"\n"
-         "    defname \"fury.def\"\n"
+         "    defname \"%@\"\n"
          "    size %llu\n"
          "    crc 0x%08X\n"
          "    flags 1664\n"
          "    dependency 0\n"
-         "}\n", size, crc];
+         "}\n", gameName, definitions, size, crc];
     NSString *metadataPath = [_documentsPath stringByAppendingPathComponent:@"edukeios-fury.grpinfo"];
     NSError *error = nil;
     BOOL ok = [metadata writeToFile:metadataPath atomically:YES
@@ -1183,6 +1350,88 @@ typedef void (^EDuke32LaunchCompletion)(NSString *grpName);
         _statusLabel.text = [NSString stringWithFormat:@"Could not prepare Ion Fury: %@",
                                                        error.localizedDescription];
     return ok;
+}
+
+- (void)showArjukStudiosSplashWithCompletion:(dispatch_block_t)completion
+{
+    UIView *splash = [[[UIView alloc] initWithFrame:self.view.bounds] autorelease];
+    splash.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+    splash.backgroundColor = [UIColor colorWithRed:0.035 green:0.020 blue:0.014 alpha:1.0];
+    splash.alpha = 0.0;
+
+    UIImage *artwork = [UIImage imageNamed:@"ArjukStudios.jpeg"];
+    UIImageView *artView = [[[UIImageView alloc] initWithFrame:CGRectZero] autorelease];
+    artView.contentMode = UIViewContentModeScaleAspectFill;
+    artView.clipsToBounds = YES;
+    artView.layer.cornerRadius = 18.0;
+    artView.layer.borderWidth = 1.0;
+    artView.layer.borderColor = [UIColor colorWithRed:1.0 green:0.39 blue:0.08 alpha:0.45].CGColor;
+
+    if (artwork.CGImage)
+    {
+        size_t const sourceWidth = CGImageGetWidth(artwork.CGImage);
+        size_t const sourceHeight = CGImageGetHeight(artwork.CGImage);
+        // Keep the original bear and fire artwork while cropping away the
+        // hot-sauce label; the studio name is typeset cleanly below it.
+        CGRect const crop = CGRectMake(0.0, sourceHeight * 0.025,
+                                       sourceWidth, sourceHeight * 0.59);
+        CGImageRef croppedImage = CGImageCreateWithImageInRect(artwork.CGImage, crop);
+        if (croppedImage)
+        {
+            artView.image = [UIImage imageWithCGImage:croppedImage
+                                                scale:artwork.scale
+                                          orientation:artwork.imageOrientation];
+            CGImageRelease(croppedImage);
+        }
+        else
+            artView.image = artwork;
+    }
+
+    UILabel *studio = [[[UILabel alloc] initWithFrame:CGRectZero] autorelease];
+    studio.text = @"ARJUK STUDIOS";
+    studio.textAlignment = NSTextAlignmentCenter;
+    studio.textColor = [UIColor colorWithRed:1.0 green:0.34 blue:0.08 alpha:1.0];
+    studio.font = [UIFont systemFontOfSize:30.0 weight:UIFontWeightBlack];
+    studio.adjustsFontSizeToFitWidth = YES;
+    studio.minimumScaleFactor = 0.7;
+
+    UILabel *presents = [[[UILabel alloc] initWithFrame:CGRectZero] autorelease];
+    presents.text = @"P R E S E N T S";
+    presents.textAlignment = NSTextAlignmentCenter;
+    presents.textColor = [UIColor colorWithWhite:1.0 alpha:0.55];
+    presents.font = [UIFont systemFontOfSize:10.0 weight:UIFontWeightSemibold];
+
+    CGFloat const height = CGRectGetHeight(self.view.bounds);
+    CGFloat const width = CGRectGetWidth(self.view.bounds);
+    CGFloat const artHeight = fmin(238.0, height * 0.54);
+    CGFloat const artWidth = fmin(width - 56.0, artHeight * 1.66);
+    CGFloat const totalHeight = artHeight + 60.0;
+    CGFloat const top = (height - totalHeight) * 0.5;
+    artView.frame = CGRectMake((width - artWidth) * 0.5, top, artWidth, artHeight);
+    studio.frame = CGRectMake(28.0, CGRectGetMaxY(artView.frame) + 8.0, width - 56.0, 34.0);
+    presents.frame = CGRectMake(28.0, CGRectGetMaxY(studio.frame) + 1.0, width - 56.0, 16.0);
+
+    [splash addSubview:artView];
+    [splash addSubview:studio];
+    [splash addSubview:presents];
+    [self.view addSubview:splash];
+
+    [UIView animateWithDuration:0.22 animations:^{
+        splash.alpha = 1.0;
+    } completion:^(BOOL finished) {
+        (void)finished;
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 1150 * NSEC_PER_MSEC),
+                       dispatch_get_main_queue(), ^{
+            [UIView animateWithDuration:0.22 animations:^{
+                splash.alpha = 0.0;
+            } completion:^(BOOL faded) {
+                (void)faded;
+                [splash removeFromSuperview];
+                if (completion)
+                    completion();
+            }];
+        });
+    }];
 }
 
 - (void)showMessage:(NSString *)title body:(NSString *)body
@@ -1218,15 +1467,41 @@ typedef void (^EDuke32LaunchCompletion)(NSString *grpName);
         return;
     }
 
+    if (sender.tag == 2)
+        [self detectFuryVoxelPack];
+    else
+    {
+        g_furyVoxelPackMode = 0;
+        g_furyVoxelPackSearchPath[0] = '\0';
+    }
+
     if (sender.tag == 2 && ![self writeFuryMetadataForFile:file])
         return;
 
+    g_usePolymost = sender.tag == 2;
     _statusLabel.text = [NSString stringWithFormat:@"Starting %@…", file];
-    if (_completion)
-        _completion(file);
+    [self showArjukStudiosSplashWithCompletion:^{
+        if (self->_completion)
+            self->_completion(file);
+    }];
 }
 
 @end
+
+extern "C" int EDuke32_IOS_WantsPolymost(void)
+{
+    return g_usePolymost ? 1 : 0;
+}
+
+extern "C" int EDuke32_IOS_FuryVoxelPackMode(void)
+{
+    return (int)g_furyVoxelPackMode;
+}
+
+extern "C" char const *EDuke32_IOS_FuryVoxelPackSearchPath(void)
+{
+    return g_furyVoxelPackSearchPath[0] ? g_furyVoxelPackSearchPath : nullptr;
+}
 
 extern "C" char *EDuke32_IOS_SelectGame(void)
 {
@@ -1313,11 +1588,58 @@ extern "C" char *EDuke32_IOS_SelectGame(void)
     NSSetUncaughtExceptionHandler(&EDuke32UncaughtExceptionHandler);
     dispatch_async(dispatch_get_main_queue(), ^{
         [[NSNotificationCenter defaultCenter] addObserver:self
-                                                 selector:@selector(installControls)
+                                                 selector:@selector(applicationWillResignActive:)
+                                                     name:UIApplicationWillResignActiveNotification
+                                                   object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(applicationDidBecomeActive:)
                                                      name:UIApplicationDidBecomeActiveNotification
+                                                   object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(installControls)
+                                                     name:UIWindowDidBecomeKeyNotification
                                                    object:nil];
         [self performSelector:@selector(installControls) withObject:nil afterDelay:0.75];
     });
+}
+
++ (void)applicationWillResignActive:(NSNotification *)notification
+{
+    (void)notification;
+    NSInteger const tag = 0x4544554B;
+    for (UIWindow *window in UIApplication.sharedApplication.windows)
+    {
+        UIView *view = [window viewWithTag:tag];
+        if ([view isKindOfClass:EDuke32ControlsView.class])
+            [(EDuke32ControlsView *)view cancelActiveTouchesForBackground];
+    }
+    PushApplicationEvent(SDL_APP_WILLENTERBACKGROUND);
+    fprintf(stderr, "EDUKE32_IOS_LIFECYCLE: UIKit will-resign-active\n");
+    fflush(stderr);
+}
+
++ (void)applicationDidBecomeActive:(NSNotification *)notification
+{
+    (void)notification;
+    // SDL's iOS backend normally generates this event, but pushing an
+    // idempotent copy here guarantees that EDuke32 clears a stale minimized
+    // flag even when UIKit omits SDL_WINDOWEVENT_RESTORED.
+    PushApplicationEvent(SDL_APP_DIDENTERFOREGROUND);
+    fprintf(stderr, "EDUKE32_IOS_LIFECYCLE: UIKit did-become-active\n");
+    fflush(stderr);
+    [self installControls];
+}
+
++ (void)scheduleRefresh
+{
+    // Menus, loading screens, and gameplay all share one UIKit overlay.  The
+    // engine can change MODE_MENU/MODE_GAME without causing UIKit to redraw,
+    // so refresh the inexpensive transparent overlay while the app is active.
+    [NSObject cancelPreviousPerformRequestsWithTarget:self
+                                             selector:@selector(installControls)
+                                               object:nil];
+    if (UIApplication.sharedApplication.applicationState == UIApplicationStateActive)
+        [self performSelector:@selector(installControls) withObject:nil afterDelay:0.15];
 }
 
 + (UIWindow *)activeWindow
@@ -1349,12 +1671,21 @@ extern "C" char *EDuke32_IOS_SelectGame(void)
     }
 
     NSInteger const tag = 0x4544554B;
-    if ([window viewWithTag:tag])
+    UIView *existing = [window viewWithTag:tag];
+    if (existing)
+    {
+        existing.frame = window.bounds;
+        [window bringSubviewToFront:existing];
+        [existing setNeedsDisplay];
+        [self scheduleRefresh];
         return;
+    }
 
     EDuke32ControlsView *controls = [[[EDuke32ControlsView alloc] initWithFrame:window.bounds] autorelease];
     controls.tag = tag;
     [window addSubview:controls];
+    [controls setNeedsDisplay];
+    [self scheduleRefresh];
 }
 
 @end

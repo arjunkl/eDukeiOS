@@ -33,6 +33,13 @@ GLuint samplerObjectIDs[NUM_SAMPLERS];
 
 void buildgl_outputDebugMessage(uint8_t severity, const char* format, ...)
 {
+#if defined EDUKE32_GL4ES
+    // GL4ES does not export the desktop ARB debug-marker entry points. They
+    // are diagnostic-only and are not needed for rendering.
+    UNREFERENCED_PARAMETER(severity);
+    UNREFERENCED_PARAMETER(format);
+    return;
+#else
     if (!glinfo.debugoutput || r_polymostDebug < severity)
         return;
 
@@ -56,6 +63,7 @@ void buildgl_outputDebugMessage(uint8_t severity, const char* format, ...)
                                -1,
                                buf);
     Xfree(buf);
+#endif
 }
 
 

@@ -804,10 +804,38 @@ void G_DrawRooms(int32_t playerNum, int32_t smoothRatio)
         return;
     }
 
+#if defined EDUKE32_IOS
+    // Fury's settings are allowed to select the legacy aspect path.  That path
+    // keeps a fixed horizontal field of view, so an extra-wide iPhone canvas
+    // loses visible scene above and below.  The corrected path expands the
+    // horizontal field of view while preserving the vertical field of view.
+    if (FURY && !r_usenewaspect)
+    {
+        LOG_F(INFO, "iOS Fury 3D aspect: enabling vertical-FOV-preserving corrected aspect for %dx%d.",
+              xdim, ydim);
+        r_usenewaspect = 1;
+    }
+#endif
+
     if (r_usenewaspect)
     {
         newaspect_enable = 1;
         videoSetCorrectedAspect();
+
+#if defined EDUKE32_IOS
+        if (FURY)
+        {
+            static bool loggedFuryAspect = false;
+            if (!loggedFuryAspect)
+            {
+                LOG_F(INFO,
+                      "iOS Fury 3D projection: screen=%dx%d viewingrange=%d "
+                      "yxaspect=%d fov=%d.",
+                      xdim, ydim, viewingrange, yxaspect, ud.fov);
+                loggedFuryAspect = true;
+            }
+        }
+#endif
     }
 
     if (pPlayer->on_crane > -1)
@@ -878,7 +906,10 @@ void G_DrawRooms(int32_t playerNum, int32_t smoothRatio)
         int32_t floorZ, ceilZ;
         int32_t tiltcx, tiltcy, tiltcs=0;    // JBF 20030807
 
-        int vr            = divscale22(1, sprite[pPlayer->i].yrepeat + 28);
+        int const projectionPlayerYRepeat = sprite[pPlayer->i].yrepeat;
+        int const projectionFov = ud.fov;
+
+        int vr            = divscale22(1, projectionPlayerYRepeat + 28);
         int screenTilting = (videoGetRenderMode() == REND_CLASSIC
                              && ((ud.screen_tilting && pPlayer->rotscrnang
 
@@ -887,7 +918,32 @@ void G_DrawRooms(int32_t playerNum, int32_t smoothRatio)
 #endif
                                   )));
 
-        vr = Blrintf(float(vr) * tanf(ud.fov * (fPI/360.f)));
+        vr = Blrintf(float(vr) * tanf(projectionFov * (fPI/360.f)));
+
+#if defined EDUKE32_IOS
+        {
+            static bool loggedDukeProjection = false;
+            static bool loggedFuryProjection = false;
+            bool &loggedProjection = FURY ? loggedFuryProjection : loggedDukeProjection;
+            if (!loggedProjection)
+            {
+                int const viewportWidth = windowxy2.x - windowxy1.x + 1;
+                int const viewportHeight = windowxy2.y - windowxy1.y + 1;
+                float const verticalFovTan = (float(vr) * viewportHeight * 5.f)
+                                             / (float(yxaspect) * viewportWidth * 4.f);
+                float const verticalFovDegrees = atanf(verticalFovTan) * (360.f / fPI);
+                LOG_F(INFO,
+                      "iOS %s projection: screen=%dx%d viewport=(%d,%d)-(%d,%d) "
+                      "yrepeat=%d fov=%d base-vr=%d viewingrange=%d yxaspect=%d "
+                      "calculated-vfov=%.2f degrees r_usenewaspect=%d.",
+                      FURY ? "Fury" : "Duke", xdim, ydim,
+                      windowxy1.x, windowxy1.y, windowxy2.x, windowxy2.y,
+                      projectionPlayerYRepeat, projectionFov, vr, viewingrange, yxaspect,
+                      verticalFovDegrees, r_usenewaspect);
+                loggedProjection = true;
+            }
+        }
+#endif
 
         if (!r_usenewaspect)
             renderSetAspect(vr, yxaspect);
@@ -6822,13 +6878,48 @@ int app_main(int argc, char const* const* argv)
 
     Anim_Init();
 
-    char const * const deffile = G_DefFile();
+    char const *deffile = G_DefFile();
     uint32_t stime = timerGetTicks();
-    if (!loaddefinitionsfile(deffile))
+    int32_t definitionsStatus = loaddefinitionsfile(deffile);
+
+    // Original Ion Fury uses fury.def, while Aftershock uses ashock.def.
+    // Prefer the GRP metadata selection, but recover from missing or generated
+    // metadata and from packages extracted under a top-level directory.
+    if (definitionsStatus && FURY)
+    {
+        static char const * const alternatives[] =
+        {
+            "ashock.def",
+            "fury.def",
+            "fury/fury.def",
+            "fury/ashock.def",
+        };
+
+        for (char const * const candidate : alternatives)
+        {
+            if (!Bstrcasecmp(candidate, deffile))
+                continue;
+
+            buildvfs_kfd const probe = kopen4load(candidate, 0);
+            if (probe == buildvfs_kfd_invalid)
+                continue;
+
+            kclose(probe);
+            LOG_F(INFO, "Definitions file '%s' was unavailable; trying '%s'.", deffile, candidate);
+            deffile = candidate;
+            definitionsStatus = loaddefinitionsfile(deffile);
+            if (!definitionsStatus)
+                break;
+        }
+    }
+
+    if (!definitionsStatus)
     {
         uint32_t etime = timerGetTicks();
         LOG_F(INFO, "Definitions file '%s' loaded in %d ms.", deffile, etime-stime);
     }
+    else
+        LOG_F(ERROR, "Definitions file '%s' was not found. Ion Fury cannot initialize without its DEF palette declarations.", deffile);
     loaddefinitions_game(deffile, FALSE);
 
     for (char * m : g_defModules)

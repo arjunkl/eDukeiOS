@@ -17,6 +17,9 @@
 # include "SDL_main.h"
 extern "C" void EDuke32_IOS_GetRenderSize(int32_t *width, int32_t *height);
 extern "C" char *EDuke32_IOS_SelectGame(void);
+extern "C" int EDuke32_IOS_WantsPolymost(void);
+extern "C" int EDuke32_IOS_FuryVoxelPackMode(void);
+extern "C" char const *EDuke32_IOS_FuryVoxelPackSearchPath(void);
 #endif
 #include "softsurface.h"
 
@@ -32,6 +35,10 @@ extern "C" char *EDuke32_IOS_SelectGame(void);
 # include "glad/glad.h"
 # include "glbuild.h"
 # include "glsurface.h"
+#endif
+
+#if defined EDUKE32_GL4ES
+extern "C" void initialize_gl4es(void);
 #endif
 
 #if defined HAVE_GTK2
@@ -464,9 +471,9 @@ void sdlayer_sethints()
     SDL_SetHint(SDL_HINT_ACCELEROMETER_AS_JOYSTICK, "0");
 # endif
 # ifdef USE_OPENGL
-    // The legacy iOS target does not yet create a modern GLES context. Use the
-    // classic software renderer for the first playable iOS milestone.
-    nogl = 1;
+    // Keep the proven software path for Duke/custom data. Ion Fury requests
+    // Polymost explicitly because its game flags prohibit the classic renderer.
+    nogl = !EDuke32_IOS_WantsPolymost();
 # endif
 #endif
 }
@@ -502,10 +509,43 @@ int main(int argc, char *argv[])
     // Choose the main game before allocator/log/search-path initialization.
     // The returned filename lives in Documents and remains valid for app_main.
     char *iosSelectedGrp = EDuke32_IOS_SelectGame();
-    char *iosArgv[4] = { argv[0], (char *)"-gamegrp", iosSelectedGrp, nullptr };
+    char *iosArgv[8] = { argv[0], (char *)"-gamegrp", iosSelectedGrp,
+                         nullptr, nullptr, nullptr, nullptr, nullptr };
     if (iosSelectedGrp != nullptr)
     {
         argc = 3;
+        int const iosVoxelPackMode = EDuke32_IOS_WantsPolymost()
+            ? EDuke32_IOS_FuryVoxelPackMode() : 0;
+        if (iosVoxelPackMode == 1)
+        {
+            iosArgv[3] = (char *)"-mh";
+            iosArgv[4] = (char *)"voxels.def";
+            argc = 5;
+            fprintf(stderr,
+                    "EDUKE32_IOS_VOXELS: enabled flattened; module=voxels.def\n");
+        }
+        else if (iosVoxelPackMode == 2)
+        {
+            char const *searchPath = EDuke32_IOS_FuryVoxelPackSearchPath();
+            if (searchPath && searchPath[0])
+            {
+                iosArgv[3] = (char *)"-j";
+                iosArgv[4] = const_cast<char *>(searchPath);
+                iosArgv[5] = (char *)"-mh";
+                iosArgv[6] = (char *)"voxels.def";
+                argc = 7;
+                fprintf(stderr,
+                        "EDUKE32_IOS_VOXELS: enabled nested; search=%s module=voxels.def\n",
+                        searchPath);
+            }
+            else
+                fprintf(stderr,
+                        "EDUKE32_IOS_VOXELS: nested mode missing search path; disabled\n");
+        }
+        else if (EDuke32_IOS_WantsPolymost())
+            fprintf(stderr,
+                    "EDUKE32_IOS_VOXELS: disabled/not found; using base game definitions\n");
+        fflush(stderr);
         argv = iosArgv;
     }
 #endif
@@ -1872,7 +1912,7 @@ int32_t videoSetMode(int32_t x, int32_t y, int32_t c, int32_t fs)
 
 #ifdef EDUKE32_IOS
     EDuke32_IOS_GetRenderSize(&x, &y);
-    c = 8;
+    c = EDuke32_IOS_WantsPolymost() ? 32 : 8;
     fs = 1;
 #endif
 
@@ -1915,12 +1955,19 @@ int32_t videoSetMode(int32_t x, int32_t y, int32_t c, int32_t fs)
             int32_t value;
         } sdlayer_gl_attributes[] =
         {
+#if defined EDUKE32_GL4ES
+              { SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES },
+              { SDL_GL_CONTEXT_MAJOR_VERSION, 2 },
+              { SDL_GL_CONTEXT_MINOR_VERSION, 0 },
+              { SDL_GL_CONTEXT_FLAGS, 0 },
+#else
               { SDL_GL_CONTEXT_FLAGS,
 #ifndef NDEBUG
               SDL_GL_CONTEXT_DEBUG_FLAG |
 #endif
               SDL_GL_CONTEXT_ROBUST_ACCESS_FLAG },
               { SDL_GL_CONTEXT_RESET_NOTIFICATION, SDL_GL_CONTEXT_RESET_LOSE_CONTEXT },
+#endif
               { SDL_GL_DOUBLEBUFFER, 1 },
 
               { SDL_GL_STENCIL_SIZE, 1 },
@@ -1947,16 +1994,57 @@ int32_t videoSetMode(int32_t x, int32_t y, int32_t c, int32_t fs)
             nogl = 1;
         }
 
-#ifndef EDUKE32_GLES
+#if defined EDUKE32_GL4ES
+        if (!nogl)
+        {
+            // Prefer correctness over GL4ES' desktop-GL fast paths on iOS.
+            // The renderer still submits desktop-style BGRA and fixed-function
+            // state, so ask GL4ES to convert those explicitly instead of using
+            // driver extensions and caches that have produced corrupt textures.
+            SDL_setenv("LIBGL_NOBGRA", "1", 1);
+            SDL_setenv("LIBGL_NOVAOCACHE", "1", 1);
+            SDL_setenv("LIBGL_USEVBO", "0", 1);
+            SDL_setenv("LIBGL_MIPMAP", "3", 1);
+            SDL_setenv("LIBGL_FORCENPOT", "1", 1);
+            SDL_setenv("LIBGL_ALPHAHACK", "1", 1);
+
+            // Keep shader failures, unsupported calls, and native crash stacks
+            // in the ordinary EDuke32 log so device-only failures are actionable.
+            SDL_setenv("LIBGL_LOGSHADERERROR", "1", 1);
+            SDL_setenv("LIBGL_SILENTSTUB", "0", 1);
+            SDL_setenv("LIBGL_STACKTRACE", "1", 1);
+
+            LOG_F(INFO, "GL4ES iOS safe mode enabled (BGRA conversion, no VAO cache/VBO, no mipmaps).");
+            initialize_gl4es();
+            char const *version = (char const *)glGetString(GL_VERSION);
+            char const *renderer = (char const *)glGetString(GL_RENDERER);
+            char const *vendor = (char const *)glGetString(GL_VENDOR);
+            GLint maxTextureSize = 0, maxTextureUnits = 0, maxVertexAttribs = 0;
+            glGetIntegerv(GL_MAX_TEXTURE_SIZE, &maxTextureSize);
+            glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &maxTextureUnits);
+            glGetIntegerv(GL_MAX_VERTEX_ATTRIBS, &maxVertexAttribs);
+            LOG_F(INFO, "GL4ES initialized: version=%s renderer=%s.",
+                  version ? version : "unknown", renderer ? renderer : "unknown");
+            LOG_F(INFO, "GL4ES capabilities: vendor=%s maxTexture=%d textureUnits=%d vertexAttribs=%d.",
+                  vendor ? vendor : "unknown", maxTextureSize, maxTextureUnits, maxVertexAttribs);
+            if (!version)
+            {
+                LOG_F(ERROR, "GL4ES did not expose an OpenGL context; Polymost is unavailable.");
+                nogl = 1;
+            }
+        }
+#elif !defined EDUKE32_GLES
         gladLoadGLLoader(SDL_GL_GetProcAddress);
 #else
         gladLoadGLES2Loader(SDL_GL_GetProcAddress);
 #endif
+#if !defined EDUKE32_GL4ES
         if (GLVersion.major < 2)
         {
             LOG_F(ERROR, "Video driver does not support OpenGL version 2 or greater; all OpenGL modes are unavailable.");
             nogl = 1;
         }
+#endif
 
         if (nogl)
         {
@@ -2826,6 +2914,68 @@ int32_t handleevents_pollsdl(void)
                         g_mouseCallback(6, 1);
                 }
                 break;
+
+#ifdef EDUKE32_IOS
+            case SDL_APP_WILLENTERBACKGROUND:
+            case SDL_APP_DIDENTERBACKGROUND:
+                // UIKit does not reliably pair its minimize notification with
+                // SDL_WINDOWEVENT_RESTORED. Stop presentation explicitly while
+                // backgrounded so iOS never receives OpenGL work from the game.
+                sdl_minimized = true;
+                appactive = 0;
+                fprintf(stderr, "EDUKE32_IOS_LIFECYCLE: background event=%u minimized=1\n",
+                        ev.type);
+                fflush(stderr);
+                break;
+
+            case SDL_APP_WILLENTERFOREGROUND:
+                // Clear this before DIDENTERFOREGROUND as SDL may not emit a
+                // desktop-style restored window event on iOS.
+                sdl_minimized = false;
+                appactive = 1;
+                fprintf(stderr, "EDUKE32_IOS_LIFECYCLE: will-foreground minimized=0\n");
+                fflush(stderr);
+                break;
+
+            case SDL_APP_DIDENTERFOREGROUND:
+            {
+                sdl_minimized = false;
+                appactive = 1;
+                int makeCurrentResult = 0;
+                int drawableWidth = 0;
+                int drawableHeight = 0;
+
+#ifdef USE_OPENGL
+                if (!nogl && bpp > 8 && sdl_window && sdl_context)
+                {
+                    makeCurrentResult = SDL_GL_MakeCurrent(sdl_window, sdl_context);
+                    SDL_GL_GetDrawableSize(sdl_window, &drawableWidth, &drawableHeight);
+                    if (makeCurrentResult == 0)
+                    {
+                        // Keep the Build 100 logical geometry. Merely rebind
+                        // the preserved context and restore its viewport.
+                        glViewport(0, 0, xres, yres);
+                    }
+                    else
+                    {
+                        // If iOS discarded the drawable/context, recreate the
+                        // current mode instead of presenting forever to a dead
+                        // context.
+                        videoResetMode();
+                        if (videoSetGameMode(fullscreen, xres, yres, bpp, upscalefactor))
+                            fprintf(stderr, "EDUKE32_IOS_LIFECYCLE: video mode recovery failed: %s\n",
+                                    SDL_GetError());
+                    }
+                }
+#endif
+
+                fprintf(stderr,
+                        "EDUKE32_IOS_LIFECYCLE: did-foreground minimized=0 current=%d drawable=%dx%d engine=%dx%d\n",
+                        makeCurrentResult, drawableWidth, drawableHeight, xres, yres);
+                fflush(stderr);
+                break;
+            }
+#endif
 
             case SDL_WINDOWEVENT:
                 switch (ev.window.event)

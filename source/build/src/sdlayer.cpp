@@ -18,6 +18,8 @@
 extern "C" void EDuke32_IOS_GetRenderSize(int32_t *width, int32_t *height);
 extern "C" char *EDuke32_IOS_SelectGame(void);
 extern "C" int EDuke32_IOS_WantsPolymost(void);
+extern "C" int EDuke32_IOS_FuryVoxelPackMode(void);
+extern "C" char const *EDuke32_IOS_FuryVoxelPackSearchPath(void);
 #endif
 #include "softsurface.h"
 
@@ -507,10 +509,43 @@ int main(int argc, char *argv[])
     // Choose the main game before allocator/log/search-path initialization.
     // The returned filename lives in Documents and remains valid for app_main.
     char *iosSelectedGrp = EDuke32_IOS_SelectGame();
-    char *iosArgv[4] = { argv[0], (char *)"-gamegrp", iosSelectedGrp, nullptr };
+    char *iosArgv[8] = { argv[0], (char *)"-gamegrp", iosSelectedGrp,
+                         nullptr, nullptr, nullptr, nullptr, nullptr };
     if (iosSelectedGrp != nullptr)
     {
         argc = 3;
+        int const iosVoxelPackMode = EDuke32_IOS_WantsPolymost()
+            ? EDuke32_IOS_FuryVoxelPackMode() : 0;
+        if (iosVoxelPackMode == 1)
+        {
+            iosArgv[3] = (char *)"-mh";
+            iosArgv[4] = (char *)"voxels.def";
+            argc = 5;
+            fprintf(stderr,
+                    "EDUKE32_IOS_VOXELS: enabled flattened; module=voxels.def\n");
+        }
+        else if (iosVoxelPackMode == 2)
+        {
+            char const *searchPath = EDuke32_IOS_FuryVoxelPackSearchPath();
+            if (searchPath && searchPath[0])
+            {
+                iosArgv[3] = (char *)"-j";
+                iosArgv[4] = const_cast<char *>(searchPath);
+                iosArgv[5] = (char *)"-mh";
+                iosArgv[6] = (char *)"voxels.def";
+                argc = 7;
+                fprintf(stderr,
+                        "EDUKE32_IOS_VOXELS: enabled nested; search=%s module=voxels.def\n",
+                        searchPath);
+            }
+            else
+                fprintf(stderr,
+                        "EDUKE32_IOS_VOXELS: nested mode missing search path; disabled\n");
+        }
+        else if (EDuke32_IOS_WantsPolymost())
+            fprintf(stderr,
+                    "EDUKE32_IOS_VOXELS: disabled/not found; using base game definitions\n");
+        fflush(stderr);
         argv = iosArgv;
     }
 #endif

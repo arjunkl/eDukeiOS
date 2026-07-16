@@ -15,6 +15,8 @@
 namespace
 {
 static BOOL g_usePolymost = NO;
+static NSInteger g_furyVoxelPackMode = 0;
+static char g_furyVoxelPackSearchPath[BMAX_PATH] = {};
 
 static void EDuke32UncaughtExceptionHandler(NSException *exception)
 {
@@ -1083,6 +1085,7 @@ typedef void (^EDuke32LaunchCompletion)(NSString *grpName);
     UILabel *_statusLabel;
 }
 - (instancetype)initWithCompletion:(EDuke32LaunchCompletion)completion;
+- (NSInteger)detectFuryVoxelPack;
 - (void)showArjukStudiosSplashWithCompletion:(dispatch_block_t)completion;
 @end
 
@@ -1119,6 +1122,65 @@ typedef void (^EDuke32LaunchCompletion)(NSString *grpName);
         if ([file caseInsensitiveCompare:wanted] == NSOrderedSame)
             return file;
     return nil;
+}
+
+- (NSInteger)detectFuryVoxelPack
+{
+    NSFileManager *manager = NSFileManager.defaultManager;
+    g_furyVoxelPackMode = 0;
+    g_furyVoxelPackSearchPath[0] = '\0';
+
+    NSString *rootDef = [_documentsPath stringByAppendingPathComponent:@"voxels.def"];
+    NSString *rootKVX = [_documentsPath stringByAppendingPathComponent:@"KVX"];
+    BOOL isDirectory = NO;
+    BOOL const rootDefExists = [manager fileExistsAtPath:rootDef isDirectory:&isDirectory] && !isDirectory;
+    isDirectory = NO;
+    BOOL const rootKVXExists = [manager fileExistsAtPath:rootKVX isDirectory:&isDirectory] && isDirectory;
+    if (rootDefExists && rootKVXExists)
+    {
+        NSString *maphacks = [_documentsPath stringByAppendingPathComponent:@"maphacks"];
+        isDirectory = NO;
+        BOOL const hasMaphacks = [manager fileExistsAtPath:maphacks isDirectory:&isDirectory] && isDirectory;
+        g_furyVoxelPackMode = 1;
+        fprintf(stderr, "EDUKE32_IOS_VOXELS: flattened detected; module=voxels.def maphacks=%s\n",
+                hasMaphacks ? "present" : "missing");
+        fflush(stderr);
+        return g_furyVoxelPackMode;
+    }
+
+    NSArray<NSString *> *entries = [manager contentsOfDirectoryAtPath:_documentsPath error:nil];
+    for (NSString *entry in entries)
+    {
+        if ([entry rangeOfString:@"IonFury-Voxel-Pack"
+                         options:(NSCaseInsensitiveSearch | NSAnchoredSearch)].location == NSNotFound)
+            continue;
+
+        NSString *base = [_documentsPath stringByAppendingPathComponent:entry];
+        NSString *nestedDef = [base stringByAppendingPathComponent:@"voxels.def"];
+        NSString *nestedKVX = [base stringByAppendingPathComponent:@"KVX"];
+        isDirectory = NO;
+        BOOL const nestedDefExists = [manager fileExistsAtPath:nestedDef isDirectory:&isDirectory] && !isDirectory;
+        isDirectory = NO;
+        BOOL const nestedKVXExists = [manager fileExistsAtPath:nestedKVX isDirectory:&isDirectory] && isDirectory;
+        if (!nestedDefExists || !nestedKVXExists)
+            continue;
+
+        NSString *maphacks = [base stringByAppendingPathComponent:@"maphacks"];
+        isDirectory = NO;
+        BOOL const hasMaphacks = [manager fileExistsAtPath:maphacks isDirectory:&isDirectory] && isDirectory;
+        g_furyVoxelPackMode = 2;
+        Bstrncpyz(g_furyVoxelPackSearchPath, entry.fileSystemRepresentation,
+                  sizeof(g_furyVoxelPackSearchPath));
+        fprintf(stderr,
+                "EDUKE32_IOS_VOXELS: nested detected; search=%s module=voxels.def maphacks=%s\n",
+                g_furyVoxelPackSearchPath, hasMaphacks ? "present" : "missing");
+        fflush(stderr);
+        return g_furyVoxelPackMode;
+    }
+
+    fprintf(stderr, "EDUKE32_IOS_VOXELS: disabled/not found\n");
+    fflush(stderr);
+    return 0;
 }
 
 - (UIButton *)gameButtonWithTitle:(NSString *)title
@@ -1184,11 +1246,16 @@ typedef void (^EDuke32LaunchCompletion)(NSString *grpName);
     subtitle.font = [UIFont systemFontOfSize:12.0 weight:UIFontWeightBold];
     subtitle.textAlignment = NSTextAlignmentCenter;
 
+    NSInteger const voxelPackMode = [self detectFuryVoxelPack];
+    NSString *furySubtitle = voxelPackMode
+        ? @"FURY.GRP · voxel pack detected"
+        : @"FURY.GRP · base game or Aftershock";
+
     UIStackView *cards = [[[UIStackView alloc] initWithArrangedSubviews:@[
         [self gameButtonWithTitle:@"Duke Nukem 3D"
                          subtitle:@"DUKE3D.GRP" tag:1 enabled:YES],
         [self gameButtonWithTitle:@"Ion Fury"
-                         subtitle:@"FURY.GRP · base game or Aftershock" tag:2 enabled:YES],
+                         subtitle:furySubtitle tag:2 enabled:YES],
         [self gameButtonWithTitle:@"Shadow Warrior"
                          subtitle:@"SW.GRP · VoidSW engine coming next" tag:3 enabled:YES],
         [self gameButtonWithTitle:@"Custom"
@@ -1400,6 +1467,14 @@ typedef void (^EDuke32LaunchCompletion)(NSString *grpName);
         return;
     }
 
+    if (sender.tag == 2)
+        [self detectFuryVoxelPack];
+    else
+    {
+        g_furyVoxelPackMode = 0;
+        g_furyVoxelPackSearchPath[0] = '\0';
+    }
+
     if (sender.tag == 2 && ![self writeFuryMetadataForFile:file])
         return;
 
@@ -1416,6 +1491,16 @@ typedef void (^EDuke32LaunchCompletion)(NSString *grpName);
 extern "C" int EDuke32_IOS_WantsPolymost(void)
 {
     return g_usePolymost ? 1 : 0;
+}
+
+extern "C" int EDuke32_IOS_FuryVoxelPackMode(void)
+{
+    return (int)g_furyVoxelPackMode;
+}
+
+extern "C" char const *EDuke32_IOS_FuryVoxelPackSearchPath(void)
+{
+    return g_furyVoxelPackSearchPath[0] ? g_furyVoxelPackSearchPath : nullptr;
 }
 
 extern "C" char *EDuke32_IOS_SelectGame(void)

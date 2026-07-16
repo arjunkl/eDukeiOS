@@ -20,6 +20,16 @@ extern "C" int EDuke32_IOS_WantsPolymost(void)
     return 0;
 }
 
+extern "C" int EDuke32_IOS_FuryVoxelPackMode(void)
+{
+    return 0;
+}
+
+extern "C" char const *EDuke32_IOS_FuryVoxelPackSearchPath(void)
+{
+    return nullptr;
+}
+
 extern "C" char *EDuke32_IOS_SelectGame(void)
 {
     return strdup("SW.GRP");

@@ -29,7 +29,7 @@ constexpr CGFloat kMovementDeadZone = 12.0;
 constexpr CGFloat kMovementDiagonalRatio = 0.55;
 constexpr CGFloat kLookGestureDisplacementSlop = 4.0;
 constexpr CGFloat kLookGestureTravelSlop = 6.0;
-constexpr int64_t kLookHoldFireDelayMilliseconds = 150;
+constexpr int64_t kLookHoldFireDelayMilliseconds = 125;
 constexpr CGFloat kDefaultLookScale = 0.018;
 constexpr CGFloat kDefaultGyroScale = 6.0;
 constexpr CGFloat kDirectMouseFactor = 2048.0;
@@ -62,6 +62,18 @@ static SDL_Window *ActiveSDLWindow()
     if (!window)
         window = SDL_GetWindowFromID(1);
     return window;
+}
+
+static void PushApplicationEvent(Uint32 type)
+{
+    SDL_Event event = {};
+    event.type = type;
+    if (SDL_PushEvent(&event) < 0)
+    {
+        fprintf(stderr, "EDUKE32_IOS_LIFECYCLE: could not push event %u: %s\n",
+                type, SDL_GetError());
+        fflush(stderr);
+    }
 }
 
 static void PushKey(SDL_Scancode scancode)
@@ -257,6 +269,7 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
     UITouch *_pauseTouch;
     BOOL _pauseHoldActivated;
 }
+- (void)cancelActiveTouchesForBackground;
 @end
 
 @implementation EDuke32ControlsView
@@ -550,16 +563,15 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
     [self toggleControlEditor];
 }
 
-- (void)toggleControlEditor
+- (void)cancelActiveTouchesForBackground
 {
-
-    if (_moveTouch)
-        AndroidMove(0.f, 0.f);
+    AndroidMove(0.f, 0.f);
     if (_lookFiring)
         AndroidAction(0, gamefunc_Fire);
     for (NSNumber *action in _touchActions.allValues)
         AndroidAction(0, action.intValue);
     [_touchActions removeAllObjects];
+
     _moveTouch = nil;
     _lookTouch = nil;
     _lookFiring = NO;
@@ -567,6 +579,15 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
     _lookTotalTravel = 0.0;
     _editTouch = nil;
     _editingControl = kNoControl;
+    _editingResize = NO;
+    _pauseTouch = nil;
+    _pauseHoldActivated = NO;
+    [self setNeedsDisplay];
+}
+
+- (void)toggleControlEditor
+{
+    [self cancelActiveTouchesForBackground];
 
     _layoutEditing = !_layoutEditing;
     _editorPanel.hidden = !_layoutEditing;
@@ -1002,6 +1023,8 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
 @interface EDuke32ControlsInstaller : NSObject
 + (UIWindow *)activeWindow;
 + (void)scheduleRefresh;
++ (void)applicationWillResignActive:(NSNotification *)notification;
++ (void)applicationDidBecomeActive:(NSNotification *)notification;
 @end
 
 typedef void (^EDuke32LaunchCompletion)(NSString *grpName);
@@ -1348,7 +1371,11 @@ extern "C" char *EDuke32_IOS_SelectGame(void)
     NSSetUncaughtExceptionHandler(&EDuke32UncaughtExceptionHandler);
     dispatch_async(dispatch_get_main_queue(), ^{
         [[NSNotificationCenter defaultCenter] addObserver:self
-                                                 selector:@selector(installControls)
+                                                 selector:@selector(applicationWillResignActive:)
+                                                     name:UIApplicationWillResignActiveNotification
+                                                   object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(applicationDidBecomeActive:)
                                                      name:UIApplicationDidBecomeActiveNotification
                                                    object:nil];
         [[NSNotificationCenter defaultCenter] addObserver:self
@@ -1357,6 +1384,33 @@ extern "C" char *EDuke32_IOS_SelectGame(void)
                                                    object:nil];
         [self performSelector:@selector(installControls) withObject:nil afterDelay:0.75];
     });
+}
+
++ (void)applicationWillResignActive:(NSNotification *)notification
+{
+    (void)notification;
+    NSInteger const tag = 0x4544554B;
+    for (UIWindow *window in UIApplication.sharedApplication.windows)
+    {
+        UIView *view = [window viewWithTag:tag];
+        if ([view isKindOfClass:EDuke32ControlsView.class])
+            [(EDuke32ControlsView *)view cancelActiveTouchesForBackground];
+    }
+    PushApplicationEvent(SDL_APP_WILLENTERBACKGROUND);
+    fprintf(stderr, "EDUKE32_IOS_LIFECYCLE: UIKit will-resign-active\n");
+    fflush(stderr);
+}
+
++ (void)applicationDidBecomeActive:(NSNotification *)notification
+{
+    (void)notification;
+    // SDL's iOS backend normally generates this event, but pushing an
+    // idempotent copy here guarantees that EDuke32 clears a stale minimized
+    // flag even when UIKit omits SDL_WINDOWEVENT_RESTORED.
+    PushApplicationEvent(SDL_APP_DIDENTERFOREGROUND);
+    fprintf(stderr, "EDUKE32_IOS_LIFECYCLE: UIKit did-become-active\n");
+    fflush(stderr);
+    [self installControls];
 }
 
 + (void)scheduleRefresh

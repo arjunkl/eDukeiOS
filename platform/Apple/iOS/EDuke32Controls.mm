@@ -27,6 +27,9 @@ static void EDuke32UncaughtExceptionHandler(NSException *exception)
 
 constexpr CGFloat kMovementDeadZone = 12.0;
 constexpr CGFloat kMovementDiagonalRatio = 0.55;
+constexpr CGFloat kLookGestureDisplacementSlop = 4.0;
+constexpr CGFloat kLookGestureTravelSlop = 6.0;
+constexpr int64_t kLookHoldFireDelayMilliseconds = 150;
 constexpr CGFloat kDefaultLookScale = 0.018;
 constexpr CGFloat kDefaultGyroScale = 6.0;
 constexpr CGFloat kDirectMouseFactor = 2048.0;
@@ -241,6 +244,7 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
     float _gyroAimScale;
     BOOL _lookMoved;
     BOOL _lookFiring;
+    CGFloat _lookTotalTravel;
 
     BOOL _layoutEditing;
     BOOL _controlLayoutReady;
@@ -560,6 +564,7 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
     _lookTouch = nil;
     _lookFiring = NO;
     _lookMoved = NO;
+    _lookTotalTravel = 0.0;
     _editTouch = nil;
     _editingControl = kNoControl;
 
@@ -716,12 +721,15 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
             _lookPrevious = point;
             _lookMoved = NO;
             _lookFiring = NO;
+            _lookTotalTravel = 0.0;
 
-            // A quick tap fires once. Holding still briefly begins continuous
-            // fire; after it starts, the same finger may drag to aim.
+            // A quick tap fires once. Holding still begins continuous fire;
+            // any meaningful aim movement permanently cancels firing for this
+            // touch. After hold-fire starts, the finger may still drag to aim.
             if ([self touchMode] == TOUCH_SCREEN_GAME)
             {
-                dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 90 * NSEC_PER_MSEC),
+                dispatch_after(dispatch_time(DISPATCH_TIME_NOW,
+                                                  kLookHoldFireDelayMilliseconds * NSEC_PER_MSEC),
                                dispatch_get_main_queue(), ^{
                     if (self->_lookTouch == touch && !self->_lookMoved && !self->_lookFiring
                         && [self touchMode] == TOUCH_SCREEN_GAME)
@@ -792,7 +800,12 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
             {
                 CGFloat const dx = point.x - _lookPrevious.x;
                 CGFloat const dy = point.y - _lookPrevious.y;
-                if (!_lookFiring && hypot(point.x - _lookOrigin.x, point.y - _lookOrigin.y) >= 12.0)
+                _lookTotalTravel += hypot(dx, dy);
+                CGFloat const displacement =
+                    hypot(point.x - _lookOrigin.x, point.y - _lookOrigin.y);
+                if (!_lookFiring
+                    && (displacement >= kLookGestureDisplacementSlop
+                        || _lookTotalTravel >= kLookGestureTravelSlop))
                     _lookMoved = YES;
                 // Touch coordinates grow downward; gyro is already correct,
                 // so invert only the touch pitch before the shared aim path.
@@ -858,9 +871,11 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
         {
             CGFloat const distance = hypot(point.x - _lookOrigin.x, point.y - _lookOrigin.y);
             BOOL const wasFiring = _lookFiring;
+            BOOL const wasMoved = _lookMoved;
             _lookTouch = nil;
             _lookMoved = NO;
             _lookFiring = NO;
+            _lookTotalTravel = 0.0;
 
             if (wasFiring)
                 AndroidAction(0, gamefunc_Fire);
@@ -869,7 +884,8 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
             {
                 if (mode == TOUCH_SCREEN_GAME)
                 {
-                    if (!wasFiring && distance < 12.0)
+                    if (!wasFiring && !wasMoved
+                        && distance < kLookGestureDisplacementSlop)
                         PulseAction(gamefunc_Fire);
                 }
                 else if (distance < 18.0)

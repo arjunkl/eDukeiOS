@@ -41,6 +41,9 @@ enum IOSControlIndex : NSInteger
     kControlCrouch,
     kControlWeapon,
     kControlPause,
+    // Keep Fire after the existing controls so previously saved layout keys
+    // continue to refer to the same buttons.
+    kControlFire,
     kControlCount
 };
 
@@ -245,6 +248,7 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
     UILongPressGestureRecognizer *_pauseLongPressGesture;
     UILabel *_gyroStatusLabel;
     UIView *_editorPanel;
+    UIButton *_fireToggleButton;
     UIButton *_gyroButton;
     UIButton *_doneButton;
     UILabel *_touchSensitivityLabel;
@@ -252,6 +256,7 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
     UISlider *_touchSensitivitySlider;
     UISlider *_gyroSensitivitySlider;
     BOOL _gyroEnabled;
+    BOOL _fireButtonEnabled;
     float _touchAimScale;
     float _gyroAimScale;
     BOOL _lookMoved;
@@ -289,6 +294,8 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
     NSUserDefaults *preferences = NSUserDefaults.standardUserDefaults;
     _gyroEnabled = [preferences objectForKey:@"eDukeiOS.gyro.enabled"]
         ? [preferences boolForKey:@"eDukeiOS.gyro.enabled"] : YES;
+    _fireButtonEnabled = [preferences objectForKey:@"eDukeiOS.fireButton.enabled"]
+        ? [preferences boolForKey:@"eDukeiOS.fireButton.enabled"] : YES;
     _touchAimScale = [preferences objectForKey:@"eDukeiOS.aim.touch"]
         ? [preferences floatForKey:@"eDukeiOS.aim.touch"] : kDefaultLookScale;
     _gyroAimScale = [preferences objectForKey:@"eDukeiOS.aim.gyro"]
@@ -328,6 +335,13 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
     editorTitle.font = [UIFont boldSystemFontOfSize:14.0];
     [_editorPanel addSubview:editorTitle];
     editorTitle.tag = 7001;
+
+    _fireToggleButton = [[UIButton buttonWithType:UIButtonTypeSystem] retain];
+    _fireToggleButton.titleLabel.font = [UIFont boldSystemFontOfSize:13.0];
+    _fireToggleButton.layer.cornerRadius = 10.0;
+    [_fireToggleButton addTarget:self action:@selector(toggleFireButtonFromEditor:)
+               forControlEvents:UIControlEventTouchUpInside];
+    [_editorPanel addSubview:_fireToggleButton];
 
     _gyroButton = [[UIButton buttonWithType:UIButtonTypeSystem] retain];
     _gyroButton.titleLabel.font = [UIFont boldSystemFontOfSize:13.0];
@@ -406,6 +420,7 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
     [_pauseLongPressGesture release];
     [_gyroStatusLabel release];
     [_editorPanel release];
+    [_fireToggleButton release];
     [_gyroButton release];
     [_doneButton release];
     [_touchSensitivityLabel release];
@@ -427,6 +442,7 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
         case kControlCrouch: return CGPointMake(width - 153.0, height - 42.0);
         case kControlWeapon: return CGPointMake(width - 226.0, height - 46.0);
         case kControlPause: return CGPointMake(width - 35.0, 35.0);
+        case kControlFire: return CGPointMake(width - 72.0, height - 88.0);
         default: return CGPointMake(width * 0.5, height * 0.5);
     }
 }
@@ -440,6 +456,7 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
         case kControlCrouch: return 28.0;
         case kControlWeapon: return 27.0;
         case kControlPause: return 25.0;
+        case kControlFire: return 38.0;
         default: return 28.0;
     }
 }
@@ -526,6 +543,7 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
 - (CGPoint)crouchCenter { return [self centerForControl:kControlCrouch]; }
 - (CGPoint)weaponCenter { return [self centerForControl:kControlWeapon]; }
 - (CGPoint)pauseCenter { return [self centerForControl:kControlPause]; }
+- (CGPoint)fireCenter { return [self centerForControl:kControlFire]; }
 
 - (void)layoutSubviews
 {
@@ -536,7 +554,8 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
     CGFloat const panelWidth = fmin(CGRectGetWidth(self.bounds) - 32.0, 520.0);
     _editorPanel.frame = CGRectMake((CGRectGetWidth(self.bounds) - panelWidth) * 0.5, 12.0, panelWidth, 124.0);
     UILabel *title = (UILabel *)[_editorPanel viewWithTag:7001];
-    title.frame = CGRectMake(16.0, 10.0, 180.0, 30.0);
+    title.frame = CGRectMake(16.0, 10.0, 176.0, 30.0);
+    _fireToggleButton.frame = CGRectMake(panelWidth - 324.0, 9.0, 114.0, 32.0);
     _gyroButton.frame = CGRectMake(panelWidth - 202.0, 9.0, 102.0, 32.0);
     _doneButton.frame = CGRectMake(panelWidth - 92.0, 9.0, 76.0, 32.0);
     _touchSensitivityLabel.frame = CGRectMake(16.0, 47.0, 118.0, 27.0);
@@ -611,6 +630,13 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
 
 - (void)updateEditorControls
 {
+    [_fireToggleButton setTitle:(_fireButtonEnabled ? @"FIRE ON" : @"FIRE OFF")
+                       forState:UIControlStateNormal];
+    _fireToggleButton.backgroundColor = _fireButtonEnabled
+        ? [UIColor colorWithRed:0.88 green:0.24 blue:0.12 alpha:0.88]
+        : [UIColor colorWithRed:0.48 green:0.16 blue:0.16 alpha:0.85];
+    [_fireToggleButton setTitleColor:UIColor.whiteColor forState:UIControlStateNormal];
+
     [_gyroButton setTitle:(_gyroEnabled ? @"GYRO ON" : @"GYRO OFF") forState:UIControlStateNormal];
     _gyroButton.backgroundColor = _gyroEnabled
         ? [UIColor colorWithRed:0.10 green:0.68 blue:0.35 alpha:0.85]
@@ -628,6 +654,19 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
     (void)sender;
     if (_layoutEditing)
         [self toggleControlEditor];
+}
+
+- (void)toggleFireButtonFromEditor:(UIButton *)sender
+{
+    (void)sender;
+    _fireButtonEnabled = !_fireButtonEnabled;
+    [NSUserDefaults.standardUserDefaults setBool:_fireButtonEnabled
+                                          forKey:@"eDukeiOS.fireButton.enabled"];
+    [self updateEditorControls];
+    [self setNeedsDisplay];
+
+    UISelectionFeedbackGenerator *feedback = [[[UISelectionFeedbackGenerator alloc] init] autorelease];
+    [feedback selectionChanged];
 }
 
 - (void)toggleGyroFromEditor:(UIButton *)sender
@@ -673,6 +712,9 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
     if (CGRectContainsPoint(CircleRect(self.jumpCenter, [self radiusForControl:kControlJump]), point)) return gamefunc_Jump;
     if (CGRectContainsPoint(CircleRect(self.crouchCenter, [self radiusForControl:kControlCrouch]), point)) return gamefunc_Crouch;
     if (CGRectContainsPoint(CircleRect(self.weaponCenter, [self radiusForControl:kControlWeapon]), point)) return gamefunc_Next_Weapon;
+    if (_fireButtonEnabled
+        && CGRectContainsPoint(CircleRect(self.fireCenter, [self radiusForControl:kControlFire]), point))
+        return gamefunc_Fire;
     return -1;
 }
 
@@ -699,6 +741,8 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
                 CGFloat nearestDistance = CGFLOAT_MAX;
                 for (NSInteger control = 0; control < kControlCount; ++control)
                 {
+                    if (control == kControlFire && !_fireButtonEnabled)
+                        continue;
                     CGFloat const distance = hypot(point.x - _controlCenters[control].x,
                                                    point.y - _controlCenters[control].y);
                     if (distance <= _controlRadii[control] + 18.0 && distance < nearestDistance)
@@ -940,6 +984,7 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
         case kControlCrouch: return @"arrow.down.to.line";
         case kControlWeapon: return @"arrow.triangle.2.circlepath";
         case kControlPause: return @"pause.fill";
+        case kControlFire: return @"scope";
         default: return @"circle.fill";
     }
 }
@@ -1013,6 +1058,8 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
         [self drawControl:kControlJump active:[self isActionActive:gamefunc_Jump]];
         [self drawControl:kControlCrouch active:[self isActionActive:gamefunc_Crouch]];
         [self drawControl:kControlWeapon active:[self isActionActive:gamefunc_Next_Weapon]];
+        if (_fireButtonEnabled)
+            [self drawControl:kControlFire active:[self isActionActive:gamefunc_Fire]];
     }
     [self drawControl:kControlPause active:NO];
 }

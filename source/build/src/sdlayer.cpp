@@ -2880,6 +2880,68 @@ int32_t handleevents_pollsdl(void)
                 }
                 break;
 
+#ifdef EDUKE32_IOS
+            case SDL_APP_WILLENTERBACKGROUND:
+            case SDL_APP_DIDENTERBACKGROUND:
+                // UIKit does not reliably pair its minimize notification with
+                // SDL_WINDOWEVENT_RESTORED. Stop presentation explicitly while
+                // backgrounded so iOS never receives OpenGL work from the game.
+                sdl_minimized = true;
+                appactive = 0;
+                fprintf(stderr, "EDUKE32_IOS_LIFECYCLE: background event=%u minimized=1\n",
+                        ev.type);
+                fflush(stderr);
+                break;
+
+            case SDL_APP_WILLENTERFOREGROUND:
+                // Clear this before DIDENTERFOREGROUND as SDL may not emit a
+                // desktop-style restored window event on iOS.
+                sdl_minimized = false;
+                appactive = 1;
+                fprintf(stderr, "EDUKE32_IOS_LIFECYCLE: will-foreground minimized=0\n");
+                fflush(stderr);
+                break;
+
+            case SDL_APP_DIDENTERFOREGROUND:
+            {
+                sdl_minimized = false;
+                appactive = 1;
+                int makeCurrentResult = 0;
+                int drawableWidth = 0;
+                int drawableHeight = 0;
+
+#ifdef USE_OPENGL
+                if (!nogl && bpp > 8 && sdl_window && sdl_context)
+                {
+                    makeCurrentResult = SDL_GL_MakeCurrent(sdl_window, sdl_context);
+                    SDL_GL_GetDrawableSize(sdl_window, &drawableWidth, &drawableHeight);
+                    if (makeCurrentResult == 0)
+                    {
+                        // Keep the Build 100 logical geometry. Merely rebind
+                        // the preserved context and restore its viewport.
+                        glViewport(0, 0, xres, yres);
+                    }
+                    else
+                    {
+                        // If iOS discarded the drawable/context, recreate the
+                        // current mode instead of presenting forever to a dead
+                        // context.
+                        videoResetMode();
+                        if (videoSetGameMode(fullscreen, xres, yres, bpp, upscalefactor))
+                            fprintf(stderr, "EDUKE32_IOS_LIFECYCLE: video mode recovery failed: %s\n",
+                                    SDL_GetError());
+                    }
+                }
+#endif
+
+                fprintf(stderr,
+                        "EDUKE32_IOS_LIFECYCLE: did-foreground minimized=0 current=%d drawable=%dx%d engine=%dx%d\n",
+                        makeCurrentResult, drawableWidth, drawableHeight, xres, yres);
+                fflush(stderr);
+                break;
+            }
+#endif
+
             case SDL_WINDOWEVENT:
                 switch (ev.window.event)
                 {

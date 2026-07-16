@@ -68,7 +68,24 @@ jobs:
           if start < 0 or finish < 0 or finish < start:
               raise SystemExit("one-shot workflow markers are missing")
           finish += len(end)
-          path.write_text(text[:start] + text[finish:])
+          text = text[:start] + text[finish:]
+          text = text.replace(
+              "permissions:\n  contents: write\n  actions: write\n",
+              "permissions:\n  contents: read\n",
+              1,
+          )
+          text = text.replace(
+              "      - name: Check out eDukeiOS\n"
+              "        uses: actions/checkout@v6\n"
+              "        with:\n"
+              "          ref: ios-polymost-gl4es\n"
+              "          fetch-depth: 1\n"
+              "          show-progress: false\n",
+              "      - name: Check out eDukeiOS\n"
+              "        uses: actions/checkout@v6\n",
+              1,
+          )
+          path.write_text(text)
           PY
 
           git diff --check
@@ -90,7 +107,6 @@ jobs:
             -H "X-GitHub-Api-Version: 2022-11-28" \
             "https://api.github.com/repos/${{ github.repository }}/actions/workflows/ios-build.yml/dispatches" \
             -d '{"ref":"ios-polymost-gl4es"}'
-      # END ONE-SHOT ION FURY VOXEL APPLICATOR
 
       - name: Upload voxel applicator diagnostics
         if: always() && hashFiles('voxel-apply.log') != ''
@@ -100,6 +116,7 @@ jobs:
           path: voxel-apply.log
           if-no-files-found: error
           retention-days: 3
+      # END ONE-SHOT ION FURY VOXEL APPLICATOR
 
       - name: Generate iOS app icon assets
         run: |
@@ -223,6 +240,20 @@ jobs:
             echo "Ion Fury requires Vorbis, but the iOS binary contains the no-Vorbis stub." >&2
             exit 1
           fi
+          if ! strings "$APP_BINARY" | grep -Fq "EDUKE32_IOS_VOXELS:"; then
+            echo "The iOS binary is missing the optional Ion Fury voxel loader diagnostics." >&2
+            exit 1
+          fi
+          python3 - <<'PY'
+          from pathlib import Path
+
+          source = Path("source/build/src/sdlayer.cpp").read_text()
+          assert "int const iosVoxelPackMode = EDuke32_IOS_WantsPolymost()" in source
+          assert "? EDuke32_IOS_FuryVoxelPackMode() : 0;" in source
+          assert 'iosArgv[3] = (char *)"-mh"' in source
+          assert 'iosArgv[3] = (char *)"-j"' in source
+          assert "argc = 3;" in source
+          PY
 
       - name: Package unsigned IPA
         run: |

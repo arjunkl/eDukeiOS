@@ -1083,6 +1083,7 @@ typedef void (^EDuke32LaunchCompletion)(NSString *grpName);
     UILabel *_statusLabel;
 }
 - (instancetype)initWithCompletion:(EDuke32LaunchCompletion)completion;
+- (void)showArjukStudiosSplashWithCompletion:(dispatch_block_t)completion;
 @end
 
 @implementation EDuke32LauncherViewController
@@ -1284,6 +1285,88 @@ typedef void (^EDuke32LaunchCompletion)(NSString *grpName);
     return ok;
 }
 
+- (void)showArjukStudiosSplashWithCompletion:(dispatch_block_t)completion
+{
+    UIView *splash = [[[UIView alloc] initWithFrame:self.view.bounds] autorelease];
+    splash.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+    splash.backgroundColor = [UIColor colorWithRed:0.035 green:0.020 blue:0.014 alpha:1.0];
+    splash.alpha = 0.0;
+
+    UIImage *artwork = [UIImage imageNamed:@"ArjukStudios.jpeg"];
+    UIImageView *artView = [[[UIImageView alloc] initWithFrame:CGRectZero] autorelease];
+    artView.contentMode = UIViewContentModeScaleAspectFill;
+    artView.clipsToBounds = YES;
+    artView.layer.cornerRadius = 18.0;
+    artView.layer.borderWidth = 1.0;
+    artView.layer.borderColor = [UIColor colorWithRed:1.0 green:0.39 blue:0.08 alpha:0.45].CGColor;
+
+    if (artwork.CGImage)
+    {
+        size_t const sourceWidth = CGImageGetWidth(artwork.CGImage);
+        size_t const sourceHeight = CGImageGetHeight(artwork.CGImage);
+        // Keep the original bear and fire artwork while cropping away the
+        // hot-sauce label; the studio name is typeset cleanly below it.
+        CGRect const crop = CGRectMake(0.0, sourceHeight * 0.025,
+                                       sourceWidth, sourceHeight * 0.59);
+        CGImageRef croppedImage = CGImageCreateWithImageInRect(artwork.CGImage, crop);
+        if (croppedImage)
+        {
+            artView.image = [UIImage imageWithCGImage:croppedImage
+                                                scale:artwork.scale
+                                          orientation:artwork.imageOrientation];
+            CGImageRelease(croppedImage);
+        }
+        else
+            artView.image = artwork;
+    }
+
+    UILabel *studio = [[[UILabel alloc] initWithFrame:CGRectZero] autorelease];
+    studio.text = @"ARJUK STUDIOS";
+    studio.textAlignment = NSTextAlignmentCenter;
+    studio.textColor = [UIColor colorWithRed:1.0 green:0.34 blue:0.08 alpha:1.0];
+    studio.font = [UIFont systemFontOfSize:30.0 weight:UIFontWeightBlack];
+    studio.adjustsFontSizeToFitWidth = YES;
+    studio.minimumScaleFactor = 0.7;
+
+    UILabel *presents = [[[UILabel alloc] initWithFrame:CGRectZero] autorelease];
+    presents.text = @"P R E S E N T S";
+    presents.textAlignment = NSTextAlignmentCenter;
+    presents.textColor = [UIColor colorWithWhite:1.0 alpha:0.55];
+    presents.font = [UIFont systemFontOfSize:10.0 weight:UIFontWeightSemibold];
+
+    CGFloat const height = CGRectGetHeight(self.view.bounds);
+    CGFloat const width = CGRectGetWidth(self.view.bounds);
+    CGFloat const artHeight = fmin(238.0, height * 0.54);
+    CGFloat const artWidth = fmin(width - 56.0, artHeight * 1.66);
+    CGFloat const totalHeight = artHeight + 60.0;
+    CGFloat const top = (height - totalHeight) * 0.5;
+    artView.frame = CGRectMake((width - artWidth) * 0.5, top, artWidth, artHeight);
+    studio.frame = CGRectMake(28.0, CGRectGetMaxY(artView.frame) + 8.0, width - 56.0, 34.0);
+    presents.frame = CGRectMake(28.0, CGRectGetMaxY(studio.frame) + 1.0, width - 56.0, 16.0);
+
+    [splash addSubview:artView];
+    [splash addSubview:studio];
+    [splash addSubview:presents];
+    [self.view addSubview:splash];
+
+    [UIView animateWithDuration:0.22 animations:^{
+        splash.alpha = 1.0;
+    } completion:^(BOOL finished) {
+        (void)finished;
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 1150 * NSEC_PER_MSEC),
+                       dispatch_get_main_queue(), ^{
+            [UIView animateWithDuration:0.22 animations:^{
+                splash.alpha = 0.0;
+            } completion:^(BOOL faded) {
+                (void)faded;
+                [splash removeFromSuperview];
+                if (completion)
+                    completion();
+            }];
+        });
+    }];
+}
+
 - (void)showMessage:(NSString *)title body:(NSString *)body
 {
     UIAlertController *alert = [UIAlertController alertControllerWithTitle:title
@@ -1322,8 +1405,10 @@ typedef void (^EDuke32LaunchCompletion)(NSString *grpName);
 
     g_usePolymost = sender.tag == 2;
     _statusLabel.text = [NSString stringWithFormat:@"Starting %@…", file];
-    if (_completion)
-        _completion(file);
+    [self showArjukStudiosSplashWithCompletion:^{
+        if (self->_completion)
+            self->_completion(file);
+    }];
 }
 
 @end

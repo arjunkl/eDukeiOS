@@ -146,6 +146,9 @@ jobs:
 
       - name: Package unsigned IPA
         run: |
+          cp platform/Apple/iOS/ArjukStudios.jpeg \
+            platform/Apple/build/Debug-iphoneos/EDuke32-iOS.app/ArjukStudios.jpeg
+          test -f platform/Apple/build/Debug-iphoneos/EDuke32-iOS.app/ArjukStudios.jpeg
           mkdir Payload
           cp -R platform/Apple/build/Debug-iphoneos/EDuke32-iOS.app Payload/
           test -x Payload/EDuke32-iOS.app/EDuke32-iOS

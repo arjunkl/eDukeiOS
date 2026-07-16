@@ -1,30 +1,17 @@
-name: Apply Ion Fury voxel support
+name: Staged Ion Fury voxel source patch
 
 on:
-  push:
-    branches:
-      - ios-polymost-gl4es
-    paths:
-      - .github/workflows/apply-ion-fury-voxels.yml
+  workflow_dispatch:
 
 permissions:
-  contents: write
-  actions: write
+  contents: read
 
 jobs:
-  apply:
+  staged-script-container:
     runs-on: ubuntu-latest
     steps:
-      - name: Check out current feature branch
-        uses: actions/checkout@v6
-        with:
-          ref: ios-polymost-gl4es
-          fetch-depth: 0
-
-      - name: Apply guarded voxel-pack integration
-        shell: bash
+      - name: Stored source patch
         run: |
-          set -euo pipefail
           python3 - <<'PY'
           from pathlib import Path
 
@@ -328,70 +315,4 @@ jobs:
           Duke Nukem 3D, Ion Fury, Shadow Warrior, their game data, names, artwork, music, and other proprietary assets belong to their respective owners. This repository distributes source-port code only and does not grant rights to commercial game data.
           ''',
           )
-
-          workflow = ".github/workflows/ios-build.yml"
-          replace_once(
-              workflow,
-              '''          if strings "$APP_BINARY" | grep -Fq "OggVorbis support not included in this binary"; then
-                        echo "Ion Fury requires Vorbis, but the iOS binary contains the no-Vorbis stub." >&2
-                        exit 1
-                      fi
-
-                    - name: Package unsigned IPA
-          ''',
-              '''          if strings "$APP_BINARY" | grep -Fq "OggVorbis support not included in this binary"; then
-                        echo "Ion Fury requires Vorbis, but the iOS binary contains the no-Vorbis stub." >&2
-                        exit 1
-                      fi
-                      if ! strings "$APP_BINARY" | grep -Fq "EDUKE32_IOS_VOXELS:"; then
-                        echo "The iOS binary is missing the optional Ion Fury voxel loader diagnostics." >&2
-                        exit 1
-                      fi
-                      python3 - <<'PY'
-                      from pathlib import Path
-                      source = Path("source/build/src/sdlayer.cpp").read_text()
-                      assert "EDuke32_IOS_WantsPolymost()\n                      ? EDuke32_IOS_FuryVoxelPackMode() : 0" in source
-                      assert 'iosArgv[3] = (char *)"-mh"' in source
-                      assert 'iosArgv[3] = (char *)"-j"' in source
-                      assert "argc = 3;" in source
-                      PY
-
-                    - name: Package unsigned IPA
-          ''',
-          )
           PY
-
-          git diff --check
-          grep -Fq 'EDUKE32_IOS_VOXELS:' platform/Apple/iOS/EDuke32Controls.mm
-          grep -Fq 'EDuke32_IOS_FuryVoxelPackMode' source/build/src/sdlayer.cpp
-          grep -Fq 'Ion Fury / Aftershock voxel pack' README.md
-
-      - name: Commit coordinated source changes
-        shell: bash
-        run: |
-          set -euo pipefail
-          rm .github/workflows/apply-ion-fury-voxels.yml
-          git config user.name "eDukeiOS Build Agent"
-          git config user.email "actions@users.noreply.github.com"
-          git add platform/Apple/iOS/EDuke32Controls.mm \
-                  source/build/src/sdlayer.cpp \
-                  README.md \
-                  .github/workflows/ios-build.yml \
-                  .github/workflows/apply-ion-fury-voxels.yml
-          git commit -m "Add optional Ion Fury voxel pack loading"
-          git push origin HEAD:ios-polymost-gl4es
-
-      - name: Dispatch post-change iOS build
-        env:
-          GH_TOKEN: ${{ github.token }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          sleep 3
-          curl --fail-with-body -L \
-            -X POST \
-            -H "Accept: application/vnd.github+json" \
-            -H "Authorization: Bearer $GH_TOKEN" \
-            -H "X-GitHub-Api-Version: 2022-11-28" \
-            https://api.github.com/repos/${{ github.repository }}/actions/workflows/ios-build.yml/dispatches \
-            -d '{"ref":"ios-polymost-gl4es"}'

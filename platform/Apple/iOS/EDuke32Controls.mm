@@ -112,13 +112,16 @@ static CGRect CircleRect(CGPoint center, CGFloat radius)
 
 extern "C" void EDuke32_IOS_GetRenderSize(int32_t *width, int32_t *height)
 {
-    CGRect const bounds = UIScreen.mainScreen.bounds;
-    CGFloat const longEdge = fmax(CGRectGetWidth(bounds), CGRectGetHeight(bounds));
-    CGFloat const shortEdge = fmin(CGRectGetWidth(bounds), CGRectGetHeight(bounds));
+    CGRect const nativeBounds = UIScreen.mainScreen.nativeBounds;
+    CGFloat const longEdge = fmax(CGRectGetWidth(nativeBounds), CGRectGetHeight(nativeBounds));
+    CGFloat const shortEdge = fmin(CGRectGetWidth(nativeBounds), CGRectGetHeight(nativeBounds));
+    CGFloat const scale = UIScreen.mainScreen.scale;
 
     // Preserve the exact device aspect ratio while keeping the 8-bit software
     // renderer at a practical resolution on larger iPads.
-    CGFloat const renderScale = shortEdge > 600.0 ? 600.0 / shortEdge : 1.0;
+    // We use nativeBounds to get pixel dimensions, and scale the threshold accordingly.
+    CGFloat const shortEdgeThreshold = 600.0 * scale;
+    CGFloat const renderScale = shortEdge > shortEdgeThreshold ? shortEdgeThreshold / shortEdge : 1.0;
     *width = static_cast<int32_t>(floor(longEdge * renderScale)) & ~1;
     *height = static_cast<int32_t>(floor(shortEdge * renderScale)) & ~1;
 }

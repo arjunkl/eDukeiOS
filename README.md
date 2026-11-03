@@ -123,9 +123,12 @@ Gyroscope aiming is available during gameplay and is enabled or disabled from th
 - Drag its resize handle to change its size.
 - Adjust touch and gyro sensitivity with the sliders.
 - Use the gyro button to enable or disable motion aiming.
-- Tap **Done** to leave the editor.
+- Tap **Done** to leave the editor. Control positions and sensitivity settings are saved between launches.
 
-Control positions and sensitivity settings are saved between launches.
+### Playing with a controller
+
+- In **Duke Nukem 3D** or **Ion Fury**, hold **Pause** for two seconds, tap **Touch Controls On** to switch it off, then tap **Done**. All on-screen buttons disappear and taps and swipes stop sending game input. The setting is saved between launches. Gyro has its own switch.
+- To bring touch controls back, hold anywhere on the game screen for two seconds, tap **Touch Controls Off**, then **Done**.
 
 ## Building with GitHub Actions
 

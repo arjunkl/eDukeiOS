@@ -250,6 +250,7 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
     UILongPressGestureRecognizer *_pauseLongPressGesture;
     UILabel *_gyroStatusLabel;
     UIView *_editorPanel;
+    UIButton *_touchControlsButton;
     UIButton *_fireToggleButton;
     UIButton *_gyroButton;
     UIButton *_doneButton;
@@ -257,6 +258,7 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
     UILabel *_gyroSensitivityLabel;
     UISlider *_touchSensitivitySlider;
     UISlider *_gyroSensitivitySlider;
+    BOOL _touchControlsDisabled;
     BOOL _gyroEnabled;
     BOOL _fireButtonEnabled;
     float _touchAimScale;
@@ -294,6 +296,7 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
     _touchActions = [[NSMutableDictionary alloc] init];
 
     NSUserDefaults *preferences = NSUserDefaults.standardUserDefaults;
+    _touchControlsDisabled = [preferences boolForKey:@"eDukeiOS.touchControls.disabled"];
     _gyroEnabled = [preferences objectForKey:@"eDukeiOS.gyro.enabled"]
         ? [preferences boolForKey:@"eDukeiOS.gyro.enabled"] : YES;
     _fireButtonEnabled = [preferences objectForKey:@"eDukeiOS.fireButton.enabled"]
@@ -337,6 +340,14 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
     editorTitle.font = [UIFont boldSystemFontOfSize:14.0];
     [_editorPanel addSubview:editorTitle];
     editorTitle.tag = 7001;
+
+    _touchControlsButton = [[UIButton buttonWithType:UIButtonTypeSystem] retain];
+    _touchControlsButton.titleLabel.font = [UIFont boldSystemFontOfSize:13.0];
+    _touchControlsButton.layer.cornerRadius = 10.0;
+    [_touchControlsButton setTitleColor:UIColor.whiteColor forState:UIControlStateNormal];
+    [_touchControlsButton addTarget:self action:@selector(toggleTouchControlsFromEditor:)
+                   forControlEvents:UIControlEventTouchUpInside];
+    [_editorPanel addSubview:_touchControlsButton];
 
     _fireToggleButton = [[UIButton buttonWithType:UIButtonTypeSystem] retain];
     _fireToggleButton.titleLabel.font = [UIFont boldSystemFontOfSize:13.0];
@@ -422,6 +433,7 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
     [_pauseLongPressGesture release];
     [_gyroStatusLabel release];
     [_editorPanel release];
+    [_touchControlsButton release];
     [_fireToggleButton release];
     [_gyroButton release];
     [_doneButton release];
@@ -554,7 +566,7 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
     _gyroStatusLabel.center = CGPointMake(CGRectGetMidX(self.bounds), 42.0);
 
     CGFloat const panelWidth = fmin(CGRectGetWidth(self.bounds) - 32.0, 520.0);
-    _editorPanel.frame = CGRectMake((CGRectGetWidth(self.bounds) - panelWidth) * 0.5, 12.0, panelWidth, 124.0);
+    _editorPanel.frame = CGRectMake((CGRectGetWidth(self.bounds) - panelWidth) * 0.5, 12.0, panelWidth, 160.0);
     UILabel *title = (UILabel *)[_editorPanel viewWithTag:7001];
     title.frame = CGRectMake(16.0, 10.0, 176.0, 30.0);
     _fireToggleButton.frame = CGRectMake(panelWidth - 324.0, 9.0, 114.0, 32.0);
@@ -564,12 +576,18 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
     _touchSensitivitySlider.frame = CGRectMake(134.0, 45.0, panelWidth - 150.0, 31.0);
     _gyroSensitivityLabel.frame = CGRectMake(16.0, 84.0, 118.0, 27.0);
     _gyroSensitivitySlider.frame = CGRectMake(134.0, 82.0, panelWidth - 150.0, 31.0);
+    _touchControlsButton.frame = CGRectMake(16.0, 118.0, panelWidth - 32.0, 34.0);
 }
 
 - (BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer shouldReceiveTouch:(UITouch *)touch
 {
     if (gestureRecognizer != _pauseLongPressGesture)
         return YES;
+
+    if ([touch.view isDescendantOfView:_editorPanel])
+        return NO;
+    if (_touchControlsDisabled && !_layoutEditing)
+        return YES; // Pause is hidden. A long press anywhere reopens the editor.
 
     CGPoint const point = [touch locationInView:self];
     return CGRectContainsPoint(CircleRect(self.pauseCenter, [self radiusForControl:kControlPause] + 10.0), point);
@@ -616,7 +634,8 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
         [self saveControlLayout];
 
     [self updateEditorControls];
-    _gyroStatusLabel.text = @"CONTROL LAYOUT SAVED";
+    _gyroStatusLabel.text = _touchControlsDisabled
+        ? @"Touch off. Hold anywhere for 2s to edit." : @"CONTROL LAYOUT SAVED";
     _gyroStatusLabel.alpha = _layoutEditing ? 0.0 : 1.0;
 
     UINotificationFeedbackGenerator *feedback = [[[UINotificationFeedbackGenerator alloc] init] autorelease];
@@ -632,6 +651,13 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
 
 - (void)updateEditorControls
 {
+    [_touchControlsButton setTitle:(_touchControlsDisabled
+        ? @"TOUCH CONTROLS OFF  ·  Hold anywhere for 2s to edit" : @"TOUCH CONTROLS ON")
+                          forState:UIControlStateNormal];
+    _touchControlsButton.backgroundColor = _touchControlsDisabled
+        ? [UIColor colorWithRed:0.48 green:0.16 blue:0.16 alpha:0.85]
+        : [UIColor colorWithRed:0.10 green:0.68 blue:0.35 alpha:0.85];
+
     [_fireToggleButton setTitle:(_fireButtonEnabled ? @"FIRE ON" : @"FIRE OFF")
                        forState:UIControlStateNormal];
     _fireToggleButton.backgroundColor = _fireButtonEnabled
@@ -669,6 +695,14 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
 
     UISelectionFeedbackGenerator *feedback = [[[UISelectionFeedbackGenerator alloc] init] autorelease];
     [feedback selectionChanged];
+}
+
+- (void)toggleTouchControlsFromEditor:(UIButton *)sender
+{
+    (void)sender;
+    _touchControlsDisabled = !_touchControlsDisabled;
+    [NSUserDefaults.standardUserDefaults setBool:_touchControlsDisabled forKey:@"eDukeiOS.touchControls.disabled"];
+    [self updateEditorControls];
 }
 
 - (void)toggleGyroFromEditor:(UIButton *)sender
@@ -723,6 +757,9 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
 - (void)touchesBegan:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event
 {
     (void)event;
+    if (_touchControlsDisabled && !_layoutEditing)
+        return;
+
     for (UITouch *touch in touches)
     {
         CGPoint const point = [touch locationInView:self];
@@ -1054,6 +1091,9 @@ void CONTROL_Android_PollDevices(ControlInfo *info)
 - (void)drawRect:(CGRect)rect
 {
     (void)rect;
+    if (_touchControlsDisabled && !_layoutEditing)
+        return;
+
     if ([self touchMode] == TOUCH_SCREEN_GAME || _layoutEditing)
     {
         [self drawControl:kControlUse active:[self isActionActive:gamefunc_Open]];

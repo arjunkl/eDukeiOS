@@ -55,6 +55,31 @@ jobs:
       - name: Fetch SDL2 beside the repository
         run: git clone --depth 1 --branch SDL2 https://github.com/libsdl-org/SDL.git ../SDL
 
+      - name: Build GL4ES for Polymost on iOS
+        run: |
+          set -euxo pipefail
+          git clone --depth 1 --branch v1.1.6 https://github.com/ptitSeb/gl4es.git ../gl4es
+          git clone --depth 1 https://github.com/leetal/ios-cmake.git ../ios-cmake
+          git -C ../gl4es apply "$GITHUB_WORKSPACE/platform/Apple/iOS/gl4es-darwin.patch"
+          cmake \
+            -S ../gl4es \
+            -B ../gl4es/build-ios \
+            -G Xcode \
+            -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
+            -DCMAKE_TOOLCHAIN_FILE="$GITHUB_WORKSPACE/../ios-cmake/ios.toolchain.cmake" \
+            -DPLATFORM=OS64 \
+            -DDEPLOYMENT_TARGET=15.0 \
+            -DNOX11=ON \
+            -DNOEGL=ON \
+            -DSTATICLIB=ON \
+            -DDEFAULT_ES=2 \
+            -DNO_INIT_CONSTRUCTOR=ON
+          cmake --build ../gl4es/build-ios --config Release --target GL
+          GL4ES_LIBRARY="../gl4es/lib/Release/libGL.a"
+          test -f "$GL4ES_LIBRARY"
+          mkdir -p ../gl4es/install/lib
+          cp "$GL4ES_LIBRARY" ../gl4es/install/lib/libGL.a
+
       - name: Configure generated VoidSW iOS target
         run: |
           if ! ruby -e 'require "xcodeproj"' 2>/dev/null; then
@@ -91,6 +116,11 @@ jobs:
             COPY_PHASE_STRIP=NO
             STRIP_INSTALLED_PRODUCT=NO
             SYMROOT="$GITHUB_WORKSPACE/platform/Apple/build"
+            HEADER_SEARCH_PATHS="$GITHUB_WORKSPACE/platform/Apple/iOS/gl4es-shim \$(inherited) $GITHUB_WORKSPACE/../gl4es/include"
+            LIBRARY_SEARCH_PATHS="\$(inherited) $GITHUB_WORKSPACE/../gl4es/install/lib"
+            OTHER_LDFLAGS="\$(inherited) -lGL"
+            GCC_PREPROCESSOR_DEFINITIONS="\$(inherited) EDUKE32_GL4ES=1 HAVE_VORBIS=1"
+            EXCLUDED_SOURCE_FILE_NAMES=glad.c
           )
 
           xcodebuild \
@@ -107,8 +137,33 @@ jobs:
               build 2>&1 | tee -a ios-build.log
           done
 
+          APP_BINARY="platform/Apple/build/Debug-iphoneos/EDuke32-iOS.app/EDuke32-iOS"
+          test -x "$APP_BINARY"
+          strings "$APP_BINARY" > "$RUNNER_TEMP/edukeios-binary-strings.txt"
+          if grep -Fq "OggVorbis support not included in this binary" "$RUNNER_TEMP/edukeios-binary-strings.txt"; then
+            echo "Ion Fury requires Vorbis, but the iOS binary contains the no-Vorbis stub." >&2
+            exit 1
+          fi
+          if ! grep -Fq "EDUKE32_IOS_VOXELS:" "$RUNNER_TEMP/edukeios-binary-strings.txt"; then
+            echo "The iOS binary is missing the optional Ion Fury voxel loader diagnostics." >&2
+            exit 1
+          fi
+          python3 - <<'PY'
+          from pathlib import Path
+
+          source = Path("source/build/src/sdlayer.cpp").read_text()
+          assert "int const iosVoxelPackMode = EDuke32_IOS_WantsPolymost()" in source
+          assert "? EDuke32_IOS_FuryVoxelPackMode() : 0;" in source
+          assert 'iosArgv[3] = (char *)"-mh"' in source
+          assert 'iosArgv[3] = (char *)"-j"' in source
+          assert "argc = 3;" in source
+          PY
+
       - name: Package unsigned IPA
         run: |
+          cp platform/Apple/iOS/ArjukStudios.jpeg \
+            platform/Apple/build/Debug-iphoneos/EDuke32-iOS.app/ArjukStudios.jpeg
+          test -f platform/Apple/build/Debug-iphoneos/EDuke32-iOS.app/ArjukStudios.jpeg
           mkdir Payload
           cp -R platform/Apple/build/Debug-iphoneos/EDuke32-iOS.app Payload/
           test -x Payload/EDuke32-iOS.app/EDuke32-iOS

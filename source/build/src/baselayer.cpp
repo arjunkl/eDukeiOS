@@ -571,8 +571,14 @@ void fill_glinfo(void)
     glinfo.multitex         = !!Bstrstr(glinfo.extensions, "GL_ARB_multitexture");
     glinfo.occlusionqueries = !!Bstrstr(glinfo.extensions, "GL_ARB_occlusion_query");
     glinfo.rect             = !!Bstrstr(glinfo.extensions, "GL_NV_texture_rectangle") || !!Bstrstr(glinfo.extensions, "GL_EXT_texture_rectangle");
+#if defined EDUKE32_GL4ES
+    // GL4ES exposes direct entry points rather than GLAD's optional function
+    // pointers. Context reset notification is not required by Polymost.
+    glinfo.reset_notification = 0;
+#else
     glinfo.reset_notification = (!!Bstrstr(glinfo.extensions, "GL_ARB_robustness") && glGetGraphicsResetStatus)
                              || (!!Bstrstr(glinfo.extensions, "GL_KHR_robustness") || glGetGraphicsResetStatusKHR);
+#endif
     glinfo.samplerobjects   = !!Bstrstr(glinfo.extensions, "GL_ARB_sampler_objects");
     glinfo.sync             = !!Bstrstr(glinfo.extensions, "GL_ARB_sync");
     glinfo.texcompr         = !!Bstrstr(glinfo.extensions, "GL_ARB_texture_compression") && Bstrcmp(glinfo.vendor, "ATI Technologies Inc");
@@ -711,8 +717,10 @@ int osdcmd_glinfo(osdcmdptr_t UNUSED(parm))
 
     VLOG_F(LOG_GFX, "OpenGL driver: %s %s", glinfo.renderer, glinfo.version);
 
+#if !defined EDUKE32_GL4ES
     if (GLVersion.major)
         VLOG_F(LOG_GFX, "OpenGL context: version %d.%d", GLVersion.major, GLVersion.minor);
+#endif
 
     if (!glinfo.filled)
         return OSDCMD_OK;

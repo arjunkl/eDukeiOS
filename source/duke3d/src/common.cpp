@@ -444,6 +444,10 @@ void G_LoadGroups(int32_t autoload)
 
         if (type->rtsname && g_rtsNamePtr == NULL)
             g_rtsNamePtr = dup_filename(type->rtsname);
+
+        LOG_F(INFO, "Selected game metadata: name='%s', flags=0x%03x, script='%s', definitions='%s'.",
+              type->name ? type->name : "(unnamed)", type->game,
+              G_ConFile() ? G_ConFile() : "(none)", G_DefFile() ? G_DefFile() : "(none)");
     }
     else
     {
@@ -476,6 +480,33 @@ void G_LoadGroups(int32_t autoload)
 #endif
 
     loaddefinitions_game(G_DefFile(), TRUE);
+
+    if (FURY)
+    {
+        static char const * const requiredFiles[] =
+        {
+            "fury.def",
+            "ashock.def",
+            "content.def",
+            "palette.def",
+            "palette.dat",
+            "basepalette_000.raw",
+            "palookup_000.raw",
+            "blendtable_000.raw",
+        };
+
+        for (char const * const filename : requiredFiles)
+        {
+            buildvfs_kfd const file = kopen4load(filename, 0);
+            if (file == buildvfs_kfd_invalid)
+                LOG_F(WARNING, "Ion Fury data preflight: '%s' is not visible in the virtual filesystem.", filename);
+            else
+            {
+                LOG_F(INFO, "Ion Fury data preflight: found '%s' (%d bytes).", filename, kfilelength(file));
+                kclose(file);
+            }
+        }
+    }
 
     struct strllist *s;
 

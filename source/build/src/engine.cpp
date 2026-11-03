@@ -7776,7 +7776,6 @@ void dorotspr_handle_bit2(int32_t *sxptr, int32_t *syptr, int32_t *z, int32_t da
 
         int32_t zoomsc, sx=*sxptr, sy=*syptr;
         int32_t ouryxaspect = yxaspect, ourxyaspect = xyaspect;
-
         sy += rotatesprite_y_offset;
 
         if (!(dastat & RS_STRETCH) && 4*ydim <= 3*xdim)
@@ -11972,6 +11971,19 @@ int32_t videoSetGameMode(char davidoption, int32_t daupscaledxdim, int32_t daups
     PolymostFreeVBOs();
 #endif
     if (videoSetMode(daupscaledxdim,daupscaledydim,dabpp,davidoption) < 0) return -1;
+
+#ifdef EDUKE32_IOS
+    // UIKit may replace the requested desktop-style mode with the drawable's
+    // actual pixel size. Keep Build's logical geometry in lockstep with that
+    // accepted mode; otherwise the renderer presents a 1024x768 canvas through
+    // a 956x440 drawable and every projection/2D coordinate is calculated in
+    // the wrong aspect ratio.
+    if (daupscaledxdim != xres || daupscaledydim != yres)
+        LOG_F(INFO, "UIKit video-mode handoff: replacing requested engine size %dx%d with actual %dx%d.",
+              daupscaledxdim, daupscaledydim, xres, yres);
+    daupscaledxdim = xres;
+    daupscaledydim = yres;
+#endif
 
     // Workaround possible bugs in the GL driver
     makeasmwriteable();
